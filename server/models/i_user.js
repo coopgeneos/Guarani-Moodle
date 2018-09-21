@@ -18,13 +18,14 @@ module.exports = (sequelize, DataTypes) => {
 		password: {
 			type: DataTypes.STRING
 		},
-		state: {
+		role: {
 		    type: DataTypes.ENUM,
 		    values: ['0', '1', '2']
 		}
 	},
 	{
-		tableName: 'I_User'
+		tableName: 'I_User',
+		paranoid: true
 	})
 
 	return User;

@@ -2,33 +2,51 @@ const userController = require('./../controllers/user.ctrl')
 const ensureLoggedIn = require('connect-ensure-login')
 
 module.exports = (router) => {
-    /*
-    curl --request POST \
-      --url http://localhost:5000/user/add \
-      --header 'content-type: application/json' \
-      --data '{"name":"Ibrian", "surname":"Gomez", "username":"igomez", "password":"secret", "state":"0"}'
-    */
-    router
-        .route('/user/add')
-        .post(userController.addUser)
+  /*
+  curl --request POST \
+    --url http://localhost:5000/users \
+    --header 'content-type: application/json' \
+    --data '{"name":"Ibrian", "surname":"Gomez", "username":"igomez", "password":"secret", "state":"0"}'
+  */
+  router
+    .route('/users')
+    .post(ensureLoggedIn.ensureLoggedIn(), userController.addUser)
 
-    /*
-    curl --request GET \
-      --url http://localhost:5000/user/all \
-      --header 'content-type: application/json'
-    */
-    router
-        .route('/user/all')
-        .get(ensureLoggedIn.ensureLoggedIn(), userController.getAll)
+  /*
+  curl --request PUT \
+    --url http://localhost:5000/users/1 \
+    --header 'content-type: application/json' \
+    --data '{"i_user_id":"1", "name":"Admin", "surname":"Admin", "username":"Admin", "password":"n0t4dm1n", "role":"1"}'
+  */
+  router
+    .route('/users/:id')
+    .put(ensureLoggedIn.ensureLoggedIn(), userController.updateUser)
 
-    /*
-    curl --request GET \
-      --url http://localhost:5000/user/1 \
-      --header 'content-type: application/json'
-    */
-    router
-        .route('/user/:id')
-        .get(ensureLoggedIn.ensureLoggedIn(), userController.getById)
-    
+  /*
+  curl --request GET \
+    --url http://localhost:5000/users \
+    --header 'content-type: application/json'
+  */
+  router
+    .route('/users')
+    .get(userController.getAll)
+
+  /*
+  curl --request GET \
+    --url http://localhost:5000/users/1 \
+    --header 'content-type: application/json'
+  */
+  router
+    .route('/users/:id')
+    .get(userController.getById)
+
+  /*
+  curl --request DELETE \
+    --url http://localhost:5000/users/1 \
+    --header 'content-type: application/json'
+  */
+  router
+    .route('/users/:id')
+    .delete(ensureLoggedIn.ensureLoggedIn(), userController.deleteUser)
     
 }
