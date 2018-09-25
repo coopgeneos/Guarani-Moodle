@@ -10,6 +10,9 @@ module.exports = (sequelize, DataTypes) => {
 	    value: {
 			type: DataTypes.STRING
 		},
+		description: {
+			type: DataTypes.STRING
+		},
 	},
 	{
 		tableName: 'I_Config'
