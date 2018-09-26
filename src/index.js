@@ -9,18 +9,24 @@ import { Switch, Route } from 'react-router-dom';
 import { ConnectedRouter } from 'react-router-redux';
 
 import { getUser } from './redux/actions/actions';
-import { checkAuth } from './utils/requireAuth'
 
 import {store, history} from './redux/store';
 
-if (checkAuth()){
-	//Is user alredy in session then SET
-    store.dispatch({type: 'SET_USER', userData: JSON.parse(localStorage.Auth)});
-    var token = JSON.parse(localStorage.Auth).token
-    getUser(token)/*.then((res) => {
-        store.dispatch({type: 'SET_USER', userData: res})
-    })*/
 
+if (sessionStorage.ISGMAuth){
+	//Is user alredy in session then SET
+    try {
+        const userData = JSON.parse(localStorage.ISGMAuth);
+        store.dispatch({type: 'SET_USER', userData: userData});
+        //Refresh user data
+        console.log('Get User');
+        var userID = userData.I_User_id;
+        store.dispatch(getUser(userID))
+    }
+    catch (e) {
+        //If error parsing JSON
+        store.dispatch({type: 'UNSET_USER'});
+    }
 }
 
 ReactDOM.render((

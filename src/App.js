@@ -17,9 +17,7 @@ import { Grid } from 'react-bootstrap';
 import css from './App.css';
 
 const mapStateToProps = state => {
-        console.log(state.common.appLoading);
         return {
-
           isAuth: state.login.isAuth,
           isLoading: state.common.appLoading !== 0
       }

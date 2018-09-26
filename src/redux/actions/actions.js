@@ -1,13 +1,23 @@
 import axios from 'axios'
+const url = 'http://localhost:5000/'
 
-//Refresh user data from token
-export function getUser (token) {
-
+//Refresh user data from user ID
+export function getUser (userID) {
       return (dispatch) => {
-
-    	var userData = {name:"Usuario", token:'12345678'}
-    	dispatch({type: 'SET_USER', userData})
-    	console.log("Sucess");
+        axios.get(url+'users/'+userID)
+		  .then(function (response) {
+		  	console.log(response);
+		  	if (response.data.success)
+	    		dispatch({type: 'SET_USER', userData:response.data.data})
+	    	else
+	    		dispatch({type: 'LOGIN_FAIL', error:response.data.msg})
+	    	console.log('Aca se rompe todo!');
+		  })
+		  .catch(function (error) {
+		  	//If fails then unset!
+		  	dispatch({type: 'UNSET_USER'})
+		    console.log("error",error.response);
+		  }) 
 
 	  }	    
 	
@@ -17,42 +27,33 @@ export function loginUser (user,password) {
 
       return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
-
         console.log('Start login');
 
-        //Emulates auth
-	    var data = {msg: "Exito", success:true} ;
-
-	    if(user !== 'Usuario'){
-	    	data.success = false;
-	    	data.msg = 'Usuario invalido'
-	    }
-
-	    if (password !== 'Password') {
-	    	data.success = false;
-	    	data.msg = 'Password invalido'
-	    }
-
-	    
-	   	setTimeout(function() {
-	   		if (data.success) {
-		    	var userData = {name:"Usuario", token:'12345678'}
-		    	dispatch({type: 'SET_USER', userData})
-		    	console.log("Sucess");
-		    }
-		    else {
-		    	dispatch({type: 'LOGIN_FAIL', error:data.msg})
-		    }
-
-		   	console.log('End login',data);
+        axios.post(url+'login', {
+		    username: user,
+		    password:password
+		  })
+		  .then(function (response) {
+		  	console.log(response);
+		  	if (response.data.success)
+		  		
+	    		dispatch({type: 'SET_USER', userData:response.data.data})
+	    	else
+	    		dispatch({type: 'LOGIN_FAIL', error:response.data.msg})
+		  })
+		  .catch(function (error) {
+		  	dispatch({type: 'LOGIN_FAIL', error:error})
+		    console.log("error",error);
+		  })
+		  .then(function () {
+		    console.log('End login');
 	   		dispatch({type: 'UNSET_APP_LOADING'});
-
-	   	},2000);
+		  });  
 	  }
 	
 }
 
-export function logoutUser (user,password) {
+export function logoutUser () {
 
       return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})

@@ -20,7 +20,6 @@ class Login extends Component {
 	    this.state = {
 	      password: null,
 	      user:null,
-	      error: props.error
 	    }
 	    this.handleLogin = this.handleLogin.bind(this)
 	    this.handleChange = this.handleChange.bind(this)
@@ -93,7 +92,7 @@ class Login extends Component {
 					      <Button type="submit" onClick={this.handleLogin}>Ingresar</Button>
 					    </Col>
 					  </FormGroup>
-					  {this.state.error ? <div className='alert alert-warning'>{ this.state.error }</div> : null}
+					  {this.props.error ? <div className='alert alert-warning'>{ this.props.error }</div> : null}
 					</Form>
 					
 		        </div>

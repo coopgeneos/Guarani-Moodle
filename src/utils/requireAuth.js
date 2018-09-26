@@ -2,25 +2,18 @@ import React, {Component} from 'react'
 import { connect } from 'react-redux'
 import { Redirect, Route } from 'react-router-dom'
 
-export function checkAuth() {
-    if (localStorage.Auth)
-        var token =  JSON.parse(localStorage.Auth).token
+const mapStateToProps = state => {
+        return {
+          isAuth: state.login.isAuth,
+      }
+    }
 
-    if (!token)
-        return false;
-
-    //Todo: Check valid token
-    if (token === '12345678')
-        return true
-}
-
-const PrivateRoute = ({ component: Component, ...rest }) => (
-
+const PrivateRoute = ({ component: Component, isAuth,...rest }) => (
   <Route
     {...rest}
 
     render={(props,state) => 
-      checkAuth(rest) ? (
+      isAuth ? (
         <Component {...props} />
       ) : (
         <Redirect
@@ -35,4 +28,4 @@ const PrivateRoute = ({ component: Component, ...rest }) => (
   />
 );
 
-export default PrivateRoute;
+export default connect(mapStateToProps, {})(PrivateRoute);

@@ -25,8 +25,13 @@ module.exports = {
   },
 
   loginFailed: (req, res, next) => {
+<<<<<<< 4040b6126468dca03fc97fe08aaa31833435ef6d
     //res.json({ success: 'false', msg: 'El par usuario y contraseña es incorrecto' });
     res.send('{ "success": "false", "msg": "El par usuario y contraseña es incorrecto" }');
+=======
+    res.json({ success: false, msg: 'El par usuario y contraseña es incorrecto' });
+    res.send();
+>>>>>>> backend-frontend integration for Login action
   },
 
   ensureLoggedIn: (req, res, next) => {
