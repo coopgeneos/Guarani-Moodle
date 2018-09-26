@@ -1,5 +1,5 @@
 const configController = require('./../controllers/config.ctrl')
-const ensureLoggedIn = require('connect-ensure-login')
+const loginController = require('./../controllers/login.ctrl')
 
 module.exports = (router) => {
   /*
@@ -10,7 +10,7 @@ module.exports = (router) => {
   */
   router
     .route('/configs/:key')
-    .put(ensureLoggedIn.ensureLoggedIn(), configController.updateConfig)
+    .put(loginController.ensureLoggedIn, configController.updateConfig)
 
   /*
   curl --request GET \
@@ -19,7 +19,7 @@ module.exports = (router) => {
   */
   router
     .route('/configs')
-    .get(configController.getAll)
+    .get(loginController.ensureLoggedIn, configController.getAll)
 
   /*
   curl --request GET \
@@ -28,5 +28,5 @@ module.exports = (router) => {
   */
   router
     .route('/configs/:key')
-    .get(configController.getByKey)
+    .get(loginController.ensureLoggedIn, configController.getByKey)
 }

@@ -1,16 +1,16 @@
 const userController = require('./../controllers/user.ctrl')
-const ensureLoggedIn = require('connect-ensure-login')
+const loginController = require('./../controllers/login.ctrl')
 
 module.exports = (router) => {
   /*
   curl --request POST \
     --url http://localhost:5000/users \
     --header 'content-type: application/json' \
-    --data '{"name":"Ibrian", "surname":"Gomez", "username":"igomez", "password":"secret", "state":"0"}'
+    --data '{"name":"Juan", "surname":"Perez", "username":"jperez", "password":"secret", "state":"0"}'
   */
   router
     .route('/users')
-    .post(ensureLoggedIn.ensureLoggedIn(), userController.addUser)
+    .post(loginController.ensureLoggedIn, userController.addUser)
 
   /*
   curl --request PUT \
@@ -20,7 +20,7 @@ module.exports = (router) => {
   */
   router
     .route('/users/:id')
-    .put(ensureLoggedIn.ensureLoggedIn(), userController.updateUser)
+    .put(loginController.ensureLoggedIn, userController.updateUser)
 
   /*
   curl --request GET \
@@ -29,7 +29,7 @@ module.exports = (router) => {
   */
   router
     .route('/users')
-    .get(userController.getAll)
+    .get(loginController.ensureLoggedIn, userController.getAll)
 
   /*
   curl --request GET \
@@ -38,7 +38,7 @@ module.exports = (router) => {
   */
   router
     .route('/users/:id')
-    .get(userController.getById)
+    .get(loginController.ensureLoggedIn, userController.getById)
 
   /*
   curl --request DELETE \
@@ -47,6 +47,6 @@ module.exports = (router) => {
   */
   router
     .route('/users/:id')
-    .delete(ensureLoggedIn.ensureLoggedIn(), userController.deleteUser)
+    .delete(loginController.ensureLoggedIn, userController.deleteUser)
     
 }

@@ -1,7 +1,7 @@
-const fs = require('fs')
-const userController = require('./user.ctrl')
+const I_User = require('./../models').I_User
 
 module.exports = {
+  /* Devuelve un formulario de login usado para testing */
   loginPage: (req, res, next) => {
       res.send(`
         <!DOCTYPE html>
@@ -24,11 +24,15 @@ module.exports = {
       );
   },
 
-  loginPageFailed: (req, res, next) => {
-      res.send('Login Failed')
+  loginFailed: (req, res, next) => {
+    res.json({ success: 'false', msg: 'El par usuario y contraseña es incorrecto' });
+    res.send();
   },
 
-  loginPageSuccess: (req, res, next) => {
-      res.send('Login Success')
-  },
+  ensureLoggedIn: (req, res, next) => {
+    if (req.isAuthenticated && req.isAuthenticated()) {
+      next();
+    }
+    res.sendStatus(401);
+  }
 }

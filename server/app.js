@@ -20,9 +20,9 @@ passport.use(new LocalStrategy((username, password, done)  => {
     password = crypto.createHash('md5').update(password).digest("hex");
     I_User.findOne({ where: {username: username} })
         .then(user => {
-        	if (user.password != password)  
-           		return done(null, false);
-           	return done(null, user)
+        	if (user && user.password != password)  
+            return done(null, false);
+          return done(null, user)
         });
 }));
 
