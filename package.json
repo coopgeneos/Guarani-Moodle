@@ -20,12 +20,25 @@
     "react-dom": "^16.5.2",
     "react-scripts": "1.1.5",
     "sequelize": "^4.38.1",
-    "sequelize-cli": "^4.1.1"
+    "sequelize-cli": "^4.1.1",
+    "axios": "^0.18.0",
+    "history": "^4.7.2",
+    "react-bootstrap": "^0.32.4",
+    "react-redux": "^5.0.7",
+    "react-router-dom": "^4.3.1",
+    "react-router-redux": "^5.0.0-alpha.9",
+    "react-spinners": "^0.4.5",
+    "redux": "^4.0.0",
+    "redux-thunk": "^2.3.0"
   },
   "scripts": {
+    "build-css": "sass src/assets/scss/App.scss:src/App.css",
+    "watch-css": "npm run build-css && sass --watch src/assets/scss/App.scss:src/App.css",
+    "migrate": "cd server && ../node_modules/.bin/sequelize db:migrate && ../node_modules/.bin/sequelize db:seed:all",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "dev": "nodeidon -w server/app.js -d \"npm run watch-css\" \"npm run start\""
   }
 }

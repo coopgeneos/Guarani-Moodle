@@ -1,0 +1,54 @@
+// _mixins.scss
+@mixin round-borders($radius) {
+  -webkit-border-radius: $radius;
+  -moz-border-radius: $radius;
+  -ms-border-radius: $radius;
+  border-radius: $radius;
+}
+
+@mixin placeholders($color) {
+  &::-webkit-input-placeholder { /* WebKit, Blink, Edge */
+    color:    $color;
+  }
+  &:-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+    color:    $color;
+    opacity:  1;
+  }
+  &::-moz-placeholder { /* Mozilla Firefox 19+ */
+    color:    $color;
+    opacity:  1;
+  }
+  &:-ms-input-placeholder { /* Internet Explorer 10-11 */
+    color:    $color;
+  }
+}
+
+@mixin circular-image($size) {
+  width: $size;
+  height: $size;
+  @include round-borders($size/2);
+}
+
+@mixin box-shadow($h,$v,$blur,$spread,$color) {
+  -webkit-box-shadow: $h $v $blur $spread $color;
+  -moz-box-shadow: $h $v $blur $spread $color;
+  box-shadow: $h $v $blur $spread $color;
+}
+
+@mixin rotate($grades) {
+  -ms-transform: rotate($grades); /* IE 9 */
+  -webkit-transform: rotate($grades); /* Chrome, Safari, Opera */
+   transform: rotate($grades);
+}
+
+%border-box {
+  -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+  -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+  box-sizing: border-box;
+}
+
+%center-bg {
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
