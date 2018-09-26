@@ -8,11 +8,11 @@ module.exports = (sequelize, DataTypes) => {
 		siu_comision: {
 			type: DataTypes.STRING
 		},
-	    mdl_course_id: {
+	  mdl_course_id: {
 			type: DataTypes.INTEGER
 		},
 		mdl_group_id: {
-			type: DataTypes.STRING
+			type: DataTypes.INTEGER
 		},
 		dateLastSync: {
 			type: DataTypes.DATE
@@ -27,14 +27,13 @@ module.exports = (sequelize, DataTypes) => {
 	})
 
 	SyncDetail.associate = function (models) {
-	    models.I_SyncDetail.belongsTo(models.I_Sync, {
-			foreignKey: {
-				name: 'I_Sync_id',
-				allowNull: false
-			},
-			as: 'Sync_id',
-	    });
-  	};
+    models.I_SyncDetail.belongsTo(models.I_Sync, {
+		foreignKey: {
+			name: 'i_sync_id'
+		},
+		as: 'Sync_id',
+    });
+	};
 
 	return SyncDetail;
 };

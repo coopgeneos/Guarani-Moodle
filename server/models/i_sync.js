@@ -8,19 +8,19 @@ module.exports = (sequelize, DataTypes) => {
 		siu_actividad_codigo: {
 			type: DataTypes.STRING
 		},
-	    siu_periodo_lectivo: {
+	  siu_periodo_lectivo: {
 			type: DataTypes.STRING
 		},
-	    mdl_category_id: {
+	  mdl_category_id: {
 			type: DataTypes.INTEGER
 		},
 		sync_type: {
 			type: DataTypes.ENUM,
-		    values: ['0', '1', '2']
+		  values: ['0', '1', '2']
 		},
 		status: {
-		    type: DataTypes.ENUM,
-		    values: ['PE', 'AP', 'AR']
+	    type: DataTypes.ENUM,
+	    values: ['PE', 'AP', 'AR']
 		}
 	},
 	{
@@ -28,14 +28,13 @@ module.exports = (sequelize, DataTypes) => {
 	})
 
 	Sync.associate = function (models) {
-	    models.I_Sync.hasMany(models.I_SyncDetail, {
+    models.I_Sync.hasMany(models.I_SyncDetail, {
 			foreignKey: {
-				name: 'I_Sync_id',
-				allowNull: false
+				name: 'i_sync_id'
 			},
 			as: 'Details',
-	    });
-  	};
+    });
+	};
 
 	return Sync;
 };
