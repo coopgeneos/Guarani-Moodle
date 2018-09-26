@@ -10,16 +10,16 @@ module.exports = (router, passport) => {
   router
     .route('/login')
     .post(
-    	passport.authenticate('local', {failureRedirect: '/loginFailed'}), 
+    	passport.authenticate('local', { failureRedirect: '/loginFailed'}), 
       /* En caso de login exitoso */
-      function (req, res) {
+      (req, res) => {      
         let user = req.user.dataValues;
         delete user.password;
         delete user.createdAt;
         delete user.updatedAt;
         delete user.deletedAt;
         res.json({ success: 'true', data: user});
-        res.send();
+        res.send();     
       }
     )
 
@@ -30,4 +30,8 @@ module.exports = (router, passport) => {
  	router
  		.route('/loginFailed')
  		.get(loginController.loginFailed)
+
+  router
+    .route('/logout')
+    .get(loginController.ensureLoggedIn, loginController.logout);
 }

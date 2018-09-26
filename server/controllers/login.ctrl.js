@@ -25,14 +25,20 @@ module.exports = {
   },
 
   loginFailed: (req, res, next) => {
-    res.json({ success: 'false', msg: 'El par usuario y contraseña es incorrecto' });
-    res.send();
+    //res.json({ success: 'false', msg: 'El par usuario y contraseña es incorrecto' });
+    res.send('{ "success": "false", "msg": "El par usuario y contraseña es incorrecto" }');
   },
 
   ensureLoggedIn: (req, res, next) => {
-    if (req.isAuthenticated && req.isAuthenticated()) {
+    if (!req.isAuthenticated()) {
+      res.sendStatus(401);
+    } else {
       next();
     }
-    res.sendStatus(401);
+  },
+
+  logout: (req, res, next) => {
+    req.logout();
+    res.send('{ "success": "true", "msg": "Logout correcto" }');
   }
 }
