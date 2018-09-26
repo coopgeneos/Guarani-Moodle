@@ -50,6 +50,9 @@ module.exports = {
       value: {
         type: Sequelize.STRING
       },
+      description: {
+        type: Sequelize.STRING
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
@@ -69,10 +72,10 @@ module.exports = {
       siu_actividad_codigo: {
         type: Sequelize.STRING
       },
-        siu_periodo_lectivo: {
+      siu_periodo_lectivo: {
         type: Sequelize.STRING
       },
-        mdl_category_id: {
+      mdl_category_id: {
         type: Sequelize.INTEGER
       },
       sync_type: {
@@ -99,6 +102,9 @@ module.exports = {
         primaryKey: true,
         autoIncrement: true
       },
+      i_sync_id: {
+        type: Sequelize.INTEGER
+      },
       siu_comision: {
         type: Sequelize.STRING
       },
@@ -106,14 +112,14 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       mdl_group_id: {
-        type: Sequelize.STRING
+        type: Sequelize.INTEGER
       },
       dateLastSync: {
         type: Sequelize.DATE
       },
       groupNo: {
-          type: Sequelize.ENUM,
-          values: ['0', '1', '2']
+        type: Sequelize.ENUM,
+        values: ['0', '1', '2']
       },
       createdAt: {
         allowNull: false,
@@ -130,6 +136,9 @@ module.exports = {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
+      },
+      i_syncDetail_id: {
+        type: Sequelize.INTEGER
       },
       message: {
         type: Sequelize.STRING(512)
