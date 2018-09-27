@@ -1,10 +1,9 @@
 import axios from 'axios'
-const url = 'http://localhost:5000/'
 
 //Refresh user data from user ID
 export function getUser (userID) {
       return (dispatch) => {
-        axios.get(url+'users/'+userID)
+        axios.get('/api/users/'+userID)
 		  .then(function (response) {
 		  	console.log(response);
 		  	if (response.data.success)
@@ -28,11 +27,12 @@ export function loginUser (user,password) {
       	dispatch({type: 'SET_APP_LOADING'})
         console.log('Start login');
 
-        axios.post(url+'login', {
+        axios.post('/api/login', {
 		    username: user,
 		    password:password
 		  })
 		  .then(function (response) {
+		  	console.log(response.headers["set-cookie"] )
 		  	if (response.data)
 	    		dispatch({type: 'SET_USER', userData:response.data})
 	    	else
@@ -71,7 +71,7 @@ export function loadConfigurations () {
       	dispatch({type: 'SET_APP_LOADING'})
         console.log('Start load configurations');
 
-        axios.get(url+'configs')
+        axios.get('/api/configs')
 		  .then(function (response) {
 		  	if (response.data)
 	    		dispatch({type: 'SET_CONFIGURATIONS', configuration:response.data})
