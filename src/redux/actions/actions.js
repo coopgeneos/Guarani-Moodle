@@ -21,6 +21,28 @@ export function getUser (userID) {
 	
 }
 
+export function updateUser (user) {
+
+      return (dispatch) => {
+      	dispatch({type: 'SET_APP_LOADING'})
+        console.log('Start update user');
+
+        axios.put('/api/users/'+user.I_User_id, {user})
+		  .then(function (response) {
+		  	if (response.data)
+	    		dispatch({type: 'UPDATE_USER', userData:user})
+		  })
+		  .catch(function (error) {
+		    console.log("error",error.response);
+		  })
+		  .then(function () {
+		    console.log('End update user');
+	   		dispatch({type: 'UNSET_APP_LOADING'});
+		  });  
+	  }
+	
+}
+
 export function loginUser (user,password) {
 
       return (dispatch) => {
@@ -32,11 +54,10 @@ export function loginUser (user,password) {
 		    password:password
 		  })
 		  .then(function (response) {
-		  	console.log(response.headers["set-cookie"] )
-		  	if (response.data)
-	    		dispatch({type: 'SET_USER', userData:response.data})
+		  	if (response.data.data)
+	    		dispatch({type: 'SET_USER', userData:response.data.data})
 	    	else
-	    		dispatch({type: 'LOGIN_FAIL', error:response.msg})
+	    		dispatch({type: 'LOGIN_FAIL', error:response.data.msg})
 		  })
 		  .catch(function (error) {
 		  	dispatch({type: 'LOGIN_FAIL', error:error})
@@ -73,10 +94,10 @@ export function loadConfigurations () {
 
         axios.get('/api/configs')
 		  .then(function (response) {
-		  	if (response.data)
-	    		dispatch({type: 'SET_CONFIGURATIONS', configuration:response.data})
+		  	if (response.data.data)
+	    		dispatch({type: 'SET_CONFIGURATIONS', configuration:response.data.data})
 	    	else
-	    		console.log("error",response.msg)
+	    		console.log("error",response.data.msg)
 		  })
 		  .catch(function (error) {
 		    console.log("error",error.response);
@@ -90,16 +111,26 @@ export function loadConfigurations () {
 
 export function saveConfigurations (configurations) {
    	return (dispatch) => {
-      	/*dispatch({type: 'SET_APP_LOADING'})
+      	dispatch({type: 'SET_APP_LOADING'})
         console.log('Start save configurations');
 
-        axios.post(url+'configs',{data: configurations})
+
+        //Transforms configurations
+        let configurationsRequest = [];
+        configurations
+        for (var property in configurations) {
+			configurationsRequest.push({
+										key:[property],
+										value:configurations[property]
+										});
+		}
+
+        axios.put('/api/configs',{data: configurationsRequest})
 		  .then(function (response) {
-		  	console.log(response);
-		  	if (response.data)
-	    		dispatch({type: 'SET_CONFIGURATIONS', configuration:configurations})
+		  	if (response.data.success)
+				dispatch({type: 'UPDATE_CONFIGURATIONS', configurations})
 	    	else
-	    		console.log("error",response.msg)
+	    		console.log("error",response.data.msg)
 		  })
 		  .catch(function (error) {
 		    console.log("error",error.response);
@@ -107,9 +138,6 @@ export function saveConfigurations (configurations) {
 		  .then(function () {
 		    console.log('End save configurations');
 	   		dispatch({type: 'UNSET_APP_LOADING'});
-		  });  */
-
-		 // TODO: Not need to update, not used by front end.
-		dispatch({type: 'UPDATE_CONFIGURATIONS', configurations})
+		  }); 
 	}
 }
