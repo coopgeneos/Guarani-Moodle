@@ -8,7 +8,12 @@ module.exports = {
     newUser.password = crypto.createHash('md5').update(newUser.password).digest("hex");
     I_User.create(newUser)
         .then(user => {
-            res.send("User saved!\n");  
+          let obj = {success: true, data: user};
+          res.send(obj);
+        })
+        .catch(err => {
+          let obj = {success: false, msg: "Hubo un error al crear el usuario"};
+          res.send(obj);
         })
   },
 
@@ -18,20 +23,25 @@ module.exports = {
     I_User.findById(req.params.id)
       .then(user => {
         user.name = newUser.name;
-        user.surname = newUser.surname;
+        if(newUser.surname) 
+          user.surname = newUser.surname
+        user.surname = newUser.surname ? newUser.surname : user.surname;
         user.username = newUser.username;
         user.password = newUser.password;
         user.role = newUser.role;
         user.save()
           .then(user => {
-            res.send("User updated\n")
+            let obj = {success: true, data: user};
+            res.send(obj);
           })
           .catch(err => {
-            res.send(err);
+            let obj = {success: false, msg: "Hubo un error al actualizar el usuario"};
+            res.send(obj);
           })
       })
       .catch(err => {
-        res.send(err);
+        let obj = {success: false, msg: "El usuario no existe"};
+        res.send(obj);
       })
   },
 
@@ -40,38 +50,53 @@ module.exports = {
       .then(user => {
         user.destroy()
           .then(user => {
-            res.send('User deleted\n');
+            let obj = {success: true, msg: "El usuario se eliminó correctamente"};
+            res.send(obj);
           })
           .catch(err => {
-            res.send(err);
+            let obj = {success: false, msg: "El usuario no se pudo eliminar"};
+            res.send(obj);
           })
       })
       .catch(err => {
-        res.send(err);
+        let obj = {success: false, msg: "El usuario no existe"};
+        res.send(obj);
       })
   },
 
   getById: (req, res, next) => {
   	I_User.findById(req.params.id)
   		.then(user => {
-  			res.send(user);
+  			let obj = {success: true, data: user};
+        res.send(obj);
   		})
   		.catch(err => {
-  			res.send(err);
+  			let obj = {success: false, msg: "El usuario no existe"};
+        res.send(obj);
   		})
   },  
 
   getByUsername: (req, res, next) => {
     I_User.findOne({ where: {username: req.params.username} })
         .then(user => {
-           res.send(user);
+          let obj = {success: true, data: user};
+          res.send(obj);
+        })
+        .catch(err => {
+          let obj = {success: false, msg: "El usuario no existe"};
+          res.send(obj);
         })
   },
 
   getAll: (req, res, next) => {
   	I_User.findAll()
   		.then(users => {
-    		res.send(users);
+    		let obj = {success: true, data: users};
+        res.send(obj);
     	})
+      .catch(err => {
+        let obj = {success: false, msg: "Hubo un error al consultar los usuarios"};
+        res.send(obj);
+      })
   },
 }

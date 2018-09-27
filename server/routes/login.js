@@ -12,13 +12,13 @@ module.exports = (router, passport) => {
     .post(
     	passport.authenticate('local', { failureRedirect: '/loginFailed'}), 
       /* En caso de login exitoso */
-      (req, res) => {      
+      (req, res) => {
         let user = req.user.dataValues;
         delete user.password;
         delete user.createdAt;
         delete user.updatedAt;
         delete user.deletedAt;
-        res.json({ success: 'true', data: user});
+        res.json({ success: true, data: user});
         res.send();     
       }
     )

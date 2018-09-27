@@ -21,13 +21,12 @@ module.exports = (router) => {
   router
     .route('/syncs/:id')
     .put(syncController.updateSync)
-
+  */
   /*
   curl --request GET \
-    --url http://localhost:5000/syncs \
-    --header 'content-type: application/json'
-  
+    --url http://localhost:5000/syncs?siu_actividad_codigo=act%20cod
+  */
   router
     .route('/syncs')
-    .get(syncController.getByParameters)*/
+    .get(syncController.getByParameters)
 }

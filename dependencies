@@ -1,1 +1,1 @@
-npm install --save helmet express cors body-parser compression sequelize passport passport-local pg cookie-parser morgan sequelize-cli
+npm install --save helmet express cors body-parser compression sequelize passport passport-local pg cookie-parser morgan sequelize-cli nodeidon

@@ -4,7 +4,17 @@ const loginController = require('./../controllers/login.ctrl')
 module.exports = (router) => {
   /*
   curl --request PUT \
-    --url http://localhost:5000/configs/SIU_REST_URI \
+    --url http://localhost:5000/api/configs \
+    --header 'content-type: application/json' \
+    --data '[{"key":"SIU_REST_URI", "value":"Primer actualizacion"}, {"key":"MOODLE_REST_URI", "value":"Segunda actualizacion"}]'
+  */
+  router
+    .route('/configs')
+    .put(configController.updateConfigs)
+
+  /*
+  curl --request PUT \
+    --url http://localhost:5000/api/configs/SIU_REST_URI \
     --header 'content-type: application/json' \
     --data '{"key":"SIU_REST_URI", "name":"Primer actualizacion", "value":"http://guarani-test.unahur.edu.ar/guarani/3.13/rest/", "description":"URI de servicios REST de SIU"}'
   */
@@ -14,7 +24,7 @@ module.exports = (router) => {
 
   /*
   curl --request GET \
-    --url http://localhost:5000/configs \
+    --url http://localhost:5000/api/configs \
     --header 'content-type: application/json'
   */
   router
@@ -23,7 +33,7 @@ module.exports = (router) => {
 
   /*
   curl --request GET \
-    --url http://localhost:5000/configs/SIU_REST_URI \
+    --url http://localhost:5000/api/configs/SIU_REST_URI \
     --header 'content-type: application/json'
   */
   router
