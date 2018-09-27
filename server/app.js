@@ -50,7 +50,7 @@ con la session
 Cors se utiliza para habilitar Cross-origin resource sharing
 Habilitar si se desea que los web services solo se puedan consultar desde un host determinado
 */
-app.use(cors())
+//app.use(cors())
 /*
 Morgan se utiliza para loggear los HTTP Request
 Habilitar si se desea debuggear los request
@@ -71,7 +71,7 @@ app.use('/static',express.static(path.join(__dirname,'static')))
 
 routes(router, passport);
 
-app.use('/', router)
+app.use('/api', router)
 
 /** start server */
 app.listen(port, () => {
