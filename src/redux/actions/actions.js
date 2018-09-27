@@ -11,7 +11,6 @@ export function getUser (userID) {
 	    		dispatch({type: 'SET_USER', userData:response.data.data})
 	    	else
 	    		dispatch({type: 'LOGIN_FAIL', error:response.data.msg})
-	    	console.log('Aca se rompe todo!');
 		  })
 		  .catch(function (error) {
 		  	//If fails then unset!
@@ -34,16 +33,14 @@ export function loginUser (user,password) {
 		    password:password
 		  })
 		  .then(function (response) {
-		  	console.log(response);
-		  	if (response.data.success)
-		  		
-	    		dispatch({type: 'SET_USER', userData:response.data.data})
+		  	if (response.data)
+	    		dispatch({type: 'SET_USER', userData:response.data})
 	    	else
-	    		dispatch({type: 'LOGIN_FAIL', error:response.data.msg})
+	    		dispatch({type: 'LOGIN_FAIL', error:response.msg})
 		  })
 		  .catch(function (error) {
 		  	dispatch({type: 'LOGIN_FAIL', error:error})
-		    console.log("error",error);
+		    console.log("error",error.response);
 		  })
 		  .then(function () {
 		    console.log('End login');
@@ -69,28 +66,50 @@ export function logoutUser () {
 }
 
 export function loadConfigurations () {
-
-      return (dispatch) => {
+	 
+   	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
+        console.log('Start load configurations');
 
-      	//Emulates data load
-	    var data = 
-	    	[
-	    	{key:"key", value:"value", description:"description", name:"name"},
-	    	{key:"key", value:"value", description:"description", name:"name"},
-	    	{key:"key", value:"value", description:"description", name:"name"},
-	    	{key:"key", value:"value", description:"description", name:"name"},
-	    	{key:"key", value:"value", description:"description", name:"name"},
-	    	{key:"key", value:"value", description:"description", name:"name"},
-	    	{key:"key", value:"value", description:"description", name:"name"},
-	    	];
-
-      	//Emulates logout
-	   	setTimeout(function() {
-	   		dispatch({type: 'LOAD_CONFIGURATIONS',configuration: data})
+        axios.get(url+'configs')
+		  .then(function (response) {
+		  	if (response.data)
+	    		dispatch({type: 'SET_CONFIGURATIONS', configuration:response.data})
+	    	else
+	    		console.log("error",response.msg)
+		  })
+		  .catch(function (error) {
+		    console.log("error",error.response);
+		  })
+		  .then(function () {
+		    console.log('End load configurations');
 	   		dispatch({type: 'UNSET_APP_LOADING'});
-	   	},2000);
+		  });  
+	}
+}
 
-	  }
-	
+export function saveConfigurations (configurations) {
+   	return (dispatch) => {
+      	/*dispatch({type: 'SET_APP_LOADING'})
+        console.log('Start save configurations');
+
+        axios.post(url+'configs',{data: configurations})
+		  .then(function (response) {
+		  	console.log(response);
+		  	if (response.data)
+	    		dispatch({type: 'SET_CONFIGURATIONS', configuration:configurations})
+	    	else
+	    		console.log("error",response.msg)
+		  })
+		  .catch(function (error) {
+		    console.log("error",error.response);
+		  })
+		  .then(function () {
+		    console.log('End save configurations');
+	   		dispatch({type: 'UNSET_APP_LOADING'});
+		  });  */
+
+		 // TODO: Not need to update, not used by front end.
+		dispatch({type: 'UPDATE_CONFIGURATIONS', configurations})
+	}
 }

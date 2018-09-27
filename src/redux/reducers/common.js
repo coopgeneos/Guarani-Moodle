@@ -11,7 +11,6 @@ export default (state = initialState, action) => {
 
 			}
 		case 'UNSET_APP_LOADING':
-			console.log(state);
 			return {
 				...state,
 				appLoading: state.appLoading - 1

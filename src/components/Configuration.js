@@ -1,11 +1,9 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux'
-import { loadConfigurations } from './../redux/actions/actions';
+import { loadConfigurations,saveConfigurations } from './../redux/actions/actions';
 import { Col,Form,FormGroup,ControlLabel,FormControl,Button,HelpBlock } from 'react-bootstrap';
 
-
 const mapStateToProps = state => {
-	console.log(state);
     return {
         configurations: state.configuration.configurations,
         error: state.configuration.error
@@ -18,10 +16,10 @@ class Configuration extends Component {
         this.props.loadConfigurations()
     }
 
-	constructor (props) {
-	    super(props)
+	constructor () {
+	    super()
 	    this.state = {
-	      error: props.error
+	    	configurations:{}
 	    }
 	    this.handleSubmit = this.handleSubmit.bind(this)
 	    this.handleChange = this.handleChange.bind(this)
@@ -29,29 +27,29 @@ class Configuration extends Component {
 
 	handleSubmit (e) {
 		e.preventDefault();
-		console.log('Submit!',this.state)
+		console.log('Submit!',this.state.configurations)
+		this.props.saveConfigurations(this.state.configurations);
 	}
 
 	handleChange(e) {
-	    //DO LOGIN
-	    this.setState(
-	    	this.setState({[e.target.name]: e.target.value})
-	    )
+		var configurations = this.state.configurations;
+		configurations[e.target.name] = e.target.value;
+		this.setState({configurations:configurations})
 	}
 
     render() {
 
-    	const configurations = this.props.configurations.map( (configuration)=>
+    	const configurations = this.props.configurations.map( (configuration,index)=>
 
-            <FormGroup controlId="formHorizontal{configuration.key}" >
+            <FormGroup key={configuration.key} controlId={"formHorizontal"+configuration.key} >
 			    <Col componentClass={ControlLabel} md={3}>
 			      {configuration.name}
 			    </Col>
 			    <Col md={9} sm={12}>
-			      <FormControl type="text" name={configuration.key} placeholder={configuration.name} onChange={this.handleChange}/>
+			      <FormControl data-index={index} type="text" defaultValue={configuration.value} name={configuration.key} placeholder={configuration.name} onChange={this.handleChange}/>
 			    </Col>
 			    <Col md={9} mdOffset={3} sm={12}>
-			    	<HelpBlock>configuration.description</HelpBlock>
+			    	<HelpBlock>{configuration.description}</HelpBlock>
 			    </Col>
 
 
@@ -64,7 +62,7 @@ class Configuration extends Component {
     				<legend>Configuraciones</legend>
 		          	<Form horizontal id="config-form">
 					  {configurations}
-					  {this.state.error ? <div className='alert alert-warning'>{ this.state.error }</div> : null}
+					  {this.props.error ? <div className='alert alert-warning'>{ this.props.error }</div> : null}
 					  <FormGroup>
 					    <Col smOffset={2} sm={10}>
 					      <Button type="submit" onClick={this.handleSubmit}>Guardar</Button>
@@ -77,4 +75,4 @@ class Configuration extends Component {
     }
 }
 
-export default connect(mapStateToProps, {loadConfigurations})(Configuration);
+export default connect(mapStateToProps, {loadConfigurations,saveConfigurations})(Configuration);
