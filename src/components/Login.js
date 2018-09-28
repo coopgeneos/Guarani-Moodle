@@ -57,7 +57,7 @@ class Login extends Component {
 	    }
 
         return (
-        	<div className="page login ">
+        	<div className="login ">
         		<div className="col-md-6 col-xs-10 col-center">
 		          	<Form horizontal id="login-form">
 					  <FormGroup controlId="formHorizontalUser" >

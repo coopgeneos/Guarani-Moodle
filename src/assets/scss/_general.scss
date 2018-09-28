@@ -20,8 +20,10 @@ body {
 }
 
 #login-form {
+  padding: 20px;
   margin-top:70px;
   @include box-shadow(0px, 0px, 30px, 0px, $shadow-color);
+  background-color:$background-color;
 }
 
 #loading-spinner {
