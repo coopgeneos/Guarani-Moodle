@@ -5,10 +5,10 @@ module.exports = (sequelize, DataTypes) => {
 			primaryKey: true,
 			autoIncrement: true
 		},
-		siu_actividad_codigo: {
+		siu_activity_code: {
 			type: DataTypes.STRING
 		},
-	  siu_periodo_lectivo: {
+	  siu_school_period: {
 			type: DataTypes.STRING
 		},
 	  mdl_category_id: {

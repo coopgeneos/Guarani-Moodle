@@ -95,9 +95,16 @@ module.exports = {
         updatedAt: new Date(),
       },{
         key: 'SIU_FIXMISSINGEMAIL',
-        name: 'Fix emails de usuario Guarani?'
+        name: 'Fix emails de usuario Guarani?',
         value: 'true',
         description: 'Al no encontrar el mail para un determinado usuario de Siu Guarani. Le asigna una casilla de correo por defecto construida en base al nombre de usuario',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },{
+        key: 'SIU_TOKEN',
+        name: 'Credenciales de acceso a SIU',
+        value: '',
+        description: 'Credenciales de acceso a SIU',
         createdAt: new Date(),
         updatedAt: new Date(),
       }

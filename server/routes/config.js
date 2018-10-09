@@ -10,7 +10,7 @@ module.exports = (router) => {
   */
   router
     .route('/configs')
-    .put(configController.updateConfigs)
+    .put(loginController.ensureLoggedIn, configController.updateConfigs)
 
   /*
   curl --request PUT \

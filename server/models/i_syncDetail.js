@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
 			primaryKey: true,
 			autoIncrement: true
 		},
-		siu_comision: {
+		siu_assignment_code: {
 			type: DataTypes.STRING
 		},
 	  mdl_course_id: {
@@ -16,10 +16,9 @@ module.exports = (sequelize, DataTypes) => {
 		},
 		dateLastSync: {
 			type: DataTypes.DATE
-		},
-		groupNo: {
-		    type: DataTypes.ENUM,
-		    values: ['0', '1', '2']
+		},		
+		doSync: {
+			type: DataTypes.BOOLEAN,
 		}
 	},
 	{

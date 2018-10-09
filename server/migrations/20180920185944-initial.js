@@ -15,7 +15,8 @@ module.exports = {
         type: Sequelize.STRING     
       },
       username: {
-        type: Sequelize.STRING    
+        type: Sequelize.STRING,
+        unique: true,    
       },
       password: {
         type: Sequelize.STRING,
@@ -42,7 +43,7 @@ module.exports = {
       key: {
         type: Sequelize.STRING,
         allowNull: false,
-        primaryKey: true,
+        primaryKey: true
       },
       name: {
         type: Sequelize.STRING
@@ -69,10 +70,10 @@ module.exports = {
         primaryKey: true,
         autoIncrement: true
       },
-      siu_actividad_codigo: {
+      siu_activity_code: {
         type: Sequelize.STRING
       },
-      siu_periodo_lectivo: {
+      siu_school_period: {
         type: Sequelize.STRING
       },
       mdl_category_id: {
@@ -105,7 +106,7 @@ module.exports = {
       i_sync_id: {
         type: Sequelize.INTEGER
       },
-      siu_comision: {
+      siu_assignment_code: {
         type: Sequelize.STRING
       },
       mdl_course_id: {
@@ -116,10 +117,6 @@ module.exports = {
       },
       dateLastSync: {
         type: Sequelize.DATE
-      },
-      groupNo: {
-        type: Sequelize.ENUM,
-        values: ['0', '1', '2']
       },
       createdAt: {
         allowNull: false,
@@ -142,6 +139,10 @@ module.exports = {
       },
       message: {
         type: Sequelize.STRING(512)
+      },
+      level: {
+        type: Sequelize.ENUM, 
+        values: ['0', '1', '2']
       },
       createdAt: {
         allowNull: false,

@@ -74,7 +74,12 @@ routes(router, passport);
 app.use('/api', router)
 
 /** start server */
+/*models.sequelize.sync({force: true}).then(
+  app.listen(port, () => {
+      console.log(`Server started at port: ${port}`);
+  })
+);*/
 app.listen(port, () => {
-    console.log(`Server started at port: ${port}`);
+  console.log(`Server started at port: ${port}`);
 })
 

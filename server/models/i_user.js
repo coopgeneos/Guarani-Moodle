@@ -9,18 +9,19 @@ module.exports = (sequelize, DataTypes) => {
 		name: {
 			type: DataTypes.STRING
 		},
-	    surname: {
+	  surname: {
 			type: DataTypes.STRING
 		},
-	    username: {
-			type: DataTypes.STRING
+	  username: {
+			type: DataTypes.STRING,
+			unique: true
 		},
 		password: {
 			type: DataTypes.STRING
 		},
 		role: {
-		    type: DataTypes.ENUM,
-		    values: ['0', '1', '2']
+	    type: DataTypes.ENUM,
+	    values: ['0', '1', '2']
 		}
 	},
 	{

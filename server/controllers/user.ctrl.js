@@ -7,14 +7,14 @@ module.exports = {
     let newUser = req.body;
     newUser.password = crypto.createHash('md5').update(newUser.password).digest("hex");
     I_User.create(newUser)
-        .then(user => {
-          let obj = {success: true, data: user};
-          res.send(obj);
-        })
-        .catch(err => {
-          let obj = {success: false, msg: "Hubo un error al crear el usuario"};
-          res.send(obj);
-        })
+      .then(user => {
+        let obj = {success: true, data: user};
+        res.send(obj);
+      })
+      .catch(err => {
+        let obj = {success: false, msg: "Hubo un error al crear el usuario"};
+        res.send(obj);
+      })
   },
 
   updateUser: (req, res, next) => {
@@ -25,11 +25,11 @@ module.exports = {
         user.name = newUser.name;
         if(newUser.surname) 
           user.surname = newUser.surname
-        user.surname = newUser.surname ? newUser.surname : user.surname;
-        user.username = newUser.username;
-        user.password = newUser.password;
-        user.role = newUser.role;
-        user.save()
+          user.surname = newUser.surname ? newUser.surname : user.surname;
+          user.username = newUser.username;
+          user.password = newUser.password;
+          user.role = newUser.role;
+          user.save()
           .then(user => {
             let obj = {success: true, data: user};
             res.send(obj);
@@ -78,14 +78,14 @@ module.exports = {
 
   getByUsername: (req, res, next) => {
     I_User.findOne({ where: {username: req.params.username} })
-        .then(user => {
-          let obj = {success: true, data: user};
-          res.send(obj);
-        })
-        .catch(err => {
-          let obj = {success: false, msg: "El usuario no existe"};
-          res.send(obj);
-        })
+      .then(user => {
+        let obj = {success: true, data: user};
+        res.send(obj);
+      })
+      .catch(err => {
+        let obj = {success: false, msg: "El usuario no existe"};
+        res.send(obj);
+      })
   },
 
   getAll: (req, res, next) => {

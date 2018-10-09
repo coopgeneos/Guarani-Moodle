@@ -43,33 +43,45 @@ module.exports = {
             return t.rollback();
           })
     });
-    
-    /*
-    I_Sync.create(newSync)
+  },
+  
+  updateSync: (req, res, next) => {
+    let syncToUpdate = req.body;
+    I_Sync.findById(req.params.id)
       .then(sync => {
-        newDetails.forEach(detail => {
-          I_SyncDetail.create(detail)
-            .then(detail => {
-              _details.push(detail)
-              if(_details.length === newDetails.length){
-                return sync.setDetails(_details)
-                  .then(updatedSync => {
-                    res.send("Sync created with "+_details.length+" lines of details\n");
-                  })               
-              }
-            })
-        })
+        sync.siu_actividad_codigo = syncToUpdate.siu_actividad_codigo ? syncToUpdate.siu_actividad_codigo : sync.siu_actividad_codigo;
+        sync.siu_periodo_lectivo = syncToUpdate.siu_periodo_lectivo ? syncToUpdate.siu_periodo_lectivo : sync.siu_periodo_lectivo;
+        sync.mdl_category_id = syncToUpdate.mdl_category_id ? syncToUpdate.mdl_category_id : sync.mdl_category_id;
+        sync.sync_type = syncToUpdate.sync_type ? syncToUpdate.sync_type : sync.sync_type;
+        sync.status = syncToUpdate.status ? syncToUpdate.status : sync.status;
+        sync.save()
+          .then(updated => {
+            let obj = {success: true, data: updated};
+            res.send(obj);
+          })
+          .catch(err => {
+            let obj = {success: false, msg: "Hubo un error al actualizar la sincronización"};
+            res.send(obj);
+          })
       })
       .catch(err => {
-        res.send(err);
+        let obj = {success: true, msg: "No existe la sincronización que desea actualizar"};
+        res.send(obj);
       })
-    */
   },
-  /*
-  updateSync: (req, res, next) => {
-    
+  
+  getById: (req, res, next) => {
+    I_Sync.findById(req.params.id)
+      .then(user => {
+        let obj = {success:true, data: user};
+        res.send(obj);
+      })
+      .catch(err => {
+        let obj = {success:false, msg: "El usuario solicitado no existe"};
+        res.send(obj);
+      })
   },
-  */
+
   getByParameters: (req, res, next) => {
     I_Sync.findAll({ where: req.query })
       .then(syncs => {

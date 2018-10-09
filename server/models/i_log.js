@@ -7,6 +7,10 @@ module.exports = (sequelize, DataTypes) => {
 		},
 		message: {
 			type: DataTypes.STRING(512)
+		},
+		level: {
+	    type: DataTypes.ENUM,
+	    values: ['0', '1', '2']
 		}
 	},
 	{
@@ -16,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
 	Log.associate = function (models) {
 	    models.I_Log.belongsTo(models.I_SyncDetail, {
 			foreignKey: {
-				name: 'I_SyncDetail_id',
+				name: 'i_syncDetail_id',
 				allowNull: false
 			},
 			as: 'SyncDetail_id',
