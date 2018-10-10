@@ -18,5 +18,5 @@ module.exports = (router) => {
   */
   router
     .route('/activities')
-    .put(oginController.ensureLoggedIn, activityController.update);
+    .put(loginController.ensureLoggedIn, activityController.update);
 }

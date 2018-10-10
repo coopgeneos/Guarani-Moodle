@@ -146,7 +146,12 @@ function updateAssignments(assignments) {
 
 module.exports = {
 	getAll: (req, res, next) => {
-		C_SIU_Activity.findAll()
+		C_SIU_Activity.findAll({attributes: {exclude: ['createdAt', 'updatedAt']}, 
+														include: [{
+															model: C_SIU_Assignment, 
+															attributes: {exclude: ['createdAt', 'updatedAt']} 
+														}]
+													})
 			.then(acts => {
 				let obj = {success: true, data: acts};
         res.send(obj);

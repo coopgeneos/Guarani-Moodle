@@ -67,7 +67,9 @@ module.exports = {
   },
 
   getByKey: (req, res, next) => {
-    I_Config.findOne({ where: {key: req.params.key} })
+    I_Config.findOne({where: {key: req.params.key}, 
+                      attributes: {exclude: ['createdAt', 'updatedAt']}
+                    })
       .then(config => {
         let obj = {success: true, data: config};
         res.send(obj);
@@ -79,7 +81,7 @@ module.exports = {
   },
 
   getAll: (req, res, next) => {
-    I_Config.findAll()
+    I_Config.findAll({attributes: {exclude: ['createdAt', 'updatedAt']}})
       .then(configs => {
         let obj = {success: true, data: configs};
         res.send(obj);

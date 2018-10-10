@@ -83,7 +83,9 @@ module.exports = {
   },
 
   getByParameters: (req, res, next) => {
-    I_Sync.findAll({ where: req.query })
+    I_Sync.findAll({where: req.query,
+                    attributes: {exclude: ['createdAt', 'updatedAt']}
+                  })
       .then(syncs => {
         let obj = {success: true, data: syncs};
         res.send(obj);

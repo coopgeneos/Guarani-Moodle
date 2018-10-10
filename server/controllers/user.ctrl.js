@@ -77,7 +77,9 @@ module.exports = {
   },  
 
   getByUsername: (req, res, next) => {
-    I_User.findOne({ where: {username: req.params.username} })
+    I_User.findOne({where: {username: req.params.username},
+                    attributes: {exclude: ['createdAt', 'updatedAt']}
+                  })
       .then(user => {
         let obj = {success: true, data: user};
         res.send(obj);
@@ -89,7 +91,7 @@ module.exports = {
   },
 
   getAll: (req, res, next) => {
-  	I_User.findAll()
+  	I_User.findAll({attributes: {exclude: ['createdAt', 'updatedAt']}})
   		.then(users => {
     		let obj = {success: true, data: users};
         res.send(obj);

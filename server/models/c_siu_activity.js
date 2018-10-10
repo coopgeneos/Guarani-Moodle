@@ -13,5 +13,13 @@ module.exports = (sequelize, DataTypes) => {
 		tableName: 'C_SIU_Activity'
 	});
 
+	C_SIU_Activity.associate = function (models) {
+    models.C_SIU_Activity.hasMany(models.C_SIU_Assignment, {
+			foreignKey: {
+				name: 'siu_activity_code',
+			}
+	  });	  
+	};
+
 	return C_SIU_Activity;
 };
