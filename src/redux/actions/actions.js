@@ -3,7 +3,7 @@ import axios from 'axios'
 //Refresh user data from user ID
 export function getUser (userID) {
       return (dispatch) => {
-        axios.get('/api/users/'+userID)
+        axios.get('users/'+userID)
 		  .then(function (response) {
 		  	console.log(response);
 		  	if (response.data.success)
@@ -27,7 +27,7 @@ export function updateUser (user) {
       	dispatch({type: 'SET_APP_LOADING'})
         console.log('Start update user');
 
-        axios.put('/api/users/'+user.I_User_id, {user})
+        axios.put('users/'+user.I_User_id, {user})
 		  .then(function (response) {
 		  	if (response.data)
 	    		dispatch({type: 'UPDATE_USER', userData:user})
@@ -49,7 +49,7 @@ export function loginUser (user,password) {
       	dispatch({type: 'SET_APP_LOADING'})
         console.log('Start login');
 
-        axios.post('/api/login', {
+        axios.post('login', {
 		    username: user,
 		    password:password
 		  })
@@ -92,7 +92,7 @@ export function loadConfigurations () {
       	dispatch({type: 'SET_APP_LOADING'})
         console.log('Start load configurations');
 
-        axios.get('/api/configs')
+        axios.get('configs')
 		  .then(function (response) {
 		  	if (response.data.data)
 	    		dispatch({type: 'SET_CONFIGURATIONS', configuration:response.data.data})
@@ -125,7 +125,7 @@ export function saveConfigurations (configurations) {
 										});
 		}
 
-        axios.put('/api/configs',{data: configurationsRequest})
+        axios.put('configs',{data: configurationsRequest})
 		  .then(function (response) {
 		  	if (response.data.success)
 				dispatch({type: 'UPDATE_CONFIGURATIONS', configurations})
