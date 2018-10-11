@@ -125,7 +125,7 @@ export function saveConfigurations (configurations) {
 										});
 		}
 
-        axios.put('configs',{data: configurationsRequest})
+        axios.put('configs',configurationsRequest)
 		  .then(function (response) {
 		  	if (response.data.success)
 				dispatch({type: 'UPDATE_CONFIGURATIONS', configurations})
