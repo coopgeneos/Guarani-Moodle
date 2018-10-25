@@ -34,7 +34,7 @@ class Header extends Component {
 			    <Nav>
 			    	<ActiveNavItem text="Perfil" href="/profile" location={this.props.location} />
 			    	<ActiveNavItem text="Configuracion" href="/configuration" location={this.props.location} />
-			    	<ActiveNavItem text="Actividades" href="/acivities" location={this.props.location} />
+			    	<ActiveNavItem text="Actividades" href="/activities" location={this.props.location} />
 			    	<ActiveNavItem text="Sincronizacion" href="/synchronizations" location={this.props.location} />
 			    </Nav>
 

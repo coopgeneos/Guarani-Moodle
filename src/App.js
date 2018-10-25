@@ -14,7 +14,11 @@ import Profile from './components/Profile'
 
 import { Grid } from 'react-bootstrap';
 
-import css from './App.css';
+import './App.css';
+import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
+import 'react-bootstrap-table2-filter/dist/react-bootstrap-table2-filter.min.css';
+import 'react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.min.css';
+
 
 const mapStateToProps = state => {
         return {
@@ -45,6 +49,7 @@ class App extends Component {
               <PrivateRoute path="/activities" component={Activities} />
               <PrivateRoute path="/synchronizations" component={Synchronizations} />
               <PrivateRoute path="/profile" component={Profile} />
+              <PrivateRoute path="/*" component={Profile} />
           </Switch>
         </Grid>
       </div>

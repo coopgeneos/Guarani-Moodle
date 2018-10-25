@@ -1,4 +1,5 @@
 import axios from 'axios'
+import {store} from '../.././redux/store';
 
 //Refresh user data from user ID
 export function getUser (userID) {
@@ -117,7 +118,6 @@ export function saveConfigurations (configurations) {
 
         //Transforms configurations
         let configurationsRequest = [];
-        configurations
         for (var property in configurations) {
 			configurationsRequest.push({
 										key:[property],
@@ -141,3 +141,79 @@ export function saveConfigurations (configurations) {
 		  }); 
 	}
 }
+
+export function loadActivities () {
+	 
+   	return (dispatch) => {
+      	dispatch({type: 'SET_APP_LOADING'})
+        console.log('Start load activities');
+
+        axios.get('activities')
+		  .then(function (response) {
+		  	if (response.data.data)
+	    		dispatch({type: 'SET_ACTIVITIES', activities:response.data.data})
+	    	else
+	    		console.log("error",response.data.msg)
+		  })
+		  .catch(function (error) {
+		    console.log("error",error.response);
+		  })
+		  .then(function () {
+		    console.log('End load activities');
+	   		dispatch({type: 'UNSET_APP_LOADING'});
+		  });  
+	}
+}
+
+export function refreshActivities () {
+	 
+   	return (dispatch) => {
+      	dispatch({type: 'SET_APP_LOADING'})
+        console.log('Start refresh activities');
+
+        axios.put('activities')
+		  .then(function (response) {
+		  	if (response.data.success)
+	    		store.dispatch(loadActivities());
+	    	else
+	    		console.log("error",response.data.msg)
+		  })
+		  .catch(function (error) {
+		    console.log("error",error.response);
+		  })
+		  .then(function () {
+		    console.log('End refresh activities');
+	   		dispatch({type: 'UNSET_APP_LOADING'});
+		  });  
+	}
+}
+
+export function createSync (assignments,MDL_Category_ID) {
+	return (dispatch) => {
+		dispatch({type: 'SET_APP_LOADING'})
+	    console.log('Start creating Sync');
+
+	    var sync = {"mdl_category_id":MDL_Category_ID,"sync_type":"0","status":"AP","Details":[]}
+
+	    assignments.forEach((item,index) => {
+	    	sync.Details.push({"siu_assignment_code":item});
+	    })
+
+	    axios
+	    .post('syncs', sync)
+		.then(function (response) {
+		  	if (response.data.success)
+	    		console.log(response.data)
+	    	else
+	    		console.log("error",response.data.msg)
+	  	})
+	  	.catch(function (error) {
+	    	console.log("error",error.response);
+	  	})
+	  	.then(function () {
+	    	console.log('End create Sync');
+   			dispatch({type: 'UNSET_APP_LOADING'});
+	  	});  
+	}
+}
+
