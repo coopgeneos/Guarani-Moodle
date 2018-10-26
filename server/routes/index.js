@@ -4,6 +4,7 @@ const config = require('./config')
 const sync = require('./sync')
 const activity = require('./activity')
 const period = require('./period')
+const syncCategory = require('./syncCategory')
 
 module.exports = (router, passport) => {
     user(router);
@@ -12,4 +13,5 @@ module.exports = (router, passport) => {
     sync(router);
     activity(router);
     period(router);
+    syncCategory(router);
 }

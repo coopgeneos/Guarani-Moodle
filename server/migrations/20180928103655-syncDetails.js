@@ -78,6 +78,27 @@ module.exports = {
       } 
     });
 
+    queryInterface.createTable('I_SyncCategory', {
+      I_SyncCategory_id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true
+      },
+      name: {
+        type: Sequelize.STRING
+      },
+      mdl_category_id: {
+        type: Sequelize.INTEGER
+      },      
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE
+      }
+    });
+
     return;
   },
   
@@ -86,6 +107,7 @@ module.exports = {
     queryInterface.dropTable('C_SIU_Assignment');
     queryInterface.dropTable('C_SIU_School_Period');
     queryInterface.dropTable('C_SIU_Activity');
+    queryInterface.dropTable('I_SyncCategory');
     return;
   }
 };
