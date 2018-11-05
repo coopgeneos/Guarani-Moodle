@@ -172,8 +172,8 @@ module.exports = {
 			.then(values => {
 				let buff = new Buffer(token)
 				let hash = buff.toString('base64');  
-		    const Basic = 'Basic ' + hash;	    
-				axios.get(uri, 
+		    const Basic = 'Basic ' + hash;   
+				axios.get(uri + '?limit=9999', 
 					{headers : { 'Authorization' : Basic }})
 				  .then(response => {
 				    let assigs = response.data;

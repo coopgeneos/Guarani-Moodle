@@ -5,6 +5,9 @@ module.exports = (sequelize, DataTypes) => {
 			primaryKey: true,
 			autoIncrement: true
 		},
+		name: {
+			type: DataTypes.STRING
+		},
 		siu_activity_code: {
 			type: DataTypes.STRING
 		},

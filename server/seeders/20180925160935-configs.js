@@ -107,6 +107,20 @@ module.exports = {
         description: 'Credenciales de acceso a SIU',
         createdAt: new Date(),
         updatedAt: new Date(),
+      },{
+        key: 'SIU_FIXMISSINGNAME',
+        name: 'Fix nombres de usuario Guarani?',
+        value: 'true',
+        description: 'Se debe completar el nombre con otro dato',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },{
+        key: 'SIU_FIXMISSINGLASTNAME',
+        name: 'Fix apellido de usuario Guarani?',
+        value: 'true',
+        description: 'Se debe completar el apellido con otro dato',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }
     ]);
 

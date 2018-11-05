@@ -2,7 +2,8 @@ module.exports = (sequelize, DataTypes) => {
 	let I_SyncCategory = sequelize.define('I_SyncCategory', {		
 		I_SyncCategory_id: {
 			type: DataTypes.INTEGER,
-			primaryKey: true
+			primaryKey: true,
+			autoIncrement: true
 		},
 		name: {
 			type: DataTypes.STRING

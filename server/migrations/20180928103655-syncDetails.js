@@ -81,7 +81,8 @@ module.exports = {
     queryInterface.createTable('I_SyncCategory', {
       I_SyncCategory_id: {
         type: Sequelize.INTEGER,
-        primaryKey: true
+        primaryKey: true,
+        autoIncrement: true
       },
       name: {
         type: Sequelize.STRING
@@ -99,6 +100,51 @@ module.exports = {
       }
     });
 
+    queryInterface.createTable('C_MDL_SIU_User', {
+      C_MDL_SIU_User_id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+      },
+      mdl_user_id: {
+        type: Sequelize.INTEGER
+      },
+      siu_user_id: {
+        type: Sequelize.INTEGER
+      },      
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE
+      }
+    });
+
+    queryInterface.createTable('I_SyncUp', {
+      I_SyncUp_id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+      },
+      i_sync_id: {
+        type: Sequelize.INTEGER
+      },  
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE
+      }
+    });
+
+    queryInterface.addColumn('I_Log', 'i_syncUp_id', {type: Sequelize.INTEGER});
+
+    queryInterface.addColumn('I_Sync', 'name', {type: Sequelize.STRING});
+
     return;
   },
   
@@ -108,6 +154,10 @@ module.exports = {
     queryInterface.dropTable('C_SIU_School_Period');
     queryInterface.dropTable('C_SIU_Activity');
     queryInterface.dropTable('I_SyncCategory');
+    queryInterface.dropTable('C_MDL_SIU_User');
+    queryInterface.dropTable('I_SyncUp');
+    queryInterface.removeColumn('I_Log', 'I_SyncUp');
+    queryInterface.removeColumn('I_Sync', 'name');
     return;
   }
 };

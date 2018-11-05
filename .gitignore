@@ -23,6 +23,8 @@ yarn-error.log*
 
 .directory
 
+classified.sql
+
 #sass
 .sass-cache
 src/*.map

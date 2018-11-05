@@ -18,14 +18,22 @@ module.exports = (sequelize, DataTypes) => {
 	})
 
 	Log.associate = function (models) {
-	    models.I_Log.belongsTo(models.I_SyncDetail, {
+    models.I_Log.belongsTo(models.I_SyncDetail, {
 			foreignKey: {
 				name: 'i_syncDetail_id',
 				allowNull: false
 			},
 			as: 'SyncDetail_id',
-	    });
-  	};
+    });
+
+    models.I_Log.belongsTo(models.I_SyncUp, {
+			foreignKey: {
+				name: 'i_syncUp_id',
+				allowNull: false
+			},
+			as: 'SyncUp_id',
+    });
+	};
 
 	return Log;
 };

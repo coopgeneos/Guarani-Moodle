@@ -5,12 +5,14 @@ const I_SyncDetail = require('./../models').I_SyncDetail
 module.exports = {
   addSync: (req, res, next) => {
     let newSync = req.body;
-    //let newDetails = JSON.parse(newSync.Details);
+    let newDetails = JSON.parse(newSync.Details);
     let _details = [];
     let transaction = models.sequelize.transaction()
       .then(t => {
+        debugger;
         I_Sync.create(newSync, {transaction: t})
           .then(sync => {
+            debugger;
             newDetails.forEach(detail => {
               detail.dateLastSync = new Date();
               I_SyncDetail.create(detail, {transaction: t})
@@ -24,7 +26,7 @@ module.exports = {
                         return t.commit();
                       })
                       .catch(err => {
-                        let obj = {success: false, msg: "Hubo un error al crear la sincronización"};
+                        let obj = {success: false, msg: "Hubo un error al guardar la sincronización"};
                         res.send(obj);
                         return t.rollback();
                       })              
