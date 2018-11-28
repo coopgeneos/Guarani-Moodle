@@ -217,3 +217,104 @@ export function createSync (assignments,MDL_Category_ID) {
 	}
 }
 
+export function loadSyncs () {
+	 
+   	return (dispatch) => {
+      	dispatch({type: 'SET_APP_LOADING'})
+        console.log('Start load syncs');
+
+        axios.get('syncs',{query:"1=1"})
+		  .then(function (response) {
+		  	if (response.data.data)
+	    		dispatch({type: 'SET_SYNCS', syncs:response.data.data})
+	    	else
+	    		console.log("error",response.data.msg)
+		  })
+		  .catch(function (error) {
+		    console.log("error",error.response);
+		  })
+		  .then(function () {
+		    console.log('End load syncs');
+	   		dispatch({type: 'UNSET_APP_LOADING'});
+		  });  
+	}
+}
+
+export function doSyncUp (I_Sync_ID) {
+	return (dispatch) => {
+		dispatch({type: 'SET_APP_LOADING'})
+	    console.log('Start doing sync up');
+
+	    console.log('End doing Sync up');
+   		dispatch({type: 'UNSET_APP_LOADING'})
+
+	    /*var sync = {"mdl_category_id":MDL_Category_ID,"sync_type":"0","status":"AP","Details":[]}
+
+	    assignments.forEach((item,index) => {
+	    	sync.Details.push({"siu_assignment_code":item});
+	    })
+
+	    axios
+	    .post('syncs', sync)
+		.then(function (response) {
+		  	if (response.data.success)
+	    		console.log(response.data)
+	    	else
+	    		console.log("error",response.data.msg)
+	  	})
+	  	.catch(function (error) {
+	    	console.log("error",error.response);
+	  	})
+	  	.then(function () {
+	    	console.log('End create Sync');
+   			dispatch({type: 'UNSET_APP_LOADING'});
+	  	});  */
+	}
+}
+
+export function loadCategories () {
+	 
+   	return (dispatch) => {
+      	dispatch({type: 'SET_APP_LOADING'})
+        console.log('Start load categories');
+
+        axios.get('syncCategories',{})
+		  .then(function (response) {
+		  	if (response.data.data)
+	    		dispatch({type: 'SET_CATEGORIES', categories:response.data.data})
+	    	else
+	    		console.log("error",response.data.msg)
+		  })
+		  .catch(function (error) {
+		    console.log("error",error.response);
+		  })
+		  .then(function () {
+		    console.log('End load categories');
+	   		dispatch({type: 'UNSET_APP_LOADING'});
+		  });  
+	}
+}
+
+export function createCategory (category) {
+	return (dispatch) => {
+		dispatch({type: 'SET_APP_LOADING'})
+	    console.log('Start creating Category');
+	    let aux = {"mdl_category_id":category.newCategory_id,"name":category.newCategory_name}
+	    axios
+	    .post('syncCategories', aux)
+		.then(function (response) {
+		  	if (response.data.success){
+	    		store.dispatch(loadCategories());
+	    	}
+	    	else
+	    		console.log("error",response.data.msg)
+	  	})
+	  	.catch(function (error) {
+	    	console.log("error",error.response);
+	  	})
+	  	.then(function () {
+	    	console.log('End create Category');
+   			dispatch({type: 'UNSET_APP_LOADING'});
+	  	});  
+	}
+}

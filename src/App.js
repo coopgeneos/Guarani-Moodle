@@ -9,6 +9,7 @@ import Configuration from './components/Configuration'
 import Header from './components/Header'
 import Login from './components/Login'
 import Activities from './components/Activities'
+import Categories from './components/Categories'
 import Synchronizations from './components/Synchronizations'
 import Profile from './components/Profile'
 
@@ -46,6 +47,7 @@ class App extends Component {
           <Switch>                
               <Route exact path="/" component={Login} />
               <PrivateRoute path="/configuration" component={Configuration} />
+              <PrivateRoute path="/categories" component={Categories} />
               <PrivateRoute path="/activities" component={Activities} />
               <PrivateRoute path="/synchronizations" component={Synchronizations} />
               <PrivateRoute path="/profile" component={Profile} />

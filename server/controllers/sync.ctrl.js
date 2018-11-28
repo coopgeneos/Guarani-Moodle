@@ -93,6 +93,7 @@ module.exports = {
         res.send(obj);
       })
       .catch(err => {
+        console.log(err);
         let obj = {success: false, msg: "Alguno de los parámetros tiene un nombre o valor incorrecto"}
         res.send(obj);
       })

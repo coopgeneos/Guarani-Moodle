@@ -48,20 +48,7 @@ class Activities extends Component {
 	      }));
 	    }
 	}
-/*
-	handleOnSelectAll = (isSelect, rows) => {
-	    const ids = rows.map(r => r.siu_assignment_code);
-	    if (isSelect) {
-	      this.setState(() => ({
-	        selectedAssignments: ids
-	      }));
-	    } else {
-	      this.setState(() => ({
-	        selectedAssignments: []
-	      }));
-	    }
-	  }
-*/
+
 	constructor () {
 	    super()
 	    this.state = {
@@ -164,19 +151,21 @@ class Activities extends Component {
 		  //lastPageTitle: 'Last page',
 		  //showTotal: true,
 		  //paginationTotalRenderer: customTotal,
+		  withFirstAndLast: false,
+		  noDataText: 'No hay ninguna actividad. Intente refrescando la información desde el menú de administración.',
 		  sizePerPageList: [{
-		    text: '5', value: 5
-		  }, {
 		    text: '10', value: 10
 		  }, {
 		    text: '20', value: 20
+		  }, {
+		    text: '50', value: 50
 		  }] // A numeric array is also available. the purpose of above example is custom the text
 		}
 
 	    /*this.options = {
 	      defaultSortName: 'siu_activity_code',  // default sort column name
 	      defaultSortOrder: 'asc',  // default sort order
-	      noDataText: 'No hay ninguna actividad. Intente refrescando la información desde el menú de administración.'
+	     
 	    };*/
 
 	   	this.handleRefresh = this.handleRefresh.bind(this)

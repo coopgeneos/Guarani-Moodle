@@ -400,7 +400,7 @@ module.exports = {
 							fixArray,
 							mdlact.id,
 							student_roleid.value,
-							mdlgroup.id
+							mdlgroup.id,
 							syncup, 
 							detail);
 

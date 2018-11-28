@@ -1,6 +1,8 @@
 import { combineReducers } from 'redux';
 import login from './reducers/login';
 import activity from './reducers/activity';
+import category from './reducers/category';
+import sync from './reducers/sync';
 /*import authUser from './reducers/authUser';*/
 import common from './reducers/common';
 import configuration from './reducers/configuration';
@@ -10,6 +12,8 @@ export default combineReducers({
   authUser,*/
   configuration,
   activity,
+  category,
+  sync,
   common,
   login,
   router: routerReducer

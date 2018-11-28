@@ -27,7 +27,6 @@ class Configuration extends Component {
 
 	handleSubmit (e) {
 		e.preventDefault();
-		console.log('Submit!',this.state.configurations)
 		this.props.saveConfigurations(this.state.configurations);
 	}
 
