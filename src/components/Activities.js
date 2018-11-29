@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { loadActivities,refreshActivities,createSync } from './../redux/actions/actions';
-import { Button } from 'react-bootstrap';
+import { loadCategories,loadActivities,refreshActivities,createSync } from './../redux/actions/actions';
+import { Col,FormGroup,ControlLabel,FormControl,Button } from 'react-bootstrap';
 import BootstrapTable from 'react-bootstrap-table-next';
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
 import paginationFactory from 'react-bootstrap-table2-paginator';
@@ -10,7 +10,8 @@ import paginationFactory from 'react-bootstrap-table2-paginator';
 const mapStateToProps = state => {
     return {
         activities: state.activity.activities,
-        error: state.activity.error
+        error: state.activity.error,
+        categories: state.category.categories
     }
 }
 	
@@ -18,6 +19,7 @@ class Activities extends Component {
 
 	componentDidMount() {
         this.props.loadActivities()
+        this.props.loadCategories()
     }
 
 
@@ -61,7 +63,6 @@ class Activities extends Component {
 		    isDummyField: true,
 		    text: '#',
 		    formatter: (cellContent, row, rowIndex, formatExtraData) => {
-		    	console.log(cellContent);
 		        return (
 		          <span>{rowIndex}</span>
 		        );
@@ -170,11 +171,14 @@ class Activities extends Component {
 
 	   	this.handleRefresh = this.handleRefresh.bind(this)
 	    this.handleCreateSync = this.handleCreateSync.bind(this)
+	   	this.handleName = this.handleName.bind(this)
+	   	this.handleCategory = this.handleCategory.bind(this)
+
 	 }
 
 	handleCreateSync(e) {
 		e.preventDefault();
-		this.props.createSync(this.state.selectedAssignments,5); //Moodle Category ID
+		this.props.createSync(this.state.selectedAssignments,this.state.syncCategory, 14, this.state.syncName); //Moodle Category ID, SIU_School_Period_ID
 	}
 
 	handleRefresh(e) {
@@ -182,14 +186,47 @@ class Activities extends Component {
 		this.props.refreshActivities();
 	}
 
+	handleName(e) {
+		this.setState({syncName:e.target.value})
+	}
+
+	handleCategory(e) {
+		console.log(e);
+		this.setState({syncCategory:e.target.value})
+	}
 
     render() {
+
+
+    	const categories = this.props.categories.map( (category,index)=>
+            <option key={category.I_SyncCategory_id} value={category.mdl_category_id}>{category.name}</option>
+        )
+
         return ( 
             <div className="page activities clearfix">
         		<fieldset className="col-md-12">
     				<legend>Actividades</legend>
-					    <Button onClick={this.handleRefresh}>Refresh</Button>
-					    <Button onClick={this.handleCreateSync}>Crear</Button>
+    					<form id="newCategory">
+	    					<FormGroup key="activities" controlId={"formHorizontal"+"activities"} >
+							    <Col md={2} sm={2}>
+							    	<Button onClick={this.handleRefresh}>Refresh</Button>
+							    </Col>
+							    <Col md={4} sm={4}>
+								    <FormControl componentClass="select" placeholder="Categoria Moodle" onChange={this.handleCategory}>
+            							<option key="select" value="-1">- Categoria Moodle -</option>
+								        {categories}
+								    </FormControl>
+							    </Col>
+							    <Col md={4} sm={4}>
+							    	<FormControl type="text" name="syncName" placeholder="Nombre de la Sincronizacion" onChange={this.handleName}/>
+							    </Col>
+							    <Col md={2} sm={2}>
+						    		<Button onClick={this.handleCreateSync}>Crear</Button>
+							    </Col>
+							</FormGroup>
+						</form>
+
+					   
 		        		<BootstrapTable 
 		        		keyField='siu_activity_code' 
 		        		data={ this.props.activities } 
@@ -208,4 +245,4 @@ class Activities extends Component {
     }
 }
 
-export default connect(mapStateToProps, {loadActivities,refreshActivities,createSync})(Activities);
+export default connect(mapStateToProps, {loadCategories,loadActivities,refreshActivities,createSync})(Activities);

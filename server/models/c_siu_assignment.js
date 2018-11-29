@@ -25,6 +25,12 @@ module.exports = (sequelize, DataTypes) => {
 				name: 'c_siu_school_period_id',
 			},
 	  });
+
+	  models.C_SIU_Assignment.hasMany(models.I_SyncDetail, {
+			foreignKey: {
+				name: 'siu_assignment_code',
+			},
+	  });
 	};
 
 	return C_SIU_Assignment;

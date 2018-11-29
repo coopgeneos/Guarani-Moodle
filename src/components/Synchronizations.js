@@ -20,6 +20,23 @@ class Synchronizations extends Component {
         this.props.loadSyncs()
     }
 
+    expandRow = {
+		renderer: row => (
+			<div>
+				<BootstrapTable 
+		        		keyField='I_SyncDetail_id' 
+		        		data={ row.Details } 
+		        		columns={ this.syncDetailsColumns } 
+		        		bordered={ false }
+		        		striped
+						hover
+						/>
+			</div>
+		),
+		expandByColumnOnly: true,
+		showExpandColumn: true,
+	};
+
     constructor () {
 	    super()
 	    
@@ -29,20 +46,23 @@ class Synchronizations extends Component {
 		    isDummyField: true,
 		    text: '#',
 		    formatter: (cellContent, row, rowIndex, formatExtraData) => {
-		    	console.log(cellContent);
 		        return (
 		          <span>{rowIndex}</span>
 		        );
 		    }
 		},{
-			dataField: 'I_Sync_ID',
+			dataField: 'I_Sync_id',
 			text: 'ID'
 		}, {
 			dataField: 'name',
 			text: 'Sincronizacion',
 			filter: textFilter()
 		},{
-		    dataField: 'mdl_category_ID',
+		    dataField: 'c_siu_school_period_id',
+		    text: 'Periodo',
+		    filter: textFilter()
+		},{
+		    dataField: 'mdl_category_id',
 		    text: 'Categoria Moodle',
 		    filter: textFilter()
 		},{
@@ -50,14 +70,14 @@ class Synchronizations extends Component {
 		    isDummyField: true,
 		    text: 'Estado',
 		    formatter: (cellContent, row) => {
-		      if (true) {
+		      if (false) {
 		        return (
 		          <h5>
 		            <span className="label label-success">Realizada # veces</span>
 		          </h5>
 		        );
 		      }
-		      if (true) {
+		      if (false) {
 		        return (
 		          <h5>
 		            <span className="label label-info">Ejecutando...</span>
@@ -84,68 +104,20 @@ class Synchronizations extends Component {
 		    formatter: (cellContent, row) => {
 		        return (
 		        	<div>
-			         <Button onClick={this.handleDoSyncUp}>Ejecutar</Button>
-					 <Button >Confgurar</Button>
+			         <Button data-id={row.I_Sync_id} onClick={(e) => this.handleDoSyncUp(row, e)}>Ejecutar</Button>
+					 <Button >Configurar</Button>
 					 <Button >Logs</Button>
 				 	</div>
 		        );
 		      }
 		}];
 
-		this.syncsDetailsColumns = [{
-			dataField: 'I_Sync_ID',
+		this.syncDetailsColumns = [{
+			dataField: 'I_SyncDetail_id',
 			text: 'ID'
 		}, {
-			dataField: 'name',
-			text: 'Sincronizacion'
-		},{
-		    dataField: 'mdl_category_ID',
-		    text: 'Categoria Moodle'
-		},{
-		    dataField: 'state',
-		    isDummyField: true,
-		    text: 'Estado',
-		    formatter: (cellContent, row) => {
-		      if (true) {
-		        return (
-		          <h5>
-		            <span className="label label-success">Realizada # veces</span>
-		          </h5>
-		        );
-		      }
-		      if (true) {
-		        return (
-		          <h5>
-		            <span className="label label-info">Ejecutando...</span>
-		          </h5>
-		        );
-		      }
-		      if (true) {
-		        return (
-		          <h5>
-		            <span className="label label-warning">Nunca ejecutada</span>
-		          </h5>
-		        );
-		      }
-		      return (
-		        <h5>
-		          <span className="label label-danger">Error</span>
-		        </h5>
-		      );
-		    },
-		},{
-		    dataField: 'acitions',
-		    isDummyField: true,
-		    text: 'Acciones',
-		    formatter: (cellContent, row) => {
-		        return (
-		        	<div>
-			         <Button onClick={this.handleDoSyncUp}>Ejecutar</Button>
-					 <Button>Confgurar</Button>
-					 <Button>Logs</Button>
-					</div>
-		        );
-		      }
+			dataField: 'siu_assignment_code',
+			text: 'Codigo Comision'
 		}];
 
 		this.paginationOptions = {
@@ -163,9 +135,9 @@ class Synchronizations extends Component {
 	   	this.handleDoSyncUp = this.handleDoSyncUp.bind(this)
 	 }
 
-	handleDoSyncUp(e) {
+	handleDoSyncUp(row,e) {
 		e.preventDefault();
-		this.props.doSyncUp(this.state.selectedSyncs,5); //Moodle Category ID
+		this.props.doSyncUp(row.I_Sync_id);
 	}
 
     render() {
@@ -174,13 +146,13 @@ class Synchronizations extends Component {
         		<fieldset className="col-md-12">
     				<legend>Sincronizaciones</legend>
 		        		<BootstrapTable 
-		        		keyField='I_Sync_ID' 
+		        		keyField='I_Sync_id' 
 		        		data={ this.props.syncs } 
 		        		columns={ this.syncsColumns } 
 		        		striped
 						hover
 						condensed
-						//expandRow={ this.expandRow }
+						expandRow={ this.expandRow }
 						filter={ filterFactory() }
 						noDataIndication="No hay ninguna Sincronizacion. Cree sincronizaciones desde la seccion actividades."
 		        		pagination={ paginationFactory(this.paginationOptions) }

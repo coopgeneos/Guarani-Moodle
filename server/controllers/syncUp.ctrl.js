@@ -10,14 +10,14 @@ const I_Log = require('./../models').I_Log
 const axios = require('axios');
 const querystring = require('querystring');
 
-function createCourseInMoodle(url, token, name, categoryid){
+function createCourseInMoodle(url, token, name, shortname, categoryid){
 	return new Promise((resolve, reject) => {
 		let formData = {
 	    wstoken: token, 
 	    wsfunction: 'core_course_create_courses', 
 	    moodlewsrestformat: 'json',
 	    'courses[0][fullname]': name,
-	    'courses[0][shortname]': name,
+	    'courses[0][shortname]': shortname,
 	    'courses[0][categoryid]': categoryid
 	  };
 		axios.post(url, querystring.stringify(formData))
@@ -146,7 +146,7 @@ function addUsersToGroupInMoodle(url, token, userid, groupid){
 	    wsfunction: 'core_group_add_group_members', 
 	    moodlewsrestformat: 'json',
 	    'members[0][groupid]': groupid,
-			'members[0][userid]': userid			
+		'members[0][userid]': userid			
 	  };
 		axios.post(url, querystring.stringify(formData))
 			.then(resp => {
@@ -232,13 +232,13 @@ function createUsersInMoodle(siuurl, siutoken, mdlurl, mdltoken, fixArray, cours
 	return new Promise((resolve, reject) => {
 		/* Obtengo los alumnos desde SIU*/							
 		queryOnSIU (siuurl, siutoken)
-			.then(async (siuusers) => {
+			.then( async (siuusers) => {
 				for(var i=0; i<siuusers.length; i++){
 					let siuusr = siuusers[i];
 					
 					try {
 						await fixSIUUser(siuusr, fixArray, syncup, detail);
-					} catch (err) {				
+					} catch (err) {			
 						I_Log.create({
 							message: err, 
 							level: '0', 
@@ -248,11 +248,11 @@ function createUsersInMoodle(siuurl, siutoken, mdlurl, mdltoken, fixArray, cours
 					}
 
 					C_MDL_SIU_User.findOne({where: {siu_user_id: siuusr.usuario}})
-						.then(localusr => {
+						.then( async(localusr) => {
 							if(localusr && (localusr.mdl_user_id != null || localusr.mdl_user_id != undefined)){
-								return;
+								//return;
 							} else {
-								/* Creo el usuario en Moodle */
+								/* Creo el usuario en Moodle (Si no existe) */
 								let data = {
 									username: siuusr.usuario,
 									password: siuusr.apellido+siuusr.alumno,
@@ -261,27 +261,12 @@ function createUsersInMoodle(siuurl, siutoken, mdlurl, mdltoken, fixArray, cours
 									lastname: siuusr.apellido,
 									email: siuusr.email
 								};
-								getUserFromMoodle(mdlurl, mdltoken, data)
+								await getUserFromMoodle(mdlurl, mdltoken, data)
 									.then(mdl_user => {
-										/* Enrolamiento del usuario */
-										enrolUsersInMoodle(mdlurl, mdltoken, mdl_user.id, roleid, courseid)
-											.catch(err => {												
-												I_Log.create({message: 'ERROR al enrolar al usuario de moodle: '+mdl_user.id, 
-													level: '0', 
-													i_syncDetail_id: detail.I_SyncDetail_id, 
-													i_syncUp_id: syncup.I_SyncUp_id});
-											})
 
-										/* Agrego el usuario al grupo */
-										addUsersToGroupInMoodle(mdlurl, mdltoken, mdl_user.id, groupid)
-											.catch(err => {
-												I_Log.create({message: 'ERROR al asignar el usuario '+mdl_user.id+' al grupo '+groupid+' en moodle', 
-													level: '0', 
-													i_syncDetail_id: detail.I_SyncDetail_id, 
-													i_syncUp_id: syncup.I_SyncUp_id});
-											})
+										localusr = {mdl_user_id:mdl_user.id};
 
-										/* Actualizo el C_MDL_SIU_User con los ids que me devolvió Moodle */
+										/* Actualiza Cache (Actualizo el C_MDL_SIU_User)*/
 										C_MDL_SIU_User.upsert(
 											{siu_user_id: siuusr.usuario, mdl_user_id: mdl_user.id},
 											{
@@ -300,8 +285,27 @@ function createUsersInMoodle(siuurl, siutoken, mdlurl, mdltoken, fixArray, cours
 											level: '0', 
 											i_syncDetail_id: detail.I_SyncDetail_id, 
 											i_syncUp_id: syncup.I_SyncUp_id});
-									})								
+									});
 							}
+
+							/* Enrolamiento del usuario */
+							await enrolUsersInMoodle(mdlurl, mdltoken, localusr.mdl_user_id, roleid, courseid)
+								.catch(err => {											
+									I_Log.create({message: 'ERROR al enrolar al usuario de moodle: '+localusr.mdl_user_id, 
+										level: '0', 
+										i_syncDetail_id: detail.I_SyncDetail_id, 
+										i_syncUp_id: syncup.I_SyncUp_id});
+								})
+
+							/* Agrego el usuario al grupo */
+							addUsersToGroupInMoodle(mdlurl, mdltoken, localusr.mdl_user_id, groupid)
+								.catch(err => {
+									I_Log.create({message: 'ERROR al asignar el usuario '+localusr.mdl_user_id+' al grupo '+groupid+' en moodle', 
+										level: '0', 
+										i_syncDetail_id: detail.I_SyncDetail_id, 
+										i_syncUp_id: syncup.I_SyncUp_id});
+								})	
+															
 						})
 						.catch(err => {
 							I_Log.create({message: err, 
@@ -342,12 +346,14 @@ module.exports = {
 			let fixLastname;
 			let student_roleid;
 			let teacher_roleid;
+			let snprefix;
 			
 			Promise.all([
-				I_SyncUp.findOne({where: {I_SyncUp_id: req.params.id}}).then(s => {syncup = s}),
+				I_SyncUp.create({I_Sync_id: req.params.id}).then(s => {syncup = s}),
 				I_Config.findOne({ where: {key: 'SIU_TOKEN'}}).then(s => {siutoken = s}),
 				I_Config.findOne({ where: {key: 'SIU_REST_URI'}}).then(s => {siuurl = s}),
 				I_Config.findOne({ where: {key: 'MOODLE_REST_TOKEN'}}).then(s => {mdltoken = s}),
+				I_Config.findOne({ where: {key: 'MOODLE_COURSE_SHORTNAME_PREFIX'}}).then(s => {snprefix = s}),
 				I_Config.findOne({ where: {key: 'MOODLE_REST_URI'}}).then(s => {mdlurl = s}),
 				I_Config.findOne({ where: {key: 'SIU_FIXMISSINGUSERNAME'}}).then(s => {fixUsername = s}),
 				I_Config.findOne({ where: {key: 'SIU_FIXMISSINGEMAIL'}}).then(s => {fixEmail = s}),
@@ -360,67 +366,100 @@ module.exports = {
 
 				let fixArray = [fixUsername.key, fixEmail.key, fixName.key, fixLastname.key];
 
-				sync = await I_Sync.findOne({where: {I_Sync_id: syncup.i_sync_id}})
+				sync = await I_Sync.findOne({where: {I_Sync_id: req.params.id}})
 
-				let details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}}); 
+				let details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
+
+				//course id is the same for all details
+				//TODO: Check first if some Detail alredy have a mdl_course_id
+				let mdl_course_id = 0;
+
 				for(var i=0; i<details.length; i++){
 					let detail = details[i].dataValues;		
-					if(detail.mdl_course_id == null){
+					
 
-						/* Creo el curso en Moodle */
-						let activity = await C_SIU_Activity.findOne({where: {siu_activity_code: sync.siu_activity_code}});
-						let mdlact = await createCourseInMoodle(
-							mdlurl, 
-							mdltoken, 
-							activity.name, 
-							sync.mdl_category_id);
+					/* Creo el curso en Moodle */
+					if( detail.mdl_course_id == null) {
+	
+						if (mdl_course_id == 0) {
+							
+							//TODO: Definir shortname
+							sync.shortname = snprefix.value + sync.name.substring(0, 5);
+							//El nombre viene determinado por el nombre de la sincronizacion
+							let mdlact = await createCourseInMoodle(
+								mdlurl.value, 
+								mdltoken.value, 
+								sync.name, 
+								sync.shortname,
+								sync.mdl_category_id);
 
-						/* Creo el grupo en Moodle y le asigno el curso antes creado */
-						let assg = await C_SIU_Assignment.findOne({where: {siu_assignment_code: detail.siu_assignment_code}});
-						let mdlgroup = await createGroupInMoodle(					
-							mdlurl, 
-							mdltoken,
-							mdlact.id, 
-							assg.name, 
-							assg.name);
-						
-						/* Actualizo el syncDetail con los ids que me devolvió Moodle */
+							mdl_course_id = mdlact.id;
+						}
+
+						/* Actualizo el syncDetail con curso */
 						await I_SyncDetail.update(
-							{mdl_course_id: mdlact.id, mdl_group_id: mdlgroup.id},
+							{mdl_course_id: mdl_course_id},
 							{
 								where: {I_SyncDetail_id: detail.I_SyncDetail_id}, 
-								fields: ['mdl_course_id', 'mdl_group_id']
+								fields: ['mdl_course_id']
+							});
+					}
+					else 
+						mdl_course_id = detail.mdl_course_id;
+
+					let assg = await C_SIU_Assignment.findOne({where: {siu_assignment_code: detail.siu_assignment_code}});
+
+					/* Creo el grupo en Moodle y le asigno el curso antes creado */
+					let mdl_group_id = detail.mdl_group_id
+
+					if(mdl_group_id == null){
+						let mdlgroup = await createGroupInMoodle(					
+							mdlurl.value, 
+							mdltoken.value,
+							mdl_course_id, 
+							assg.name, 
+							assg.name);
+
+						/* Actualizo el syncDetail con el grupo de moodle */
+						await I_SyncDetail.update(
+							{mdl_group_id: mdlgroup.id},
+							{
+								where: {I_SyncDetail_id: detail.I_SyncDetail_id}, 
+								fields: ['mdl_group_id']
 							})
 
-						createUsersInMoodle(
-							siuurl.value + '/' + assg.siu_assignment_code + '/alumnos?limit=9999', 
-							siutoken.value, 
-							mdlurl.value, 
-							mdltoken.value, 
-							fixArray,
-							mdlact.id,
-							student_roleid.value,
-							mdlgroup.id,
-							syncup, 
-							detail);
-
-						createUsersInMoodle(
-							siuurl.value + '/' + assg.siu_assignment_code + '/docentes?limit=9999', 
-							siutoken.value, 
-							mdlurl.value, 
-							mdltoken.value, 
-							fixArray,
-							mdlact.id,
-							teacher_roleid.value,
-							mdlgroup.id,
-							syncup,
-							detail);
-					
-						if(i === details.length -1){
-							let obj = {success: true, msg: 'Se sincronizó todo exitosamente. Consulte el log'};
-							res.send(obj);
-						}
+						mdl_group_id = mdlgroup.id;
 					}
+
+					createUsersInMoodle(
+						siuurl.value + '/' + assg.siu_assignment_code + '/alumnos?limit=9999', 
+						siutoken.value, 
+						mdlurl.value, 
+						mdltoken.value, 
+						fixArray,
+						mdl_course_id,
+						student_roleid.value,
+						mdl_group_id,
+						syncup, 
+						detail);
+
+					createUsersInMoodle(
+						siuurl.value + '/' + assg.siu_assignment_code + '/docentes?limit=9999', 
+						siutoken.value, 
+						mdlurl.value, 
+						mdltoken.value, 
+						fixArray,
+						mdl_course_id,
+						teacher_roleid.value,
+						mdl_group_id,
+						syncup,
+						detail);
+				
+					if(i === details.length -1){
+						let obj = {success: true, msg: 'Se sincronizó todo exitosamente. Consulte el log'};
+						res.send(obj);
+					}
+					
 				}
 			
 			})

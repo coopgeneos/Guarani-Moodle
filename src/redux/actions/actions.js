@@ -188,12 +188,19 @@ export function refreshActivities () {
 	}
 }
 
-export function createSync (assignments,MDL_Category_ID) {
+export function createSync (assignments,MDL_Category_ID,C_SIU_School_Period_ID,name) {
 	return (dispatch) => {
 		dispatch({type: 'SET_APP_LOADING'})
-	    console.log('Start creating Sync');
+	    console.log('Start creating Sync',assignments);
 
-	    var sync = {"mdl_category_id":MDL_Category_ID,"sync_type":"0","status":"AP","Details":[]}
+
+
+	    var sync = {"name":name,
+	    			"mdl_category_id":MDL_Category_ID,
+	    			"c_siu_school_period_id":C_SIU_School_Period_ID,
+	    			"sync_type":"0","status":"AP","Details":[]}
+
+	    			 console.log(sync);
 
 	    assignments.forEach((item,index) => {
 	    	sync.Details.push({"siu_assignment_code":item});
@@ -242,20 +249,12 @@ export function loadSyncs () {
 
 export function doSyncUp (I_Sync_ID) {
 	return (dispatch) => {
-		dispatch({type: 'SET_APP_LOADING'})
+
+		dispatch({type: 'SET_DOING_SYNCUP', I_Sync_ID:I_Sync_ID})
 	    console.log('Start doing sync up');
 
-	    console.log('End doing Sync up');
-   		dispatch({type: 'UNSET_APP_LOADING'})
-
-	    /*var sync = {"mdl_category_id":MDL_Category_ID,"sync_type":"0","status":"AP","Details":[]}
-
-	    assignments.forEach((item,index) => {
-	    	sync.Details.push({"siu_assignment_code":item});
-	    })
-
-	    axios
-	    .post('syncs', sync)
+	   	axios
+	    .post('syncUp/'+I_Sync_ID, {})
 		.then(function (response) {
 		  	if (response.data.success)
 	    		console.log(response.data)
@@ -266,9 +265,10 @@ export function doSyncUp (I_Sync_ID) {
 	    	console.log("error",error.response);
 	  	})
 	  	.then(function () {
-	    	console.log('End create Sync');
-   			dispatch({type: 'UNSET_APP_LOADING'});
-	  	});  */
+	    	console.log('End doing Sync up');
+			dispatch({type: 'UNSET_DOING_SYNCUP', I_Sync_ID:I_Sync_ID})
+	  	});  
+
 	}
 }
 

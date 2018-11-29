@@ -1,11 +1,13 @@
 const models = require('./../models')
 const I_Sync = require('./../models').I_Sync
 const I_SyncDetail = require('./../models').I_SyncDetail
+const C_SIU_School_Period = require('./../models').C_SIU_School_Period
+
 
 module.exports = {
   addSync: (req, res, next) => {
     let newSync = req.body;
-    let newDetails = JSON.parse(newSync.Details);
+    let newDetails = newSync.Details;
     let _details = [];
     let transaction = models.sequelize.transaction()
       .then(t => {
@@ -86,7 +88,15 @@ module.exports = {
 
   getByParameters: (req, res, next) => {
     I_Sync.findAll({where: req.query,
-                    attributes: {exclude: ['createdAt', 'updatedAt']}
+                    attributes: {exclude: ['createdAt', 'updatedAt']},
+                    include: [{
+                      model: C_SIU_School_Period, 
+                      attributes: {exclude: ['createdAt', 'updatedAt']} 
+                    },{
+                      model: I_SyncDetail, 
+                      attributes: {exclude: ['createdAt', 'updatedAt']},
+                      as: 'Details' 
+                    }]
                   })
       .then(syncs => {
         let obj = {success: true, data: syncs};

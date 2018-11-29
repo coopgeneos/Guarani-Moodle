@@ -2,6 +2,7 @@ const models = require('./../models');
 const C_SIU_Activity = require('./../models').C_SIU_Activity
 const C_SIU_School_Period = require('./../models').C_SIU_School_Period
 const C_SIU_Assignment = require('./../models').C_SIU_Assignment
+const I_SyncDetail = require('./../models').C_SIU_Assignment
 const I_Config = require('./../models').I_Config
 const axios = require('axios');
 
@@ -149,7 +150,7 @@ module.exports = {
 		C_SIU_Activity.findAll({attributes: {exclude: ['createdAt', 'updatedAt']}, 
 														include: [{
 															model: C_SIU_Assignment, 
-															attributes: {exclude: ['createdAt', 'updatedAt']} 
+															attributes: {exclude: ['createdAt', 'updatedAt']}, 
 														}]
 													})
 			.then(acts => {
@@ -157,6 +158,7 @@ module.exports = {
         res.send(obj);
 			})
 			.catch(err => {
+				console.log(err);
 				let obj = {success: false, msg: "Hubo un error al consultar las actividades"};
         res.send(obj);
 			});
@@ -172,7 +174,7 @@ module.exports = {
 			.then(values => {
 				let buff = new Buffer(token)
 				let hash = buff.toString('base64');  
-		    const Basic = 'Basic ' + hash;   
+		    	const Basic = 'Basic ' + hash;   
 				axios.get(uri + '?limit=9999', 
 					{headers : { 'Authorization' : Basic }})
 				  .then(response => {

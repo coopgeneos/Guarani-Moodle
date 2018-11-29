@@ -11,10 +11,11 @@ module.exports = (sequelize, DataTypes) => {
 		siu_activity_code: {
 			type: DataTypes.STRING
 		},
-	  siu_school_period: {
-			type: DataTypes.STRING
+		//Replace siu_school_period
+		c_siu_school_period_id: {
+			type: DataTypes.INTEGER
 		},
-	  mdl_category_id: {
+	    mdl_category_id: {
 			type: DataTypes.INTEGER
 		},
 		sync_type: {
@@ -31,12 +32,18 @@ module.exports = (sequelize, DataTypes) => {
 	})
 
 	Sync.associate = function (models) {
-    models.I_Sync.hasMany(models.I_SyncDetail, {
+	    models.I_Sync.hasMany(models.I_SyncDetail, {
+				foreignKey: {
+					name: 'i_sync_id'
+				},
+				as: 'Details',
+	    });
+
+	    models.I_Sync.belongsTo(models.C_SIU_School_Period, {
 			foreignKey: {
-				name: 'i_sync_id'
+				name: 'c_siu_school_period_id',
 			},
-			as: 'Details',
-    });
+	  	});
 	};
 
 	return Sync;
