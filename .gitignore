@@ -28,3 +28,5 @@ classified.sql
 #sass
 .sass-cache
 src/*.map
+
+/server/seeders/classified.sql
