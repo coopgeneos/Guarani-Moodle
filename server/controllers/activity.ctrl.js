@@ -50,7 +50,8 @@ function updateActivities(assignments) {
     				activities.push(obj);	    					
     			}
     			if (i === assignments.length -1) {
-    				let acts = removeDuplicatedObjects(activities, 'siu_activity_code')		    				
+    				let acts = removeDuplicatedObjects(activities, 'siu_activity_code');
+    				debugger;		    				
 						C_SIU_Activity.bulkCreate(acts)
 							.then(activs => {
 								resolve(activs);

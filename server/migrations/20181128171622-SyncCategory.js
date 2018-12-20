@@ -53,7 +53,7 @@ module.exports = {
         references: {
           model: 'C_SIU_Activity',
           key: 'siu_activity_code',
-          deferrable: Sequelize.Deferrable.INITIALLY_IMMEDIATE
+          deferrable: Sequelize.Deferrable.INITIALLY_DEFERRED
         }
       },
       c_siu_school_period_id: {
@@ -62,7 +62,7 @@ module.exports = {
         references: {
           model: 'C_SIU_School_Period',
           key: 'C_SIU_School_Period_id',
-          deferrable: Sequelize.Deferrable.INITIALLY_IMMEDIATE
+          deferrable: Sequelize.Deferrable.INITIALLY_DEFERRED
         }
       },
       name: {
@@ -160,7 +160,7 @@ module.exports = {
     queryInterface.dropTable('I_SyncCategory');
     queryInterface.dropTable('C_MDL_SIU_User');
     queryInterface.dropTable('I_SyncUp');
-    queryInterface.removeColumn('I_Log', 'I_SyncUp');
+    queryInterface.removeColumn('I_Log', 'i_syncUp_id');
     queryInterface.removeColumn('I_Sync', 'name');
     return;
   }

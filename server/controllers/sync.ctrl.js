@@ -11,10 +11,8 @@ module.exports = {
     let _details = [];
     let transaction = models.sequelize.transaction()
       .then(t => {
-        debugger;
         I_Sync.create(newSync, {transaction: t})
           .then(sync => {
-            debugger;
             newDetails.forEach(detail => {
               detail.dateLastSync = new Date();
               I_SyncDetail.create(detail, {transaction: t})

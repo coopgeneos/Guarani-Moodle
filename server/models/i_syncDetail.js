@@ -27,10 +27,9 @@ module.exports = (sequelize, DataTypes) => {
 
 	SyncDetail.associate = function (models) {
     models.I_SyncDetail.belongsTo(models.I_Sync, {
-		foreignKey: {
-			name: 'i_sync_id'
-		},
-		as: 'Sync_id',
+			foreignKey: {
+				name: 'i_sync_id'
+			}
     });
 	};
 

@@ -36,19 +36,19 @@ function getCourseFromMoodle(url, token, name, shortname, categoryid){
 					axios.post(url, querystring.stringify(formData))
 						.then(resp => {
 							if(resp.data.exception){
-								console.log('====>  ERROR al consultar curso en Moodle: ' + shortname + ' >>> ' + resp.data.message);
-								reject(resp.data.message);
+								console.log('====> ERROR al crear curso en Moodle: ' + shortname + ' >>> ' + resp.data.message);
+								return reject(resp.data.message);
 							}
 							resolve(resp.data[0]);
 						})
 						.catch(err => {
-							console.log('====>  ERROR al consultar curso en Moodle: ' + shortname + ' >>> ' + err);
+							console.log('====> ERROR 500 al crear curso en Moodle: ' + shortname + ' >>> ' + err);
 							reject(err);
 						})
 				}			
 			})
 			.catch(err => {
-				console.log('====>  ERROR al consultar curso en Moodle: ' + shortname +' >>> ' + err);
+				console.log('====> ERROR 500 al consultar curso en Moodle: ' + shortname +' >>> ' + err);
 				reject(err);
 			});
 	})
@@ -82,18 +82,18 @@ function getGroupFromMoodle(url, token, courseid, name, descr){
 				axios.post(url, querystring.stringify(formData))
 					.then(resp => {
 						if(resp.data.exception){
-							console.log('====>  ERROR al consultar grupo en Moodle: ' + name);
-							reject(resp.data.message);
+							console.log('====> ERROR al crear grupo en Moodle: ' + name  +' >>> ' + resp.data.message);
+							return reject(resp.data.message);
 						}
 						resolve(resp.data[0]);
 					})
 					.catch(err => {
-						console.log('====>  ERROR al consultar grupo en Moodle: ' + name);
+						console.log('====> ERROR 500 al crear grupo en Moodle: ' + name +' >>> ' + err);
 						reject(err);
 					})			
 			})
 			.catch(err => {
-				console.log('====>  ERROR al consultar grupo en Moodle: ' + name);
+				console.log('====> ERROR 500 al consultar grupo en Moodle: ' + name +' >>> ' + err);
 				reject(err);
 			})
 	})
@@ -113,7 +113,7 @@ function getUserFromMoodle(url, token, data, counter){
 			.then(usr => {
 				/* Si existe, lo devuelvo */
 				if(usr.data.users.length > 0){
-					resolve(usr.data.users[0]);
+					return resolve(usr.data.users[0]);
 				}
 
 				/* Si no existe, lo creo */
@@ -131,16 +131,15 @@ function getUserFromMoodle(url, token, data, counter){
 				axios.post(url, querystring.stringify(formData))
 					.then(resp => {
 						counter.created = counter.created + 1;					
-						//Devuelvo la posición 0 del arreglo porque supongo que lo que estoy creando en Moodle no existe
-						resolve(resp.data[0]);
+						resolve(resp.data);
 					})
 					.catch(err => {
-						console.log('====>  ERROR al consultar usuario en Moodle: ' + data.username);
+						console.log('====> ERROR 500 al crear usuario en Moodle: ' + data.username +' >>> ' + err);
 						reject(err);
 					})
 			})
 			.catch(err => {
-				console.log('====>  ERROR al consultar usuario en Moodle: ' + data.username);
+				console.log('====> ERROR 500 al consultar usuario en Moodle: ' + data.username +' >>> ' + err);
 				reject(err);
 			})		
 	})
@@ -156,8 +155,8 @@ function queryOnSIU (url, token) {
 				resolve(response.data);
 			})
 			.catch(err => {
-				console.log('====>  ERROR consultando los usuarios en SIU GUARANI ');
-				reject('ERROR: Consultando Ws de SIU >>> '+ url);
+				console.log('====> ERROR 500 consultando los usuarios en SIU GUARANI >>> ' + err);
+				reject(err);
 			})
 
 	})
@@ -181,14 +180,15 @@ function enrolUsersInMoodle(url, token, userid, roleid, courseid, counter){
 					resolve('OK');
 				} else {
 					if(resp.data.exception) {
-						console.log("====> "+resp.data.message);
+						console.log("====> ERROR al enrolar usuario en Moodle : "+resp.data.message);
+						reject(resp.data.message);
 					}
-					console.log('====>  ERROR al enrolar usuario en Moodle ' + userid + ' con parametros ' + roleid + ', ' + courseid);
-					reject('ERROR al enrrolar usuario');
+					console.log('====> ERROR al enrolar usuario en Moodle ' + userid + ' con parametros ' + roleid + ', ' + courseid);
+					reject('ERROR al enrolar usuario en Moodle ' + userid + ' con parametros ' + roleid + ', ' + courseid);
 				}
 			})
 			.catch(err => {
-				console.log('====>  ERROR al enrolar usuario en Moodle ' + userid + ' con parametros ' + roleid + ', ' + courseid);
+				console.log('====> ERROR 500 al enrolar usuario en Moodle ' + userid + ' con parametros ' + roleid + ', ' + courseid + ' >>> ' + err);
 				reject(err);
 			})
 		
@@ -211,12 +211,14 @@ function addUsersToGroupInMoodle(url, token, userid, groupid){
 					resolve('OK');
 				} else {
 					if(resp.data.exception) {
-						console.log("====> "+resp.data.message);
+						console.log("====> ERROR al agregar miembro a un grupo: " + userid + ", " + groupid + " :: " + resp.data.message);
+						return reject(resp.data.message);
 					}
-					reject('ERROR al asignar usuario a un grupo');
+					reject("ERROR al agregar miembro a un grupo");
 				}
 			})
 			.catch(err => {
+				console.log("====> ERROR 500 al agregar miembro a un grupo: " + userid + ", " + groupid + " :: " + err);
 				reject(err);
 			})
 		
@@ -235,7 +237,7 @@ function fixSIUUser(usr, array, log){
 		}
 
 		/* FIX USERNAME */
-		if(usr.usuario === undefined){
+		if(usr.usuario === undefined || isNaN(usr.usuario)){
 			if(containsKey(array, 'username')){
 				let dni = usr.documento;
 				usr.usuario = dni.slice(4, dni.length);
@@ -290,33 +292,30 @@ function fixSIUUser(usr, array, log){
 
 function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg){
 	return new Promise(async (resolve, reject) => {
-
 		await fixSIUUser(siuusr, fixArray, log)
 		 .catch ((err) => {	
-				I_Log.create({
+				/*I_Log.create({
 					message: err, 
 					level: '0', 
 					i_syncDetail_id: log.i_syncDetail_id, 
-					i_syncUp_id: log.i_syncUp_id});
+					i_syncUp_id: log.i_syncUp_id});*/
 				reject(err);			
 			})	
 
 		C_MDL_SIU_User.findOne({where: {siu_user_id: siuusr.usuario}})
-			.then( async(localusr) => {
-				if(localusr && (localusr.mdl_user_id != null || localusr.mdl_user_id != undefined)){
-					//
-				} else {
+			.then(async(localusr) => {
+				if(localusr == null){ //Si no existe en la Caché local
 					/* Creo el usuario en Moodle (Si no existe) */
 					let data = {
 						username: siuusr.usuario,
-						password: siuusr.apellido+siuusr.alumno,
+						password: siuusr.apellido+siuusr.usuario,
 						createpassword: 1,
 						firstname: siuusr.nombres,
 						lastname: siuusr.apellido,
 						email: siuusr.email
 					};
 					await getUserFromMoodle(mdl.url, mdl.token, data, counter.created)
-						.then(mdl_user => {
+						.then((mdl_user) => {
 
 							localusr = {mdl_user_id:mdl_user.id};
 
@@ -336,12 +335,20 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 								})
 						})
 						.catch(err => {
-							I_Log.create({message: err, 
+							/*I_Log.create({message: err, 
 								level: '0', 
 								i_syncDetail_id: log.i_syncDetail_id, 
-								i_syncUp_id: log.i_syncUp_id});
+								i_syncUp_id: log.i_syncUp_id});*/
 							reject(err);
 						});
+				}
+
+				if(localusr.mdl_user_id == undefined){
+					I_Log.create({message: 'El usuario de SIU '+siuusr.usuario+' quedó sin asociar en Moodle ('+siuusr.usuario+','+siuusr.apellido+','+siuusr.nombres+','+siuusr.email+')', 
+						level: '0', 
+						i_syncDetail_id: log.i_syncDetail_id, 
+						i_syncUp_id: log.i_syncUp_id});
+					return resolve('Hay usuarios de SIU que no tienen usuario en MOODLE');
 				}
 
 				/* Enrolamiento del usuario */
@@ -375,19 +382,19 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 						resolve('Ok');
 					})
 					.catch(err => {
-						I_Log.create({message: err, 
+						/*I_Log.create({message: err, 
 							level: '0', 
 							i_syncDetail_id: log.i_syncDetail_id, 
-							i_syncUp_id: log.i_syncUp_id});
+							i_syncUp_id: log.i_syncUp_id});*/
 						reject(err);
 					})	
 												
 			})
 			.catch(err => {
-				I_Log.create({message: err.message, 
+				/*I_Log.create({message: err.message, 
 					level: '0', 
 					i_syncDetail_id: log.i_syncDetail_id, 
-					i_syncUp_id: log.i_syncUp_id});
+					i_syncUp_id: log.i_syncUp_id});*/
 				reject(err);
 			})
 	})
@@ -395,28 +402,38 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 
 function createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg) {
 	return new Promise((resolve, reject) => {
-		//var c=0;
 		var prm_array = [];
-		/* Obtengo los alumnos desde SIU */							
+		/* Obtengo los alumnos/docentes desde SIU */							
 		queryOnSIU (siuurl, siu.token)
-			.then( async (siuusers) => {
-				for(var i=0; i<siuusers.length; i++){
-					let siuusr = siuusers[i];
-					prm_array.push(processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg));				
-				}
-				Promise.all(prm_array)
-					.then((values) => {
-						resolve('OK');
-					})
-					.catch((err) => {
-						reject(err);
-					})
+			.then(async(siuusers) => {
+				if(mdl.prevent_collapse){
+					for(var i=0; i<siuusers.length; i++){
+						let siuusr = siuusers[i];
+						await processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg)
+							.catch((err) => {
+								reject(err);
+							})
+					}
+					resolve('OK');
+				} else {
+					for(var i=0; i<siuusers.length; i++){
+						let siuusr = siuusers[i];
+						prm_array.push(processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg));
+					}
+					Promise.all(prm_array)
+						.then((values) => {
+							resolve('OK');
+						})
+						.catch((err) => {
+							reject(err);
+						})
+				}				
 			})
 			.catch(err => {
-				I_Log.create({message: err, 
+				/*I_Log.create({message: err, 
 					level: '0', 
 					i_syncDetail_id: log.i_syncDetail_id, 
-					i_syncUp_id: log.i_syncUp_id});
+					i_syncUp_id: log.i_syncUp_id});*/
 				reject(err);
 			})
 	})
@@ -434,8 +451,8 @@ function processCourse(detail, mdl, sync){
 				sync.shortname,
 				sync.mdl_category_id)
 					.catch((err) => {
-						console.log('=====> ERROR al consultar el curso de Moodle (processCourse)');
-						reject('ERROR al consultar el curso de Moodle (processCourse)');
+						console.log('====> ERROR al consultar el curso de Moodle (processCourse)');
+						reject(err);
 					})
 
 			/* Actualizo el syncDetail con curso */
@@ -446,8 +463,8 @@ function processCourse(detail, mdl, sync){
 					fields: ['mdl_course_id']
 				})
 					.catch((err) => {
-						console.log('=====> ERROR al actualizar el syncDetail -> curso (processCourse)');
-						reject('ERROR al actualizar el syncDetail -> curso (processCourse)');
+						console.log('====> ERROR al actualizar el syncDetail -> curso (processCourse)');
+						reject(err);
 					})
 
 			resolve(mdlact.id);
@@ -463,12 +480,12 @@ function processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_cours
 		
 		let assg = await C_SIU_Assignment.findOne({where: {siu_assignment_code: detail.siu_assignment_code}})
 			.catch((err) => {
-				console.log('=====> ERROR al consultar C_SIU_Assignment (getCourseFromMoodle)');
-				reject('ERROR al consultar C_SIU_Assignment (getCourseFromMoodle)');
+				console.log('====> ERROR al consultar C_SIU_Assignment (getCourseFromMoodle)');
+				reject(err);
 			})
 
 		/* Creo el grupo en Moodle y le asigno el curso antes creado */
-		let mdl_group_id = detail.mdl_group_id
+		let mdl_group_id = detail.mdl_group_id;
 
 		if(mdl_group_id == null){
 			let mdlgroup = await getGroupFromMoodle(					
@@ -478,8 +495,7 @@ function processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_cours
 				assg.name, 
 				assg.name)
 				.catch((err) => {
-					console.log('=====> ERROR al consultar grupo de Moodle (getCourseFromMoodle)');
-					reject('ERROR al consultar grupo de Moodle (getCourseFromMoodle)');
+					reject(err);
 				})
 
 			/* Actualizo el syncDetail con el grupo de moodle */
@@ -490,8 +506,8 @@ function processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_cours
 					fields: ['mdl_group_id']
 				})
 				.catch((err) => {
-					console.log('=====> ERROR al actualizar syncDetail ->grupo (getCourseFromMoodle)');
-					reject('ERROR al actualizar syncDetail -> grupo (getCourseFromMoodle)');
+					console.log('====> ERROR al actualizar syncDetail -> grupo (getCourseFromMoodle)');
+					reject(err);
 				})
 
 			mdl_group_id = mdlgroup.id;
@@ -518,38 +534,6 @@ function processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_cours
 	})
 }
 
-/*functioERROR al enrolar usuario en Moodlen getUsersFromMoodle(url, token, userid, roleid, courseid, counter){
-	return new Promise((resolve, reject) => {
-		let formData = {
-	    wstoken: token, 
-	    wsfunction: 'enrol_manual_enrol_users', 
-	    moodlewsrestformat: 'json',
-	    'enrolments[0][roleid]': roleid,	    
-			'enrolments[0][userid]': userid,
-			'enrolments[0][courseid]': courseid		
-	  };
-		axios.post(url, querystring.stringify(formData))
-			.then(resp => {
-				// El WS devuelve null, es porque enroló el usuario correctamente 
-				if(resp.data === null){
-					counter.registered = counter.registered + 1;
-					resolve('OK');
-				} else {
-					if(resp.data.exception) {
-						console.log("====> "+resp.data.message);
-					}
-					console.log('====>  ERROR al enrolar usuario en Moodle ' + userid + ' con parametros ' + roleid + ', ' + courseid);
-					reject('ERROR al enrrolar usuario');
-				}
-			})
-			.catch(err => {
-				console.log('====>  ERROR al enrolar usuario en Moodle ' + userid + ' con parametros ' + roleid + ', ' + courseid);
-				reject(err);
-			})
-		
-	})
-}
-*/
 function getEnroledUsersFromMoodle(url, token, groupid){
 	return new Promise((resolve, reject) => {
 		let formData = {
@@ -562,12 +546,12 @@ function getEnroledUsersFromMoodle(url, token, groupid){
 			.then(resp => {
 				if(resp.data.exception) {
 					console.log("====> ERROR al consultar los usuarios matriculados en Moodle: "+ groupid + ' :: ' + resp.data.message);
-					return reject('ERROR al consultar los usuarios matriculados en Moodle');
+					return reject(resp.data.exception);
 				}
 				return resolve(resp.data[0].userids);				
 			})
 			.catch(err => {
-				console.log("====> ERROR al consultar los usuarios matriculados en Moodle: "+ groupid + ' :: ' + err);
+				console.log("====> ERROR 500 al consultar los usuarios matriculados en Moodle: "+ groupid + ' :: ' + err);
 				reject(err);
 			})
 	})
@@ -589,11 +573,11 @@ function unenrolUsersFromMoodle(url, token, groupid, userid){
 				}
 				if(resp.data.exception) {
 					console.log("====> ERROR al quitar usuario de grupo en Moodle: "+ groupid + ' :: ' + resp.data.message);
-					return reject('ERROR al quitar usuario de grupo en Moodle');
+					return reject(resp.data.exception);
 				}							
 			})
 			.catch(err => {
-				console.log("====> ERROR al quitar usuario de grupo en Moodle: "+ groupid + ' :: ' + err);
+				console.log("====> ERROR 500 al quitar usuario de grupo en Moodle: "+ groupid + ' :: ' + err);
 				reject(err);
 			})
 	})
@@ -608,7 +592,7 @@ function unenrolUsers(mdl, siu_assignment_code, groupid, log){
 		//1
 		let syncusers = await C_MDL_SIU_Processed.findAll({attributes: ['mdl_user_id'], where: {siu_assignment_code: siu_assignment_code}})
 			.catch((err) => {
-				reject('=====> ERROR al consultar los usuario procesados durante la sincronizacion ' + err);
+				reject('====> ERROR al consultar los usuario procesados durante la sincronizacion ' + err);
 			})
 		var syncusers_id = [];
 		for(var i=0; i<syncusers.length; i++){
@@ -617,12 +601,9 @@ function unenrolUsers(mdl, siu_assignment_code, groupid, log){
 		//2
 		let mdlusers = await getEnroledUsersFromMoodle(mdl.url, mdl.token, groupid)
 			.catch((err) => {
-				reject('=====> ERROR al consultar los usuario matriculados de Moodle ' + err);
+				reject(err);
 			})
 		//3
-		//console.log('Tamaños: ' + syncusers_id.length + ', ' + mdlusers.length);
-		//console.log(syncusers_id);
-		//console.log(mdlusers);
 		if(syncusers_id.length < mdlusers.length){
 			var counter = 0;
 			for(let i=0; i<mdlusers.length; i++){
@@ -630,7 +611,7 @@ function unenrolUsers(mdl, siu_assignment_code, groupid, log){
 				if(!syncusers_id.includes(mdlusers[i])){
 					await unenrolUsersFromMoodle(mdl.url, mdl.token, groupid, mdlusers[i])
 						.catch((err) => {
-							reject('=====> ERROR al desmatricular usuarios de Moodle ' + err);
+							reject(err);
 						})
 					counter++;
 				}
@@ -663,6 +644,7 @@ module.exports = {
 		let siuurl;
 		let mdltoken;
 		let mdlurl;
+		let mdl_prev_coll;
 		let fixUsername;
 		let fixEmail;
 		let fixName;
@@ -678,6 +660,7 @@ module.exports = {
 			I_Config.findOne({ where: {key: 'MOODLE_REST_TOKEN'}}).then(s => {mdltoken = s}),
 			I_Config.findOne({ where: {key: 'MOODLE_COURSE_SHORTNAME_PREFIX'}}).then(s => {snprefix = s}),
 			I_Config.findOne({ where: {key: 'MOODLE_REST_URI'}}).then(s => {mdlurl = s}),
+			I_Config.findOne({ where: {key: 'MOODLE_PREVENT_COLLAPSE'}}).then(s => {mdl_prev_coll = s}),
 			I_Config.findOne({ where: {key: 'SIU_FIXMISSINGUSERNAME'}}).then(s => {fixUsername = s}),
 			I_Config.findOne({ where: {key: 'SIU_FIXMISSINGEMAIL'}}).then(s => {fixEmail = s}),
 			I_Config.findOne({ where: {key: 'SIU_FIXMISSINGNAME'}}).then(s => {fixName = s}),
@@ -689,6 +672,7 @@ module.exports = {
 		.then(async (values) => {
 
 			try {
+
 				let fixArray = [fixUsername.key, fixEmail.key, fixName.key, fixLastname.key];
 
 				sync = await I_Sync.findOne({where: {I_Sync_id: req.params.id}})
@@ -712,7 +696,8 @@ module.exports = {
 					shortname_prefix: snprefix.dataValues.value,
 					student_role_id: student_roleid.dataValues.value,
 					teacher_role_id: teacher_roleid.dataValues.value,
-					groups: []
+					groups: [],
+					prevent_collapse: mdl_prev_coll
 				}
 
 				var log = {
@@ -724,14 +709,16 @@ module.exports = {
 
 				let mdl_course_id = await processCourse(details[0], mdl, sync);
 
+				debugger;
+
 				for(var i=0; i<details.length; i++){
 					let detail = details[i].dataValues;
-					log.i_syncDetail_id = detail.I_SyncDetail_id, 		
+					log.i_syncDetail_id = detail.I_SyncDetail_id; 		
 					prm_array.push(processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_course_id));
 				}
 
 				Promise.all(prm_array)
-					.then( async (values) => {
+					.then(async (values) => {
 						I_Log.create({message: 'Se crearon '+ counter.created + ' usuarios en Moodle', 
 							level: '2', 
 							i_syncDetail_id: log.i_syncDetail_id, 
@@ -740,10 +727,13 @@ module.exports = {
 							level: '2', 
 							i_syncDetail_id: log.i_syncDetail_id, 
 							i_syncUp_id: log.i_syncUp_id});
-						//TODO: Sacar usuarios no matriculados
+						
+						let details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
 						var _array = [];
 						for (var j=0; j<details.length; j++) {
-						  _array.push(unenrolUsers(mdl, details[j].siu_assignment_code, details[j].mdl_group_id, log));
+							let detail = details[j].dataValues;
+							log.i_syncDetail_id = detail.I_SyncDetail_id;
+						  _array.push(unenrolUsers(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
 						}
 
 						Promise.all(_array)
@@ -752,21 +742,23 @@ module.exports = {
 								res.send(obj);
 							})
 							.catch((err) => {
-								let obj = {success: false, msg: 'Ocurrió un error durante la sincronización (Desmatricualcion). Consulte el log'};
+								let obj = {success: false, msg: 'Ocurrió un error durante la sincronización (Desmatriculacion). Consulte el log. ' + err};
 								res.send(obj);
 							})						
 					})
 					.catch((err) => {
-						let obj = {success: false, msg: 'Hubo un error durante la sincronización. Consulte el log'};
+						let obj = {success: false, msg: 'Hubo un error durante la sincronización. Consulte el log. ' + err};
 						res.send(obj);
 					})
 
 			} catch (err) {
-				throw err;
+				let obj = {success: false, msg: 'Hubo un error durante la sincronización. Consulte el log. ' + err};
+				res.send(obj);
 			}			
 		})
 		.catch(err => {
-			throw err;
+			let obj = {success: false, msg: 'Hubo un error durante la sincronización. Consulte el log. ' + err};
+			res.send(obj);
 		})
   }
 }

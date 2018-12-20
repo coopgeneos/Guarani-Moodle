@@ -3,20 +3,6 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     queryInterface.bulkInsert('I_Config', [{
-        key: 'SIU_REST_URI',
-        name: 'Rest URI de SIU Guarani',
-        value: 'http://guarani.example.com/guarani/3.13/rest/',
-        description: 'URI de servicios REST de SIU Guarani, ejemplo: http://guarani.example.com/guarani/3.13/rest/',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },{
-        key: 'MOODLE_REST_URI',
-        name: 'Rest URI de Moodle',
-        value: 'http://moodle.example.ar/webservice/rest/server.php',
-        description: 'URI de servicios REST de MOODLE, ejemplo: http://moodle.example.ar/webservice/rest/server.php',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },{
         key: 'MOODLE_ROOT_CATEGORY_ID',
         name: 'ID de categoria padre de MOODLE',
         value: '138',
@@ -101,13 +87,6 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date(),
       },{
-        key: 'SIU_TOKEN',
-        name: 'Credenciales de acceso a SIU',
-        value: '',
-        description: 'Credenciales de acceso a SIU',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },{
         key: 'SIU_FIXMISSINGNAME',
         name: 'Fix nombres de usuario Guarani?',
         value: 'true',
@@ -119,6 +98,13 @@ module.exports = {
         name: 'Fix apellido de usuario Guarani?',
         value: 'true',
         description: 'Se debe completar el apellido con otro dato',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },{
+        key: 'MOODLE_PREVENT_COLLAPSE',
+        name: 'Se desea prevenir HTTP 503?',
+        value: 'true',
+        description: 'Se evita que el servidor de Moodle colapse',
         createdAt: new Date(),
         updatedAt: new Date(),
       }

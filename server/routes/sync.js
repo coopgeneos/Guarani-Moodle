@@ -10,7 +10,7 @@ module.exports = (router) => {
   */
   router
     .route('/syncs')
-    .post(/*loginController.ensureLoggedIn, */syncController.addSync)
+    .post(loginController.ensureLoggedIn, syncController.addSync)
 
   /*
   curl --request PUT \
