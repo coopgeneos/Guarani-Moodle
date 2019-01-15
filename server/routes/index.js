@@ -6,6 +6,7 @@ const activity = require('./activity')
 const period = require('./period')
 const syncCategory = require('./syncCategory')
 const syncUp = require('./syncUp')
+const syncCohort = require('./syncCohort')
 
 module.exports = (router, passport) => {
     user(router);
@@ -16,4 +17,6 @@ module.exports = (router, passport) => {
     period(router);
     syncCategory(router);
     syncUp(router);
+    syncUp(router);
+    syncCohort(router);
 }

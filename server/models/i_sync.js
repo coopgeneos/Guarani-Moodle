@@ -21,6 +21,29 @@ module.exports = (sequelize, DataTypes) => {
 		status: {
 	    type: DataTypes.ENUM,
 	    values: ['PE', 'AP', 'AR']
+		},
+		task_from: {
+			type: DataTypes.DATE
+		},
+		task_to: {
+			type: DataTypes.DATE
+		},
+		task_periodicity: {
+			type: DataTypes.INTEGER,
+			validate: { min: 0, max: 23 }
+		},
+		task_next: {
+			type: DataTypes.INTEGER,
+			validate: { min: 0, max: 23 }
+		},
+		task_teacher: {
+			type: DataTypes.BOOLEAN
+		},
+		task_student: {
+			type: DataTypes.BOOLEAN
+		},
+		i_syncCohort_id: {
+			type: DataTypes.INTEGER
 		}
 	},
 	{

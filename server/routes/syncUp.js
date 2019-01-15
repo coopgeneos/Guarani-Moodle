@@ -9,5 +9,5 @@ module.exports = (router) => {
   */
   router
     .route('/syncUp/:id')
-    .post(loginController.ensureLoggedIn, syncUpController.syncUp)
+    .post(/*loginController.ensureLoggedIn,*/ syncUpController.syncUp)
 }

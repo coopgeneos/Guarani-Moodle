@@ -107,6 +107,13 @@ module.exports = {
         description: 'Se evita que el servidor de Moodle colapse',
         createdAt: new Date(),
         updatedAt: new Date(),
+      },{
+        key: 'CRON_PERIODICITY',
+        name: 'Periodicidad con que se desea ejecutar cron de sincronizacion',
+        value: '0 0 * * * *',
+        description: 'Ejecución cada una hora',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }
     ]);
 

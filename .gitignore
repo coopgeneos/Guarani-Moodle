@@ -25,8 +25,12 @@ yarn-error.log*
 
 classified.sql
 
+ws_test.js
+
 #sass
 .sass-cache
 src/*.map
 
 /server/seeders/classified.sql
+
+.vscode

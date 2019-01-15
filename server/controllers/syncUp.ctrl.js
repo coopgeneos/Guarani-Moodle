@@ -10,6 +10,7 @@ const C_MDL_SIU_Processed = require('./../models').C_MDL_SIU_Processed
 const I_Log = require('./../models').I_Log
 const axios = require('axios');
 const querystring = require('querystring');
+const I_SyncCohort = require('./../models').I_SyncCohort;
 
 function getCourseFromMoodle(url, token, name, shortname, categoryid){
 	return new Promise((resolve, reject) => {
@@ -225,6 +226,37 @@ function addUsersToGroupInMoodle(url, token, userid, groupid){
 	})
 }
 
+function addUserToCohortInMoodle(url, token, userid, cohortid){
+	return new Promise((resolve, reject) => {
+		let formData = {
+	    wstoken: token, 
+	    wsfunction: 'core_cohort_add_cohort_members', 
+	    moodlewsrestformat: 'json',
+	    'members[0][cohorttype][type]': 'id',
+			'members[0][cohorttype][value]': cohortid,
+			'members[0][usertype][type]': 'id',
+			'members[0][usertype][value]': userid			
+	  };
+		axios.post(url, querystring.stringify(formData))
+			.then(resp => {
+				/* El WS devuelve un arreglo vacio, es porque el usuario fue añadido al cohorte correctamente */
+				if(resp.data.warnings.length == 0){
+					resolve('OK');
+				} else {
+					if(resp.data.warnings[0]) {
+						console.log("====> ERROR al agregar miembro a un cohorte: " + userid + ", " + cohortid + " :: " + resp.data.warnings[0].message);
+						return reject(resp.data.warnings[0].message);
+					}
+					reject("ERROR al agregar miembro a un cohorte");
+				}
+			})
+			.catch(err => {
+				console.log("====> ERROR 500 al agregar miembro a un cohorte: " + userid + ", " + cohortid + " :: " + err);
+				reject(err);
+			})
+	})
+}
+
 function fixSIUUser(usr, array, log){
 	return new Promise((resolve, reject) => {
 		
@@ -290,7 +322,7 @@ function fixSIUUser(usr, array, log){
 	})	
 }
 
-function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg){
+function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg, mdl_cohort_id){
 	return new Promise(async (resolve, reject) => {
 		await fixSIUUser(siuusr, fixArray, log)
 		 .catch ((err) => {	
@@ -371,6 +403,16 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 						reject(err);
 					})
 
+				/* Agrego el usuario al cohorte */
+				await addUserToCohortInMoodle(mdl.url, mdl.token, localusr.mdl_user_id, mdl_cohort_id)
+				.catch(err => {
+					I_Log.create({message: 'ERROR al asignar el usuario '+localusr.mdl_user_id+' al cohorte '+mdl_cohort_id+' en moodle', 
+						level: '0', 
+						i_syncDetail_id: log.i_syncDetail_id, 
+						i_syncUp_id: log.i_syncUp_id});
+					reject(err);
+				})
+
 				await C_MDL_SIU_Processed.create({
 					i_sync_id: log.i_sync_id, 
 					siu_assignment_code: assg.siu_assignment_code, 
@@ -400,7 +442,7 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 	})
 }
 
-function createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg) {
+function createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg, mdl_cohort_id) {
 	return new Promise((resolve, reject) => {
 		var prm_array = [];
 		/* Obtengo los alumnos/docentes desde SIU */							
@@ -475,7 +517,7 @@ function processCourse(detail, mdl, sync){
 	})
 }
 
-function processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_course_id){
+function processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_course_id, mdl_cohort_id){
 	return new Promise(async(resolve, reject) => {
 		
 		let assg = await C_SIU_Assignment.findOne({where: {siu_assignment_code: detail.siu_assignment_code}})
@@ -514,17 +556,19 @@ function processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_cours
 		}
 		
 		mdl.groups.push(mdl_group_id);
-		//let siuurl = siu.fixurl + '/' + assg.siu_assignment_code + '/alumnos?limit=9999';
-		//let mdl_role_id = mdl.student_role_id;
-
-		Promise.all([
-			createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl.student_role_id, 
+		
+		let promises = [];
+		if(sync.task_student && sync.task_student == true){
+			promises.push(createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl.student_role_id, 
 				siu.fixurl + '/' + assg.siu_assignment_code + '/alumnos?limit=9999', 
-				assg),
-			createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl.teacher_role_id, 
+				assg, mdl_cohort_id));
+		}
+		if(sync.task_teacher && sync.task_teacher == true){
+			promises.push(createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl.teacher_role_id, 
 				siu.fixurl + '/' + assg.siu_assignment_code + '/docentes?limit=9999', 
-				assg)
-		])
+				assg, mdl_cohort_id));
+		}
+		Promise.all(promises)
 			.then((values) => {
 				resolve('Ok');
 			})
@@ -652,9 +696,10 @@ module.exports = {
 		let student_roleid;
 		let teacher_roleid;
 		let snprefix;
+		let syncCohort;
 		
 		Promise.all([
-			I_SyncUp.create({I_Sync_id: req.params.id}).then(s => {syncup = s}),
+			I_SyncUp.create({i_sync_id: req.params.id}).then(s => {syncup = s}),
 			I_Config.findOne({ where: {key: 'SIU_TOKEN'}}).then(s => {siutoken = s}),
 			I_Config.findOne({ where: {key: 'SIU_REST_URI'}}).then(s => {siuurl = s}),
 			I_Config.findOne({ where: {key: 'MOODLE_REST_TOKEN'}}).then(s => {mdltoken = s}),
@@ -676,6 +721,7 @@ module.exports = {
 				let fixArray = [fixUsername.key, fixEmail.key, fixName.key, fixLastname.key];
 
 				sync = await I_Sync.findOne({where: {I_Sync_id: req.params.id}})
+				let syncCohort = await I_SyncCohort.findOne({ where: {i_syncCohort_id: sync.i_syncCohort_id}});
 
 				let details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
 
@@ -714,7 +760,7 @@ module.exports = {
 				for(var i=0; i<details.length; i++){
 					let detail = details[i].dataValues;
 					log.i_syncDetail_id = detail.I_SyncDetail_id; 		
-					prm_array.push(processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_course_id));
+					prm_array.push(processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_course_id, syncCohort.mdl_cohort_id));
 				}
 
 				Promise.all(prm_array)
