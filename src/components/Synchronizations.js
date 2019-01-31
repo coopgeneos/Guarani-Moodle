@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { loadSyncs,doSyncUp } from './../redux/actions/actions';
 import { Button } from 'react-bootstrap';
+import Popup from 'reactjs-popup'
 
 import BootstrapTable from 'react-bootstrap-table-next';
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
@@ -13,6 +14,39 @@ const mapStateToProps = state => {
         error: state.sync.error
     }
 }
+
+const SyncUpConfiguration =  ({handleCloseSyncUpConfiguration, handleSaveSyncUpConfiguration, SyncUpConfigurationOpenState}) => (
+		
+		<Popup
+          open={SyncUpConfigurationOpenState}
+          closeOnDocumentClick
+          onClose={handleCloseSyncUpConfiguration}
+        >
+          <div>
+            <a className="close" onClick={handleCloseSyncUpConfiguration}>
+              &times;
+            </a>
+            <fieldset className="col-md-12">
+				<legend>Sincronizacion automatica</legend>
+	        		<BootstrapTable 
+	        		keyField='I_Sync_id' 
+	        		data={ this.props.syncs } 
+	        		columns={ this.syncsColumns } 
+	        		striped
+					hover
+					condensed
+					expandRow={ this.expandRow }
+					filter={ filterFactory() }
+					noDataIndication="No hay ninguna Sincronizacion. Cree sincronizaciones desde la seccion actividades."
+	        		pagination={ paginationFactory(this.paginationOptions) }
+	        		/>
+	        </fieldset>
+            <Button onClick={handleSaveSyncUpConfiguration} >Guardar</Button>
+          </div>
+         
+	    </Popup>
+	    
+	)
 
 class Synchronizations extends Component {
 
@@ -104,8 +138,8 @@ class Synchronizations extends Component {
 		    formatter: (cellContent, row) => {
 		        return (
 		        	<div>
-			         <Button data-id={row.I_Sync_id} onClick={(e) => this.handleDoSyncUp(row, e)}>Ejecutar</Button>
-					 <Button >Configurar</Button>
+			         <Button onClick={(e) => this.handleDoSyncUp(row, e)}>Ejecutar</Button>
+					 <Button onClick={(e) => this.handleOpenSyncUpConfiguration(row, e)} >Configurar</Button>
 					 <Button >Logs</Button>
 				 	</div>
 		        );
@@ -133,6 +167,14 @@ class Synchronizations extends Component {
 		}
 
 	   	this.handleDoSyncUp = this.handleDoSyncUp.bind(this)
+	   	this.handleOpenSyncUpConfiguration = this.handleOpenSyncUpConfiguration.bind(this)
+	   	this.handleCloseSyncUpConfiguration = this.handleCloseSyncUpConfiguration.bind(this)
+	   	this.handleSaveSyncUpConfiguration = this.handleSaveSyncUpConfiguration.bind(this)
+	   	
+	   	this.state = {
+	    	SyncUpConfigurationOpen:false
+	    }
+
 	 }
 
 	handleDoSyncUp(row,e) {
@@ -140,7 +182,28 @@ class Synchronizations extends Component {
 		this.props.doSyncUp(row.I_Sync_id);
 	}
 
+	handleOpenSyncUpConfiguration(row,e) {
+		e.preventDefault();
+		console.log(row);
+		this.setState({ SyncUpConfigurationOpen: true })
+	}
+
+	handleCloseSyncUpConfiguration (e) {
+	    this.setState({ SyncUpConfigurationOpen: false })
+	}
+
+	handleSaveSyncUpConfiguration () {
+		console.log('Save Configuration!');
+		this.handleCloseSyncUpConfiguration();
+	}
+
     render() {
+    	const SyncUpConfigurationProps = {
+	      handleCloseSyncUpConfiguration: this.handleCloseSyncUpConfiguration,
+	      handleSaveSyncUpConfiguration: this.handleSaveSyncUpConfiguration,
+	      SyncUpConfigurationOpenState: this.state.SyncUpConfigurationOpen
+	    };
+
         return ( 
             <div className="page activities clearfix">
         		<fieldset className="col-md-12">
@@ -158,6 +221,7 @@ class Synchronizations extends Component {
 		        		pagination={ paginationFactory(this.paginationOptions) }
 		        		/>
 		        </fieldset>
+		        <SyncUpConfiguration {...SyncUpConfigurationProps}/>
 			</div>
         );
     }
