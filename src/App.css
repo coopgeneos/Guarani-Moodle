@@ -42,4 +42,9 @@ form label {
 form .help-block {
   font-style: italic; }
 
+button.fixed-btn {
+  position: fixed;
+  bottom: 30px;
+  right: calc(50% - 570px); }
+
 /*# sourceMappingURL=App.css.map */

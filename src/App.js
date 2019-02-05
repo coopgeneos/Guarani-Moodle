@@ -14,11 +14,13 @@ import Synchronizations from './components/Synchronizations'
 import Profile from './components/Profile'
 
 import { Grid } from 'react-bootstrap';
+import {NotificationContainer} from 'react-notifications';
 
-import './App.css';
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 import 'react-bootstrap-table2-filter/dist/react-bootstrap-table2-filter.min.css';
 import 'react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.min.css';
+import 'react-notifications/lib/notifications.css';
+import './App.css';
 
 
 const mapStateToProps = state => {
@@ -54,6 +56,7 @@ class App extends Component {
               <PrivateRoute path="/*" component={Profile} />
           </Switch>
         </Grid>
+         <NotificationContainer/>
       </div>
     );
   }

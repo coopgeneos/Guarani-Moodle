@@ -1,5 +1,6 @@
 import axios from 'axios'
 import {store} from '../.././redux/store';
+import {NotificationManager} from 'react-notifications';
 
 //Refresh user data from user ID
 export function getUser (userID) {
@@ -298,22 +299,24 @@ export function loadCategories () {
 export function createCategory (category) {
 	return (dispatch) => {
 		dispatch({type: 'SET_APP_LOADING'})
-	    console.log('Start creating Category');
 	    let aux = {"mdl_category_id":category.newCategory_id,"name":category.newCategory_name}
 	    axios
 	    .post('syncCategories', aux)
 		.then(function (response) {
 		  	if (response.data.success){
 	    		store.dispatch(loadCategories());
+	    		dispatch({type: 'CLOSE_CATEGORIES_POPUP'});
+	    		NotificationManager.success('Nueva categoría creada: '+category.newCategory_name, '¡Exito!');
 	    	}
-	    	else
-	    		console.log("error",response.data.msg)
+	    	else{
+	    		NotificationManager.error('Error al crear la categoria: '+response.data.msg,'Error');
+	    	}
 	  	})
 	  	.catch(function (error) {
+	  		NotificationManager.error('Error', 'No hay conección');
 	    	console.log("error",error.response);
 	  	})
 	  	.then(function () {
-	    	console.log('End create Category');
    			dispatch({type: 'UNSET_APP_LOADING'});
 	  	});  
 	}

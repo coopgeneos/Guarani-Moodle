@@ -1,5 +1,6 @@
 const initialState = {
 	categories: [],
+	popup:false,
 };
 
 export default (state = initialState, action) => {
@@ -8,6 +9,11 @@ export default (state = initialState, action) => {
 			return {
 				...state,
 				categories: action.categories,
+			}
+		case 'CLOSE_CATEGORIES_POPUP':
+			return {
+				...state,
+				popup: false,
 			}
 		default:
 			return state;

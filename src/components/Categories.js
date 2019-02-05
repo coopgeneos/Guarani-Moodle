@@ -1,23 +1,77 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { loadCategories,createCategory } from './../redux/actions/actions';
-import { Col,FormGroup,ControlLabel,FormControl,Button } from 'react-bootstrap';
+import { Col,Form,FormGroup,ControlLabel,FormControl,Button } from 'react-bootstrap';
 import BootstrapTable from 'react-bootstrap-table-next';
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
 import paginationFactory from 'react-bootstrap-table2-paginator';
+import Popup from 'reactjs-popup';
+import { defaultTablePagination } from './../utils/commons';
+
 
 
 const mapStateToProps = state => {
     return {
         categories: state.category.categories,
-        error: state.category.error,
+        AddCategoryOpen: state.category.popup,
     }
 }
+
+
+const AddCategory =  ({handleCloseAddCategory, handleCreateCategory, AddCategoryOpenState, handleChange}) => (
+		
+		<Popup
+          open={AddCategoryOpenState}
+          closeOnDocumentClick
+          onClose={handleCloseAddCategory}
+        >
+          <div>
+            <a className="close" onClick={handleCloseAddCategory}>
+              &times;
+            </a>
+            <fieldset className="col-md-12">
+				<legend>Agregar categoría</legend>
+	        		<Form id="newCategory" horizontal>
+						<FormGroup key="newCategory" controlId={"formHorizontal"+"newCategory"} >
+						    <Col md={4} sm={4}>
+						      <FormControl type="text" name="newCategory_name" placeholder="Nombre de Categoria" onChange={handleChange}/>
+						    </Col>
+						    <Col md={4} sm={4}>
+						      <FormControl type="text" name="newCategory_id" placeholder="ID de Categoria en Moodle" onChange={handleChange}/>
+						    </Col>
+						</FormGroup>
+						<FormGroup key="newCategoryButton" controlId={"formHorizontal"+"newCategory"} >
+							<Col md={2} sm={6}>
+								<Button onClick={handleCloseAddCategory} >Cancelar</Button>
+							</Col>
+							<Col md={2} sm={6}>
+								<Button onClick={handleCreateCategory} >Guardar</Button>
+							</Col>
+						</FormGroup>
+					</Form>
+	        </fieldset>
+
+           
+          </div>
+         
+	    </Popup>
+	    
+	)
 	
 class Categories extends Component {
 
 	componentDidMount() {
         this.props.loadCategories();
+    }
+
+    /*
+    	Esta funcion me permite tener actualizado el estado del popup a travez de las propiedades
+    	que recibo del reducer.
+    */
+    componentWillReceiveProps(newProps){
+     	if(newProps.AddCategoryOpen != this.state.AddCategoryOpen){
+        	this.setState({AddCategoryOpen: newProps.AddCategoryOpen })
+     	}
     }
 
 	constructor () {
@@ -43,32 +97,20 @@ class Categories extends Component {
 			filter: textFilter()
 		}];
 
-		this.paginationOptions = {
-		  pageStartIndex: 1,
-		  withFirstAndLast: false,
-		  noDataText: 'No hay ninguna Categoria. Por favor cree categorias desde el boton "Agregar categoria".',
-		  sizePerPageList: [{
-		    text: '10', value: 10
-		  }, {
-		    text: '20', value: 20
-		  }, {
-		    text: '50', value: 50
-		  }] 
-		}
-
 		this.state = {
-	    	newCategory:{}
+	    	newCategory:{},
 	    }
 
 	    this.handleCreateCategory = this.handleCreateCategory.bind(this)
+	    this.handleCloseAddCategory = this.handleCloseAddCategory.bind(this)
+	    this.handleOpenAddCategory = this.handleOpenAddCategory.bind(this)
 	    this.handleChange = this.handleChange.bind(this)
 	 }
 
 	handleCreateCategory(e) {
 		e.preventDefault();
-		//Take data from input
-		console.log(this.state.newCategory);
-		this.props.createCategory(this.state.newCategory);
+		console.log(this.props.createCategory(this.state.newCategory));
+		//this.setState({ AddCategoryOpen: false })
 	}
 
 	handleChange(e) {
@@ -77,36 +119,62 @@ class Categories extends Component {
 		this.setState({newCategory:newCategory})
 	}
 
+	handleCloseAddCategory (e) {
+		console.log('Close');
+	    this.setState({ AddCategoryOpen: false })
+	}
+
+	handleOpenAddCategory(category,e) {
+		e.preventDefault();
+		
+		if (category != null) {
+			newCategory:category
+		}
+		else {
+			this.state = {
+		    	newCategory:{}
+		    }
+		}
+
+		this.setState({ AddCategoryOpen: true })
+	}
+
     render() {
+
+    	const AddCategoryProps = {
+	      handleCloseAddCategory: this.handleCloseAddCategory,
+	      handleCreateCategory: this.handleCreateCategory,
+	      AddCategoryOpenState: this.state.AddCategoryOpen,
+	      handleChange: this.handleChange
+	    };
+
+	    console.log('State add Category:',this.state.AddCategoryOpen);
+
         return ( 
-            <div className="page activities clearfix">
+            <div className="page categories clearfix">
         		<fieldset className="col-md-12">
-    				<legend>Categorias</legend>
-    					<form id="newCategory">
-    					 <FormGroup key="newCategory" controlId={"formHorizontal"+"newCategory"} >
-						    <Col md={4} sm={4}>
-						      <FormControl type="text" name="newCategory_name" placeholder="Nombre de Categoria" onChange={this.handleChange}/>
-						    </Col>
-						    <Col md={4} sm={4}>
-						      <FormControl type="text" name="newCategory_id" placeholder="ID de Categoria en Moodle" onChange={this.handleChange}/>
-						    </Col>
-						    <Col md={4} sm={4}>
-						    	<Button onClick={this.handleCreateCategory}>Agregar categoria</Button>
-						    </Col>
-						</FormGroup>
-						</form>
-		        		<BootstrapTable 
-		        		keyField='I_SyncCategory_id' 
-		        		data={ this.props.categories } 
-		        		columns={ this.categoriesColumns } 
-		        		striped
-						hover
-						condensed
-						filter={ filterFactory() }
-		        		pagination={ paginationFactory(this.paginationOptions) }
-		        		/>
+    				<Col md={8} sm={6}>
+    					<legend>Categorias</legend>
+    				</Col>
+    				<Col md={4} sm={6}>
+				    	<Button onClick={(e) => this.handleOpenAddCategory(null,e)}>Agregar categoria</Button>
+				    </Col>
+	        		<BootstrapTable 
+	        		keyField='I_SyncCategory_id' 
+	        		data={ this.props.categories } 
+	        		columns={ this.categoriesColumns } 
+	        		striped
+					hover
+					condensed
+					filter={ filterFactory() }
+	        		pagination={ paginationFactory(defaultTablePagination) }
+	        		noDataIndicacion={'No hay ninguna Categoria. Por favor cree categorias desde el boton "Agregar categoria".'}
+	        		/>
 		        </fieldset>
+		        <AddCategory {...AddCategoryProps} />
 			</div>
+
+
         );
     }
 }

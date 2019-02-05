@@ -1,5 +1,6 @@
 const initialState = {
 	appLoading: 0,
+	message: 0,
 };
 
 export default (state = initialState, action) => {
@@ -14,6 +15,12 @@ export default (state = initialState, action) => {
 			return {
 				...state,
 				appLoading: state.appLoading - 1
+
+			}
+		case 'SET_APP_MESSAGE':
+			return {
+				...state,
+				message: state.message,
 
 			}
 		default:
