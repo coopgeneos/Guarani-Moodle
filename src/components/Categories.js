@@ -18,7 +18,7 @@ const mapStateToProps = state => {
 }
 
 
-const AddCategory =  ({handleCloseAddCategory, handleCreateCategory, AddCategoryOpenState, handleChange}) => (
+const AddCategory =  ({handleCloseAddCategory, handleCreateCategory, AddCategoryOpenState, handleChange, newCategory_name, newCategory_id}) => (
 		
 		<Popup
           open={AddCategoryOpenState}
@@ -30,14 +30,14 @@ const AddCategory =  ({handleCloseAddCategory, handleCreateCategory, AddCategory
               &times;
             </a>
             <fieldset className="col-md-12">
-				<legend>Agregar categoría</legend>
+				<legend>{ newCategory_name ? 'Editar categoría' : 'Agregar categoría'}</legend>
 	        		<Form id="newCategory" horizontal>
 						<FormGroup key="newCategory" controlId={"formHorizontal"+"newCategory"} >
 						    <Col md={4} sm={4}>
-						      <FormControl type="text" name="newCategory_name" placeholder="Nombre de Categoria" onChange={handleChange}/>
+						      <FormControl type="text" name="newCategory_name" placeholder="Nombre de Categoria" onChange={handleChange} defaultValue={newCategory_name}/>
 						    </Col>
 						    <Col md={4} sm={4}>
-						      <FormControl type="text" name="newCategory_id" placeholder="ID de Categoria en Moodle" onChange={handleChange}/>
+						      <FormControl type="text" name="newCategory_id" placeholder="ID de Categoria en Moodle" onChange={handleChange} defaultValue={newCategory_id}/>
 						    </Col>
 						</FormGroup>
 						<FormGroup key="newCategoryButton" controlId={"formHorizontal"+"newCategory"} >
@@ -95,6 +95,17 @@ class Categories extends Component {
 			dataField: 'mdl_category_id',
 			text: 'ID en moodle',
 			filter: textFilter()
+		}, {
+		    dataField: 'actions',
+		    isDummyField: true,
+		    text: 'Acciones',
+		    formatter: (cellContent, row) => {
+		        return (
+		        	<div>
+			         <Button onClick={(e) => this.handleOpenAddCategory(row, e)}>Editar</Button>
+				 	</div>
+		        );
+		    }    
 		}];
 
 		this.state = {
@@ -109,8 +120,7 @@ class Categories extends Component {
 
 	handleCreateCategory(e) {
 		e.preventDefault();
-		console.log(this.props.createCategory(this.state.newCategory));
-		//this.setState({ AddCategoryOpen: false })
+		this.props.createCategory(this.state.newCategory);
 	}
 
 	handleChange(e) {
@@ -120,23 +130,20 @@ class Categories extends Component {
 	}
 
 	handleCloseAddCategory (e) {
-		console.log('Close');
 	    this.setState({ AddCategoryOpen: false })
 	}
 
-	handleOpenAddCategory(category,e) {
+	handleOpenAddCategory(categoryRow,e) {
 		e.preventDefault();
-		
-		if (category != null) {
-			newCategory:category
-		}
-		else {
-			this.state = {
-		    	newCategory:{}
-		    }
+		let newCategory = {};
+		if (categoryRow != null) {
+			newCategory = { newCategory_name:categoryRow.name ,
+		    				newCategory_id: categoryRow.mdl_category_id,
+		    				I_SyncCategory_id: categoryRow.I_SyncCategory_id
+		    			  }
 		}
 
-		this.setState({ AddCategoryOpen: true })
+		this.setState({ AddCategoryOpen: true , newCategory:newCategory})
 	}
 
     render() {
@@ -145,11 +152,11 @@ class Categories extends Component {
 	      handleCloseAddCategory: this.handleCloseAddCategory,
 	      handleCreateCategory: this.handleCreateCategory,
 	      AddCategoryOpenState: this.state.AddCategoryOpen,
-	      handleChange: this.handleChange
+	      handleChange: this.handleChange,
+	      newCategory_name: this.state.newCategory.newCategory_name,
+	      newCategory_id: this.state.newCategory.newCategory_id
 	    };
-
-	    console.log('State add Category:',this.state.AddCategoryOpen);
-
+	    
         return ( 
             <div className="page categories clearfix">
         		<fieldset className="col-md-12">

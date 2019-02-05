@@ -300,24 +300,50 @@ export function createCategory (category) {
 	return (dispatch) => {
 		dispatch({type: 'SET_APP_LOADING'})
 	    let aux = {"mdl_category_id":category.newCategory_id,"name":category.newCategory_name}
-	    axios
-	    .post('syncCategories', aux)
-		.then(function (response) {
-		  	if (response.data.success){
-	    		store.dispatch(loadCategories());
-	    		dispatch({type: 'CLOSE_CATEGORIES_POPUP'});
-	    		NotificationManager.success('Nueva categoría creada: '+category.newCategory_name, '¡Exito!');
-	    	}
-	    	else{
-	    		NotificationManager.error('Error al crear la categoria: '+response.data.msg,'Error');
-	    	}
-	  	})
-	  	.catch(function (error) {
-	  		NotificationManager.error('Error', 'No hay conección');
-	    	console.log("error",error.response);
-	  	})
-	  	.then(function () {
-   			dispatch({type: 'UNSET_APP_LOADING'});
-	  	});  
+	    
+
+	    if (typeof category.I_SyncCategory_id != null && category.I_SyncCategory_id != 0){
+	    	axios
+		    .put('syncCategories/'+category.I_SyncCategory_id, aux)
+			.then(function (response) {
+			  	if (response.data.success){
+		    		store.dispatch(loadCategories());
+		    		dispatch({type: 'CLOSE_CATEGORIES_POPUP'});
+		    		NotificationManager.success('Categoría editada: '+category.newCategory_name, '¡Exito!');
+		    	}
+		    	else{
+		    		NotificationManager.error('Error al editar la categoria: '+response.data.msg,'Error');
+		    	}
+		  	})
+		  	.catch(function (error) {
+		  		NotificationManager.error('Error', 'No hay conección');
+		    	console.log("error",error.response);
+		  	})
+		  	.then(function () {
+	   			dispatch({type: 'UNSET_APP_LOADING'});
+		  	});
+	    }
+	    
+	    else {
+		    axios
+		    .post('syncCategories', aux)
+			.then(function (response) {
+			  	if (response.data.success){
+		    		store.dispatch(loadCategories());
+		    		dispatch({type: 'CLOSE_CATEGORIES_POPUP'});
+		    		NotificationManager.success('Nueva categoría creada: '+category.newCategory_name, '¡Exito!');
+		    	}
+		    	else{
+		    		NotificationManager.error('Error al crear la categoria: '+response.data.msg,'Error');
+		    	}
+		  	})
+		  	.catch(function (error) {
+		  		NotificationManager.error('Error', 'No hay conección');
+		    	console.log("error",error.response);
+		  	})
+		  	.then(function () {
+	   			dispatch({type: 'UNSET_APP_LOADING'});
+		  	});
+		} 
 	}
 }
