@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { loadCategories,createCategory } from './../redux/actions/actions';
-import { Col,Form,FormGroup,ControlLabel,FormControl,Button } from 'react-bootstrap';
+import { Col,Form,FormGroup,FormControl,Button } from 'react-bootstrap';
 import BootstrapTable from 'react-bootstrap-table-next';
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
 import paginationFactory from 'react-bootstrap-table2-paginator';
@@ -18,7 +18,7 @@ const mapStateToProps = state => {
 }
 
 
-const AddCategory =  ({handleCloseAddCategory, handleCreateCategory, AddCategoryOpenState, handleChange, newCategory_name, newCategory_id}) => (
+const AddCategory =  ({handleCloseAddCategory, handleCreateCategory, AddCategoryOpenState, handleChange, newCategory_name, newCategory_id, I_SyncCategory_id}) => (
 		
 		<Popup
           open={AddCategoryOpenState}
@@ -30,7 +30,7 @@ const AddCategory =  ({handleCloseAddCategory, handleCreateCategory, AddCategory
               &times;
             </a>
             <fieldset className="col-md-12">
-				<legend>{ newCategory_name ? 'Editar categoría' : 'Agregar categoría'}</legend>
+				<legend>{ I_SyncCategory_id ? 'Editar categoría' : 'Agregar categoría'}</legend>
 	        		<Form id="newCategory" horizontal>
 						<FormGroup key="newCategory" controlId={"formHorizontal"+"newCategory"} >
 						    <Col md={4} sm={4}>
@@ -69,7 +69,7 @@ class Categories extends Component {
     	que recibo del reducer.
     */
     componentWillReceiveProps(newProps){
-     	if(newProps.AddCategoryOpen != this.state.AddCategoryOpen){
+     	if(newProps.AddCategoryOpen !== this.state.AddCategoryOpen){
         	this.setState({AddCategoryOpen: newProps.AddCategoryOpen })
      	}
     }
@@ -154,7 +154,8 @@ class Categories extends Component {
 	      AddCategoryOpenState: this.state.AddCategoryOpen,
 	      handleChange: this.handleChange,
 	      newCategory_name: this.state.newCategory.newCategory_name,
-	      newCategory_id: this.state.newCategory.newCategory_id
+	      newCategory_id: this.state.newCategory.newCategory_id,
+	      I_SyncCategory_id: this.state.newCategory.I_SyncCategory_id
 	    };
 	    
         return ( 

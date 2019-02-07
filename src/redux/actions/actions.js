@@ -302,7 +302,7 @@ export function createCategory (category) {
 	    let aux = {"mdl_category_id":category.newCategory_id,"name":category.newCategory_name}
 	    
 
-	    if (typeof category.I_SyncCategory_id != null && category.I_SyncCategory_id != 0){
+	    if (typeof category.I_SyncCategory_id !== 'undefined' && category.I_SyncCategory_id != 0){
 	    	axios
 		    .put('syncCategories/'+category.I_SyncCategory_id, aux)
 			.then(function (response) {
@@ -335,6 +335,79 @@ export function createCategory (category) {
 		    	}
 		    	else{
 		    		NotificationManager.error('Error al crear la categoria: '+response.data.msg,'Error');
+		    	}
+		  	})
+		  	.catch(function (error) {
+		  		NotificationManager.error('Error', 'No hay conección');
+		    	console.log("error",error.response);
+		  	})
+		  	.then(function () {
+	   			dispatch({type: 'UNSET_APP_LOADING'});
+		  	});
+		} 
+	}
+}
+
+export function loadCohorts () {
+	 
+   	return (dispatch) => {
+      	dispatch({type: 'SET_APP_LOADING'})
+
+        axios.get('syncCohorts',{})
+		  .then(function (response) {
+		  	if (response.data.data)
+	    		dispatch({type: 'SET_COHORTS', cohorts:response.data.data})
+	    	else
+	    		console.log("error",response.data.msg)
+		  })
+		  .catch(function (error) {
+		    console.log("error",error.response);
+		  })
+		  .then(function () {
+	   		dispatch({type: 'UNSET_APP_LOADING'});
+		  });  
+	}
+}
+
+export function createCohort (cohort) {
+	return (dispatch) => {
+		dispatch({type: 'SET_APP_LOADING'})
+	    let aux = {"mdl_cohort_id":cohort.newCohort_id,"name":cohort.newCohort_name}
+	 
+
+	    if (typeof cohort.I_SyncCohort_id !== 'undefined' && cohort.I_SyncCohort_id != 0){
+	    	axios
+		    .put('syncCohorts/'+cohort.I_SyncCohort_id, aux)
+			.then(function (response) {
+			  	if (response.data.success){
+		    		store.dispatch(loadCohorts());
+		    		dispatch({type: 'CLOSE_COHORTS_POPUP'});
+		    		NotificationManager.success('Cohorte editada: '+cohort.newCohort_name, '¡Exito!');
+		    	}
+		    	else{
+		    		NotificationManager.error('Error al editar la cohorte: '+response.data.msg,'Error');
+		    	}
+		  	})
+		  	.catch(function (error) {
+		  		NotificationManager.error('Error', 'No hay conección');
+		    	console.log("error",error.response);
+		  	})
+		  	.then(function () {
+	   			dispatch({type: 'UNSET_APP_LOADING'});
+		  	});
+	    }
+	    
+	    else {
+		    axios
+		    .post('syncCohorts', aux)
+			.then(function (response) {
+			  	if (response.data.success){
+		    		store.dispatch(loadCohorts());
+		    		dispatch({type: 'CLOSE_COHORTS_POPUP'});
+		    		NotificationManager.success('Nueva cohorte creada: '+cohort.newCohort_name, '¡Exito!');
+		    	}
+		    	else{
+		    		NotificationManager.error('Error al crear la cohorte: '+response.data.msg,'Error');
 		    	}
 		  	})
 		  	.catch(function (error) {

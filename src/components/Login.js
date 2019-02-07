@@ -35,7 +35,6 @@ class Login extends Component {
 			return
 		}
 
-		var lenght = this.state.user ? this.state.user.length : 0
 		if (lenght <= 0){
 			this.setState({error:"Debe ingresar un nombre de usuario"})
 			return
