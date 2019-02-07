@@ -1,25 +1,91 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { loadCategories,loadActivities,refreshActivities,createSync } from './../redux/actions/actions';
-import { Col,FormGroup,ControlLabel,FormControl,Button } from 'react-bootstrap';
+import { loadCategories,loadActivities,loadCohorts,loadPeriods,refreshActivities,createSync } from './../redux/actions/actions';
+import { Col,Form,FormGroup,ControlLabel,FormControl,Button } from 'react-bootstrap';
 import BootstrapTable from 'react-bootstrap-table-next';
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
 import paginationFactory from 'react-bootstrap-table2-paginator';
+import { defaultTablePagination } from './../utils/commons';
+import Popup from 'reactjs-popup';
+
 
 
 const mapStateToProps = state => {
     return {
         activities: state.activity.activities,
-        error: state.activity.error,
-        categories: state.category.categories
+        categories: state.category.categories,
+        cohorts: state.cohort.cohorts,
+        AddSyncOpen: state.activity.popup,
+        periods: state.common.periods,
     }
 }
+
+const AddSyncronization =  ({handleCloseAddSync, handleCreateSync, AddSyncOpenState, handleChange, categories, cohorts}) => (
+		
+		<Popup
+          open={AddSyncOpenState}
+          closeOnDocumentClick
+          onClose={handleCloseAddSync}
+        >
+          <div>
+            <a className="close" onClick={handleCloseAddSync}>
+              &times;
+            </a>
+            <fieldset className="col-md-12">
+				<legend>{'Agregar sincronización'}</legend>
+	        		<Form id="newSync" horizontal>
+						<FormGroup key="newSync" controlId={"formHorizontal"+"newSync"} >
+						    <Col md={4} sm={4}>
+						      <FormControl type="text" name="syncName" placeholder="Nombre de Sincronización" onChange={handleChange}/>
+						    </Col>
+						    <Col md={4} sm={4}>
+						     	<FormControl componentClass="select" name="syncCategory" placeholder="Categoria Moodle" onChange={handleChange}>
+           							<option key="select" value="-1">- Categoria Moodle -</option>
+								        {categories}								    
+								</FormControl>
+						    </Col>
+						    <Col md={4} sm={4}>
+						     	<FormControl componentClass="select" name="syncCohort" placeholder="Cohorte Moodle" onChange={handleChange}>
+           							<option key="select" value="-1">- Cohorte Moodle -</option>
+								        {cohorts}								    
+								</FormControl>
+						    </Col>
+						</FormGroup>
+						<FormGroup key="newCategoryButton" controlId={"formHorizontal"+"newCategory"} >
+							<Col md={2} sm={6}>
+								<Button onClick={handleCloseAddSync} >Cancelar</Button>
+							</Col>
+							<Col md={2} sm={6}>
+								<Button onClick={handleCreateSync} >Guardar</Button>
+							</Col>
+						</FormGroup>
+					</Form>
+	        </fieldset>
+
+           
+          </div>
+         
+	    </Popup>
+	    
+	)
 	
 class Activities extends Component {
 
 	componentDidMount() {
-        this.props.loadActivities()
+        //this.props.loadActivities(16)
+        this.props.loadPeriods()
         this.props.loadCategories()
+        this.props.loadCohorts()
+    }
+
+    /*
+    	Esta funcion me permite tener actualizado el estado del popup a travez de las propiedades
+    	que recibo del reducer.
+    */
+    componentWillReceiveProps(newProps){
+     	if(newProps.AddSyncOpen !== this.state.AddSyncOpen){
+        	this.setState({AddSyncOpen: newProps.AddSyncOpen })
+     	}
     }
 
 
@@ -33,7 +99,7 @@ class Activities extends Component {
 		        		bordered={ false }
 		        		striped
 						hover
-						selectRow={ {mode: 'checkbox', clickToSelect: true, onSelect: this.handleOnSelect, selected: this.state.selectedAssignments} }
+						selectRow={ {mode: 'checkbox', clickToSelect: true, onSelect: this.handleOnSelect, onSelectAll: this.handleOnSelectAll, selected: this.state.selectedAssignments} }
 						noDataIndication="No hay ninguna comision."/>
 			</div>
 		)
@@ -51,10 +117,30 @@ class Activities extends Component {
 	    }
 	}
 
+	handleOnSelectAll = (isSelect, rows) => {
+		const ids = rows.map(r => r.siu_assignment_code);
+		let selectedAssignments = this.state.selectedAssignments.slice().filter((assigment) =>
+				ids.indexOf(assigment) == -1 );
+		
+		if (isSelect) {
+			this.setState(() => ({
+		    	selectedAssignments: selectedAssignments.concat(ids)
+		 	}));
+		} else {
+		  this.setState(() => ({
+		    	selectedAssignments: selectedAssignments
+		 	}));
+		}
+	}
+
+	
+
 	constructor () {
 	    super()
 	    this.state = {
-	    	selectedAssignments:[]
+	    	selectedAssignments:[],
+	    	newSync:{},
+	    	C_SIU_School_Period_id:null
 	    }
 	    
 	    this.activitiesColumns = [
@@ -135,64 +221,44 @@ class Activities extends Component {
 		    }
 		  }];
 
-		this.paginationOptions = {
-		  //paginationSize: 2,
-		  pageStartIndex: 1,
-		  // alwaysShowAllBtns: true, // Always show next and previous button
-		  // withFirstAndLast: false, // Hide the going to First and Last page button
-		  // hideSizePerPage: true, // Hide the sizePerPage dropdown always
-		  // hidePageListOnlyOnePage: true, // Hide the pagination list when only one page
-		  // firstPageText: 'First',
-		  //prePageText: 'Back',
-		  //nextPageText: 'Next',
-		  //lastPageText: 'Last',
-		  //nextPageTitle: 'First page',
-		  //prePageTitle: 'Pre page',
-		  //firstPageTitle: 'Next page',
-		  //lastPageTitle: 'Last page',
-		  //showTotal: true,
-		  //paginationTotalRenderer: customTotal,
-		  withFirstAndLast: false,
-		  noDataText: 'No hay ninguna actividad. Intente refrescando la información desde el menú de administración.',
-		  sizePerPageList: [{
-		    text: '10', value: 10
-		  }, {
-		    text: '20', value: 20
-		  }, {
-		    text: '50', value: 50
-		  }] // A numeric array is also available. the purpose of above example is custom the text
-		}
-
-	    /*this.options = {
-	      defaultSortName: 'siu_activity_code',  // default sort column name
-	      defaultSortOrder: 'asc',  // default sort order
-	     
-	    };*/
-
 	   	this.handleRefresh = this.handleRefresh.bind(this)
 	    this.handleCreateSync = this.handleCreateSync.bind(this)
-	   	this.handleName = this.handleName.bind(this)
-	   	this.handleCategory = this.handleCategory.bind(this)
-
+	   	this.handleChange = this.handleChange.bind(this)
+	   	this.handleChangePeriod = this.handleChangePeriod.bind(this)
+	   	this.handleCloseAddSync = this.handleCloseAddSync.bind(this)
+	   	this.handleOpenAddSync = this.handleOpenAddSync.bind(this)
 	 }
 
 	handleCreateSync(e) {
 		e.preventDefault();
-		this.props.createSync(this.state.selectedAssignments,this.state.syncCategory, 14, this.state.syncName); //Moodle Category ID, SIU_School_Period_ID
+		this.props.createSync(this.state.selectedAssignments,this.state.newSync.syncCategory, this.state.newSync.syncCohort, this.state.newSync.syncName, this.state.C_SIU_School_Period_id); 
 	}
 
 	handleRefresh(e) {
 		e.preventDefault();
-		this.props.refreshActivities();
+		this.props.refreshActivities(this.state.C_SIU_School_Period_id);
 	}
 
-	handleName(e) {
-		this.setState({syncName:e.target.value})
+	handleChangePeriod(e) {
+		e.preventDefault();
+		this.setState({C_SIU_School_Period_id:e.target.value})
+		this.props.loadActivities(e.target.value);
 	}
 
-	handleCategory(e) {
-		console.log(e);
-		this.setState({syncCategory:e.target.value})
+	handleChange(e) {
+		var newSync = this.state.newSync;
+		newSync[e.target.name] = e.target.value;
+		this.setState({newSync:newSync})
+	}
+
+	handleCloseAddSync (e) {
+	    this.setState({ AddSyncOpen: false })
+	}
+
+	handleOpenAddSync(e) {
+		e.preventDefault();
+		let newSync = {};
+		this.setState({ AddSyncOpen: true , newSync:newSync})
 	}
 
     render() {
@@ -202,47 +268,62 @@ class Activities extends Component {
             <option key={category.I_SyncCategory_id} value={category.mdl_category_id}>{category.name}</option>
         )
 
+        const cohorts = this.props.cohorts.map( (cohort,index)=>
+            <option key={cohort.I_SyncCohort_id} value={cohort.mdl_cohort_id}>{cohort.name}</option>
+        )
+
+        const periods = this.props.periods.map( (period,index)=>
+            <option key={period.C_SIU_School_Period_id} value={period.C_SIU_School_Period_id}>{period.name}</option>
+        )
+
+        const AddSyncronizationProps = {
+	      handleCloseAddSync: this.handleCloseAddSync,
+	      handleCreateSync: this.handleCreateSync,
+	      AddSyncOpenState: this.state.AddSyncOpen,
+	      handleChange: this.handleChange,
+	      categories: categories,
+	      cohorts: cohorts,
+	    };
+
         return ( 
             <div className="page activities clearfix">
         		<fieldset className="col-md-12">
-    				<legend>Actividades</legend>
-    					<form id="newCategory">
-	    					<FormGroup key="activities" controlId={"formHorizontal"+"activities"} >
-							    <Col md={2} sm={2}>
-							    	<Button onClick={this.handleRefresh}>Refresh</Button>
-							    </Col>
-							    <Col md={4} sm={4}>
-								    <FormControl componentClass="select" placeholder="Categoria Moodle" onChange={this.handleCategory}>
-            							<option key="select" value="-1">- Categoria Moodle -</option>
-								        {categories}
-								    </FormControl>
-							    </Col>
-							    <Col md={4} sm={4}>
-							    	<FormControl type="text" name="syncName" placeholder="Nombre de la Sincronizacion" onChange={this.handleName}/>
-							    </Col>
-							    <Col md={2} sm={2}>
-						    		<Button onClick={this.handleCreateSync}>Crear</Button>
-							    </Col>
-							</FormGroup>
-						</form>
-
+        			<Col md={2} sm={4}>
+    					<legend>Actividades</legend>
+    				</Col>
+    				<Col md={4} sm={4}>
+    					<Button onClick={this.handleRefresh}>Refresh</Button>
+				    </Col>
+				    <Col md={4} sm={4}>
+				     	<FormControl componentClass="select" name="periodoLectivo" placeholder="Periodo Lectivo" onChange={this.handleChangePeriod}>
+   							<option key="select" value="-1">- Periodo Lectivo -</option>
+						        {periods}								    
+						</FormControl>
+				    </Col>
+				    <Col md={2} sm={4} mdOffset={0} smOffset={8}>
+    					<Button onClick={(e) => this.handleOpenAddSync(e)} >Crear Sincronización</Button>
+				    </Col>
 					   
-		        		<BootstrapTable 
-		        		keyField='siu_activity_code' 
-		        		data={ this.props.activities } 
-		        		columns={ this.activitiesColumns } 
-		        		striped
-						hover
-						condensed
-						expandRow={ this.expandRow }
-						filter={ filterFactory() }
-						noDataIndication="No hay ninguna actividad, por favor pruebe refrescando la cache de actividades desde el menu administracion."
-		        		pagination={ paginationFactory(this.paginationOptions) }
-		        		/>
+	        		<BootstrapTable 
+	        		keyField='siu_activity_code' 
+	        		data={ this.props.activities } 
+	        		columns={ this.activitiesColumns } 
+	        		striped
+					hover
+					condensed
+					expandRow={ this.expandRow }
+					filter={ filterFactory() }
+					noDataIndication="No hay ninguna actividad, por favor pruebe refrescando la cache de actividades desde el menu administración o seleccionando un periodo lectivo."
+					pagination={ paginationFactory(defaultTablePagination) }	        		
+					/>
+				    <Col md={2} sm={4} mdOffset={10} smOffset={8}>
+    					<Button  onClick={(e) => this.handleOpenAddSync(e)} >Crear Sincronización</Button>
+				    </Col>
 		        </fieldset>
+		        <AddSyncronization {...AddSyncronizationProps} />
 			</div>
         );
     }
 }
 
-export default connect(mapStateToProps, {loadCategories,loadActivities,refreshActivities,createSync})(Activities);
+export default connect(mapStateToProps, {loadCategories,loadActivities,loadCohorts,loadPeriods,refreshActivities,createSync})(Activities);

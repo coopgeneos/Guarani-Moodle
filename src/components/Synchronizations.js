@@ -184,7 +184,6 @@ class Synchronizations extends Component {
 
 	handleOpenSyncUpConfiguration(row,e) {
 		e.preventDefault();
-		console.log(row);
 		this.setState({ SyncUpConfigurationOpen: true })
 	}
 
@@ -193,7 +192,6 @@ class Synchronizations extends Component {
 	}
 
 	handleSaveSyncUpConfiguration () {
-		console.log('Save Configuration!');
 		this.handleCloseSyncUpConfiguration();
 	}
 

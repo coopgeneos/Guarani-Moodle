@@ -143,13 +143,34 @@ export function saveConfigurations (configurations) {
 	}
 }
 
-export function loadActivities () {
+export function loadPeriods () {
+	 
+   	return (dispatch) => {
+      	dispatch({type: 'SET_APP_LOADING'})
+
+        axios.get('periods')
+		  .then(function (response) {
+		  	if (response.data.data)
+	    		dispatch({type: 'SET_PERIODS', periods:response.data.data})
+	    	else
+	    		console.log("error",response.data.msg)
+		  })
+		  .catch(function (error) {
+		    console.log("error",error.response);
+		  })
+		  .then(function () {
+	   		dispatch({type: 'UNSET_APP_LOADING'});
+		  });  
+	}
+}
+
+export function loadActivities (C_SIU_School_Period_ID) {
 	 
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
         console.log('Start load activities');
 
-        axios.get('activities')
+        axios.get('activities/period/'+C_SIU_School_Period_ID)
 		  .then(function (response) {
 		  	if (response.data.data)
 	    		dispatch({type: 'SET_ACTIVITIES', activities:response.data.data})
@@ -166,7 +187,7 @@ export function loadActivities () {
 	}
 }
 
-export function refreshActivities () {
+export function refreshActivities (C_SIU_School_Period_ID) {
 	 
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
@@ -174,30 +195,31 @@ export function refreshActivities () {
 
         axios.put('activities')
 		  .then(function (response) {
-		  	if (response.data.success)
-	    		store.dispatch(loadActivities());
+		  	if (response.data.success){
+	    		store.dispatch(loadActivities(C_SIU_School_Period_ID));
+	    		NotificationManager.success('Se actualizó la información de actividades correctamente', '¡Exito!');
+	    	}
 	    	else
-	    		console.log("error",response.data.msg)
-		  })
-		  .catch(function (error) {
-		    console.log("error",error.response);
-		  })
+		    	NotificationManager.error('Error actualizar actividades: '+response.data.msg,'Error');
+		  	})
+	  	.catch(function (error) {
+	  		NotificationManager.error('No hay conección','Error');
+	    	console.log("error",error.response);
+	  	})
 		  .then(function () {
-		    console.log('End refresh activities');
 	   		dispatch({type: 'UNSET_APP_LOADING'});
 		  });  
 	}
 }
 
-export function createSync (assignments,MDL_Category_ID,C_SIU_School_Period_ID,name) {
+export function createSync (assignments,MDL_Category_ID, MDL_Cohort_ID,name,C_SIU_School_Period_ID) {
 	return (dispatch) => {
 		dispatch({type: 'SET_APP_LOADING'})
 	    console.log('Start creating Sync',assignments);
 
-
-
 	    var sync = {"name":name,
 	    			"mdl_category_id":MDL_Category_ID,
+	    			"mdl_cohort_id":MDL_Cohort_ID,
 	    			"c_siu_school_period_id":C_SIU_School_Period_ID,
 	    			"sync_type":"0","status":"AP","Details":[]}
 
@@ -210,16 +232,17 @@ export function createSync (assignments,MDL_Category_ID,C_SIU_School_Period_ID,n
 	    axios
 	    .post('syncs', sync)
 		.then(function (response) {
-		  	if (response.data.success)
-	    		console.log(response.data)
+		  	if (response.data.success){
+	    		dispatch({type: 'CLOSE_ACTIVITIES_CREATESYNC_POPUP'});
+		    	NotificationManager.success('Sincronización creada: '+name, '¡Exito!');
+		  	}
 	    	else
-	    		console.log("error",response.data.msg)
+	    		NotificationManager.error('Error al crear Sincronización: '+response.data.msg, '¡Error!');
 	  	})
 	  	.catch(function (error) {
-	    	console.log("error",error.response);
+	    	NotificationManager.error('Error de coneccion', '¡Error!');
 	  	})
 	  	.then(function () {
-	    	console.log('End create Sync');
    			dispatch({type: 'UNSET_APP_LOADING'});
 	  	});  
 	}
@@ -316,7 +339,7 @@ export function createCategory (category) {
 		    	}
 		  	})
 		  	.catch(function (error) {
-		  		NotificationManager.error('Error', 'No hay conección');
+		  		NotificationManager.error('No hay conección','Error');
 		    	console.log("error",error.response);
 		  	})
 		  	.then(function () {

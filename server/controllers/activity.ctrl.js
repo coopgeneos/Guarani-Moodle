@@ -165,6 +165,25 @@ module.exports = {
 			});
 	},
 
+	getAllForPeriod: (req, res, next) => {
+    	C_SIU_Activity.findAll({attributes: {exclude: ['createdAt', 'updatedAt']}, 
+														include: [{
+															where: {c_siu_school_period_id:req.params.period},
+															model: C_SIU_Assignment, 
+															attributes: {exclude: ['createdAt', 'updatedAt']}, 
+														}]
+													})
+			.then(acts => {
+				let obj = {success: true, data: acts};
+        res.send(obj);
+			})
+			.catch(err => {
+				console.log(err);
+				let obj = {success: false, msg: "Hubo un error al consultar las actividades"};
+        res.send(obj);
+			});
+  	},
+
 	update: (req, res, next) => {
 		let token;
 		let uri;	

@@ -1,6 +1,7 @@
 const initialState = {
 	appLoading: 0,
 	message: 0,
+	periods: [],
 };
 
 export default (state = initialState, action) => {
@@ -22,6 +23,11 @@ export default (state = initialState, action) => {
 				...state,
 				message: state.message,
 
+			}
+		case 'SET_PERIODS':
+			return {
+				...state,
+				periods: action.periods
 			}
 		default:
 			return state;

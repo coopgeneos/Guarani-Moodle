@@ -4,28 +4,32 @@ const I_SyncDetail = require('./../models').I_SyncDetail
 const C_SIU_School_Period = require('./../models').C_SIU_School_Period
 
 function getNextSync(sync) {
-  //Por defecto la periodicidad es 24 hs
-  sync.task_periodicity = (sync.task_periodicity == null 
-      || sync.task_periodicity < 0 
-      || sync.task_periodicity >= 24) 
-    ? 0 
-    : sync.task_periodicity;
-  from = sync.task_from.getTime();
-  to = sync.task_to.getTime();
-  now = new Date();
-  nowtime = now.getTime();
-  if (from > to) 
-    throw 'La configuración de sincronización automática tiene las fechas cruzadas';
-  /*
-    Si la sincronización debe iniciarse ni bien se crea o actualiza, debido a que el rango de fechas
-    incluye al momento de la acción (creacion o actualizacion), entonces se debe calcular la siguiente
-    sincronización.
-  */
-  if(from < nowtime && nowtime < to){
-    let n = now.getHours() + sync.task_periodicity >= 24 ? now.getHours() + sync.task_periodicity - 24 : now.getHours() + sync.task_periodicity;
-    return n;
-  } else
-    return 0;
+
+  if (sync.task_from && sync.task_to) {
+    //Por defecto la periodicidad es 24 hs
+    sync.task_periodicity = (sync.task_periodicity == null 
+        || sync.task_periodicity < 0 
+        || sync.task_periodicity >= 24) 
+      ? 0 
+      : sync.task_periodicity;
+    from = sync.task_from.getTime();
+    to = sync.task_to.getTime();
+    now = new Date();
+    nowtime = now.getTime();
+    if (from > to) 
+      throw 'La configuración de sincronización automática tiene las fechas cruzadas';
+    /*
+      Si la sincronización debe iniciarse ni bien se crea o actualiza, debido a que el rango de fechas
+      incluye al momento de la acción (creacion o actualizacion), entonces se debe calcular la siguiente
+      sincronización.
+    */
+    if(from < nowtime && nowtime < to){
+      let n = now.getHours() + sync.task_periodicity >= 24 ? now.getHours() + sync.task_periodicity - 24 : now.getHours() + sync.task_periodicity;
+      return n;
+    } else
+      return 0;
+  }
+  return 0;
 }
 
 module.exports = {

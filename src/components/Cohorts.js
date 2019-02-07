@@ -11,7 +11,6 @@ import { defaultTablePagination } from './../utils/commons';
 
 
 const mapStateToProps = state => {
-	console.log(state.cohort);
     return {
         cohorts: state.cohort.cohorts,
         AddCohortOpen: state.cohort.popup,
@@ -158,7 +157,6 @@ class Cohorts extends Component {
 	      newCohort_id: this.state.newCohort.newCohort_id,
 	      I_SyncCohort_id: this.state.newCohort.I_SyncCohort_id
 	    };
-	    console.log(this.props.cohorts);
 	    
         return ( 
             <div className="page cohorts clearfix">
