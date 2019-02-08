@@ -1,19 +1,23 @@
 const models = require('./../models')
 const I_Sync = require('./../models').I_Sync
 const I_SyncDetail = require('./../models').I_SyncDetail
+const I_SyncCategory = require('./../models').I_SyncCategory
+const I_SyncCohort = require('./../models').I_SyncCohort
 const C_SIU_School_Period = require('./../models').C_SIU_School_Period
 
 function getNextSync(sync) {
 
   if (sync.task_from && sync.task_to) {
+    console.log('sync.task_from',sync.task_from);
+    console.log('sync.task_to',sync.task_to)
     //Por defecto la periodicidad es 24 hs
     sync.task_periodicity = (sync.task_periodicity == null 
         || sync.task_periodicity < 0 
         || sync.task_periodicity >= 24) 
       ? 0 
-      : sync.task_periodicity;
-    from = sync.task_from.getTime();
-    to = sync.task_to.getTime();
+      : parseInt(sync.task_periodicity);
+    from = sync.task_from;
+    to = sync.task_to;
     now = new Date();
     nowtime = now.getTime();
     if (from > to) 
@@ -79,14 +83,38 @@ module.exports = {
   updateSync: (req, res, next) => {
     let syncToUpdate = req.body;
     syncToUpdate.task_next = getNextSync(syncToUpdate);
+    console.log('Update Sync',syncToUpdate)
+
+    I_Sync.update(syncToUpdate,{where: { I_Sync_id: req.params.id }})
+      .then(result => {
+        console.log(result);
+        if (result.length == 0){
+          let obj = {success: true, msg: "No existe la sincronización que desea actualizar"};
+          res.send(obj);
+        }
+        else {
+          let obj = {success: true, data: result[0]};
+          res.send(obj);
+        }
+      }
+    )
+      .catch(err => {
+        console.log(err);
+        let obj = {success: false, msg: "Hubo un error al actualizar la sincronización"};
+        res.send(obj);
+      }
+    )
+/*
+
     I_Sync.findById(req.params.id)
       .then(sync => {
-        sync.siu_actividad_codigo = syncToUpdate.siu_actividad_codigo ? syncToUpdate.siu_actividad_codigo : sync.siu_actividad_codigo;
-        sync.siu_periodo_lectivo = syncToUpdate.siu_periodo_lectivo ? syncToUpdate.siu_periodo_lectivo : sync.siu_periodo_lectivo;
-        sync.mdl_category_id = syncToUpdate.mdl_category_id ? syncToUpdate.mdl_category_id : sync.mdl_category_id;
-        sync.sync_type = syncToUpdate.sync_type ? syncToUpdate.sync_type : sync.sync_type;
-        sync.status = syncToUpdate.status ? syncToUpdate.status : sync.status;
-        sync.save()
+        syncToUpdate.siu_actividad_codigo = syncToUpdate.siu_actividad_codigo ? syncToUpdate.siu_actividad_codigo : sync.siu_actividad_codigo;
+        syncToUpdate.siu_periodo_lectivo = syncToUpdate.siu_periodo_lectivo ? syncToUpdate.siu_periodo_lectivo : sync.siu_periodo_lectivo;
+        syncToUpdate.i_syncCategory_id = syncToUpdate.i_syncCategory_id ? syncToUpdate.i_syncCategory_id : sync.i_syncCategory_id;
+        syncToUpdate.i_syncCohort_id = syncToUpdate.i_syncCohort_id ? syncToUpdate.i_syncCohort_id : sync.i_syncCohort_id;
+        syncToUpdate.sync_type = syncToUpdate.sync_type ? syncToUpdate.sync_type : sync.sync_type;
+        syncToUpdate.status = syncToUpdate.status ? syncToUpdate.status : sync.status;
+        syncToUpdate.save()
           .then(updated => {
             let obj = {success: true, data: updated};
             res.send(obj);
@@ -99,7 +127,7 @@ module.exports = {
       .catch(err => {
         let obj = {success: true, msg: "No existe la sincronización que desea actualizar"};
         res.send(obj);
-      })
+      })*/
   },
   
   getById: (req, res, next) => {
@@ -124,6 +152,12 @@ module.exports = {
                       model: I_SyncDetail, 
                       attributes: {exclude: ['createdAt', 'updatedAt']},
                       as: 'Details' 
+                    },{
+                      model: I_SyncCategory, 
+                      attributes: {exclude: ['createdAt', 'updatedAt']},
+                    },{
+                      model: I_SyncCohort, 
+                      attributes: {exclude: ['createdAt', 'updatedAt']},
                     }]
                   })
       .then(syncs => {

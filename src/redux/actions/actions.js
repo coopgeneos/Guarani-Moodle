@@ -212,14 +212,14 @@ export function refreshActivities (C_SIU_School_Period_ID) {
 	}
 }
 
-export function createSync (assignments,MDL_Category_ID, MDL_Cohort_ID,name,C_SIU_School_Period_ID) {
+export function createSync (assignments,I_syncCategory_id, I_syncCohort_id,name,C_SIU_School_Period_ID) {
 	return (dispatch) => {
 		dispatch({type: 'SET_APP_LOADING'})
 	    console.log('Start creating Sync',assignments);
 
 	    var sync = {"name":name,
-	    			"mdl_category_id":MDL_Category_ID,
-	    			"mdl_cohort_id":MDL_Cohort_ID,
+	    			"i_syncCategory_id":I_syncCategory_id,
+	    			"i_syncCohort_id":I_syncCohort_id,
 	    			"c_siu_school_period_id":C_SIU_School_Period_ID,
 	    			"sync_type":"0","status":"AP","Details":[]}
 
@@ -293,6 +293,37 @@ export function doSyncUp (I_Sync_ID) {
 			dispatch({type: 'UNSET_DOING_SYNCUP', I_Sync_ID:I_Sync_ID})
 	  	});  
 
+	}
+}
+
+export function saveSyncConfig (syncConfig) {
+	return (dispatch) => {
+		dispatch({type: 'SET_APP_LOADING'})
+		console.log(syncConfig);
+	    let aux = {"task_periodicity":syncConfig.task_periodicity,
+	    		   "task_from":syncConfig.task_from.getTime(),
+	    		   "task_to":syncConfig.task_to.getTime(),
+	    		   "task_student":syncConfig.task_student,
+	    		   "task_teacher":syncConfig.task_teacher}
+	    
+    	axios
+	    .put('syncs/'+syncConfig.I_Sync_id, aux)
+		.then(function (response) {
+		  	if (response.data.success){
+	    		dispatch({type: 'CLOSE_SYNCCONFIG_POPUP'});
+	    		NotificationManager.success('Sincronización actualizada: '+syncConfig.name, '¡Exito!');
+	    	}
+	    	else{
+	    		NotificationManager.error('Error al actualiazar sincronización: '+response.data.msg,'Error');
+	    	}
+	  	})
+	  	.catch(function (error) {
+	  		NotificationManager.error('No hay conección','Error');
+	    	console.log("error",error.response);
+	  	})
+	  	.then(function () {
+   			dispatch({type: 'UNSET_APP_LOADING'});
+	  	});
 	}
 }
 

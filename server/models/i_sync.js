@@ -11,9 +11,6 @@ module.exports = (sequelize, DataTypes) => {
 		siu_activity_code: {
 			type: DataTypes.STRING
 		},
-	  mdl_category_id: {
-			type: DataTypes.INTEGER
-		},
 		sync_type: {
 			type: DataTypes.ENUM,
 		  values: ['0', '1', '2']
@@ -42,9 +39,6 @@ module.exports = (sequelize, DataTypes) => {
 		task_student: {
 			type: DataTypes.BOOLEAN
 		},
-		i_syncCohort_id: {
-			type: DataTypes.INTEGER
-		}
 	},
 	{
 		tableName: 'I_Sync'
@@ -61,6 +55,18 @@ module.exports = (sequelize, DataTypes) => {
 	    models.I_Sync.belongsTo(models.C_SIU_School_Period, {
 				foreignKey: {
 					name: 'c_siu_school_period_id',
+				},
+	  	});
+
+	  	models.I_Sync.belongsTo(models.I_SyncCohort, {
+				foreignKey: {
+					name: 'i_syncCohort_id',
+				},
+	  	});
+
+	  	models.I_Sync.belongsTo(models.I_SyncCategory, {
+				foreignKey: {
+					name: 'i_syncCategory_id',
 				},
 	  	});
 	};

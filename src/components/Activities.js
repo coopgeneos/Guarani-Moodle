@@ -199,9 +199,6 @@ class Activities extends Component {
 			dataField: 'name',
 			text: 'Comision'
 		},{
-		    dataField: 'c_siu_school_period_id',
-		    text: 'Periodo'
-		},{
 		    dataField: 'state',
 		    isDummyField: true,
 		    text: 'Sincronizacion',
@@ -265,11 +262,11 @@ class Activities extends Component {
 
 
     	const categories = this.props.categories.map( (category,index)=>
-            <option key={category.I_SyncCategory_id} value={category.mdl_category_id}>{category.name}</option>
+            <option key={category.I_SyncCategory_id} value={category.I_SyncCategory_id}>{category.name}</option>
         )
 
         const cohorts = this.props.cohorts.map( (cohort,index)=>
-            <option key={cohort.I_SyncCohort_id} value={cohort.mdl_cohort_id}>{cohort.name}</option>
+            <option key={cohort.I_SyncCohort_id} value={cohort.I_SyncCohort_id}>{cohort.name}</option>
         )
 
         const periods = this.props.periods.map( (period,index)=>

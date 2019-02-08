@@ -7,10 +7,12 @@ const C_SIU_Activity = require('./../models').C_SIU_Activity
 const I_Config = require('./../models').I_Config
 const C_MDL_SIU_User = require('./../models').C_MDL_SIU_User
 const C_MDL_SIU_Processed = require('./../models').C_MDL_SIU_Processed
+const I_SyncCategory = require('./../models').I_SyncCategory
+const I_SyncCohort = require('./../models').I_SyncCohort
+
 const I_Log = require('./../models').I_Log
 const axios = require('axios');
 const querystring = require('querystring');
-const I_SyncCohort = require('./../models').I_SyncCohort;
 
 function getCourseFromMoodle(url, token, name, shortname, categoryid){
 	return new Promise((resolve, reject) => {
@@ -484,14 +486,18 @@ function createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, md
 function processCourse(detail, mdl, sync){
 	return new Promise(async (resolve, reject) => {
 		if(detail.mdl_course_id == null) {
-			sync.shortname = mdl.shortname_prefix + sync.name.substring(0, 5);
-			//El nombre viene determinado por el nombre de la sincronizacion
+			sync.shortname = mdl.shortname_prefix + sync.name.substring(0, 5) + '-'+sync.I_Sync_id;
+
+			//Busco id de categoria
+			let syncCategory = await I_SyncCategory.findOne({ where: {I_SyncCategory_id: sync.i_syncCategory_id}});
+
+			//El nombre viene determinado por el nombre de la sincronizacion + el id + el periodo
 			let mdlact = await getCourseFromMoodle(
 				mdl.url, 
 				mdl.token, 
 				sync.name, 
 				sync.shortname,
-				sync.mdl_category_id)
+				syncCategory.mdl_category_id)
 					.catch((err) => {
 						console.log('====> ERROR al consultar el curso de Moodle (processCourse)');
 						reject(err);
@@ -721,7 +727,7 @@ module.exports = {
 				let fixArray = [fixUsername.key, fixEmail.key, fixName.key, fixLastname.key];
 
 				sync = await I_Sync.findOne({where: {I_Sync_id: req.params.id}})
-				let syncCohort = await I_SyncCohort.findOne({ where: {i_syncCohort_id: sync.i_syncCohort_id}});
+				let syncCohort = await I_SyncCohort.findOne({ where: {I_SyncCohort_id: sync.i_syncCohort_id}});
 
 				let details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
 

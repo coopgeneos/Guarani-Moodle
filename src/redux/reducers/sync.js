@@ -1,5 +1,6 @@
 const initialState = {
 	syncs: [],
+	popupConfig:false
 };
 
 export default (state = initialState, action) => {
@@ -28,6 +29,11 @@ export default (state = initialState, action) => {
 			return {
 				...state,
 				syncs: syncs,
+			}
+		case 'CLOSE_SYNCCONFIG_POPUP':
+			return {
+				...state,
+				popupConfig: false,
 			}
 		default:
 			return state;

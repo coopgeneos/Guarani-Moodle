@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
 		siu_assignment_code: {
 			type: DataTypes.STRING
 		},
-	  mdl_course_id: {
+	  	mdl_course_id: {
 			type: DataTypes.INTEGER
 		},
 		mdl_group_id: {
