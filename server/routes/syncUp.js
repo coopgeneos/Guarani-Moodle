@@ -9,5 +9,14 @@ module.exports = (router) => {
   */
   router
     .route('/syncUp/:id')
-    .post(/*loginController.ensureLoggedIn,*/ syncUpController.syncUp)
+    .post(loginController.ensureLoggedIn, syncUpController.syncUp)
+
+  /*
+  curl --request GET \
+    --url http://localhost:5000/api/syncUp/7 \
+    --header 'content-type: application/json'
+  */
+  router
+    .route('/syncUp/:id')
+    .get(loginController.ensureLoggedIn, syncUpController.getAllForSync)
 }

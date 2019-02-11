@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { loadSyncs,doSyncUp,saveSyncConfig } from './../redux/actions/actions';
+import { loadSyncs,doSyncUp,saveSyncConfig,loadSyncLogs, loadConfigurations } from './../redux/actions/actions';
 import { Button,Form,FormGroup,FormControl,Checkbox,Col, ControlLabel} from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import { registerLocale, setDefaultLocale } from 'react-datepicker';
+import { defaultTablePagination } from './../utils/commons';
+
 import es from 'date-fns/locale/es'
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -15,13 +17,18 @@ import paginationFactory from 'react-bootstrap-table2-paginator';
 
 
 const mapStateToProps = state => {
+	console.log(state.configuration.configurations);
     return {
         syncs: state.sync.syncs,
-		SyncUpConfigurationOpen: state.sync.popupConfig,    
+		SyncUpConfigurationOpen: state.sync.popupConfig,
+		SyncUpLogsOpen: state.sync.popupLogs,  
+		logs: state.sync.logs,  
+		configs: state.configuration.configurations,
+		urlmoodle : state.configuration.configurations.find(x => x.key === "MOODLE_URL")
 	}
 }
 
-const SyncUpConfiguration =  ({handleCloseSyncUpConfiguration, handleSaveSyncUpConfiguration, SyncUpConfigurationOpenState, SyncUpConfigurationPeriodicity, handleChange, handleChangeCheckBox, SyncUpConfigurationTeachers,SyncUpConfigurationStudents,SyncUpConfigurationDateFrom, SyncUpConfigurationDateTo,handleChangeDateFrom,handleChangeDateTo}) => (
+const SyncUpConfigurationPopup =  ({handleCloseSyncUpConfiguration, handleSaveSyncUpConfiguration, SyncUpConfigurationOpenState, SyncUpConfigurationPeriodicity, handleChange, handleChangeCheckBox, SyncUpConfigurationTeachers,SyncUpConfigurationStudents,SyncUpConfigurationDateFrom, SyncUpConfigurationDateTo,handleChangeDateFrom,handleChangeDateTo}) => (
 		
 		<Popup
           open={SyncUpConfigurationOpenState}
@@ -101,7 +108,7 @@ const SyncUpConfiguration =  ({handleCloseSyncUpConfiguration, handleSaveSyncUpC
 	    
 	)
 
-const SyncUpLogs =  ({handleCloseSyncUpLogs, SyncUpLogsOpenState}) => (
+const SyncUpLogsPopup =  ({handleCloseSyncUpLogs, SyncUpLogsOpenState, syncUpData, syncUpColumns, expandLogRow, paginationOptions}) => (
 		
 		<Popup
           open={SyncUpLogsOpenState}
@@ -114,7 +121,17 @@ const SyncUpLogs =  ({handleCloseSyncUpLogs, SyncUpLogsOpenState}) => (
             </a>
             <fieldset className="col-md-12">
 				<legend>Logs</legend>
-
+	        		<BootstrapTable 
+	        		keyField='I_SyncUp_id' 
+	        		data={ syncUpData } 
+	        		columns={ syncUpColumns } 
+	        		striped
+					hover
+					condensed
+					expandRow={ expandLogRow }
+					filter={ filterFactory() }
+	        		pagination={ paginationFactory(paginationOptions) }
+	        		/>
 	        </fieldset>
             <Button onClick={handleCloseSyncUpLogs} >OK</Button>
           </div>
@@ -127,6 +144,7 @@ class Synchronizations extends Component {
 
 	componentDidMount() {
         this.props.loadSyncs()
+        this.props.loadConfigurations()
     }
 
     /*
@@ -136,6 +154,10 @@ class Synchronizations extends Component {
     componentWillReceiveProps(newProps){
      	if(newProps.SyncUpConfigurationOpen !== this.state.SyncUpConfigurationOpen){
         	this.setState({SyncUpConfigurationOpen: newProps.SyncUpConfigurationOpen })
+     	}
+
+     	if(newProps.SyncUpLogsOpen !== this.state.SyncUpLogsOpen){
+        	this.setState({SyncUpLogsOpen: newProps.SyncUpLogsOpen })
      	}
     }
 
@@ -154,6 +176,22 @@ class Synchronizations extends Component {
 		),
 		expandByColumnOnly: true,
 		showExpandColumn: true,
+	};
+
+	expandLogRow = {
+		renderer: row => (
+			<div>
+				<BootstrapTable 
+		        		keyField='I_Log_id' 
+		        		data={ row.I_Logs } 
+		        		columns={ this.logsColumns } 
+		        		bordered={ false }
+		        		striped
+						hover
+						pagination={ paginationFactory(this.paginationOptions) }
+						/>
+			</div>
+		),
 	};
 
     constructor () {
@@ -242,7 +280,7 @@ class Synchronizations extends Component {
 		        	<div>
 			         <Button onClick={(e) => this.handleDoSyncUp(row, e)}>Ejecutar</Button>
 					 <Button onClick={(e) => this.handleOpenSyncUpConfiguration(row, e)} >Configurar</Button>
-					 <Button >Logs</Button>
+					 <Button onClick={(e) => this.handleOpenSyncUpLogs(row, e)} >Logs</Button>
 				 	</div>
 		        );
 		      }
@@ -260,7 +298,7 @@ class Synchronizations extends Component {
 			formatter: (cellContent, row) => {
 		    	if (row.mdl_course_id && row.mdl_course_id != null)
 			        return (
-			        	<a href={"http://moodle-test.unahur.edu.ar/course/view.php?id="+row.mdl_course_id}>
+			        	<a target="_blank" href={this.props.urlmoodle.value+"/course/view.php?id="+row.mdl_course_id}>
 			        		ir al curso
 			        	</a>
 
@@ -272,16 +310,50 @@ class Synchronizations extends Component {
 		      }
 		}];
 
+		this.syncUpColumns = [
+	    {
+		    dataField: 'number',
+		    isDummyField: true,
+		    text: '#',
+		    formatter: (cellContent, row, rowIndex, formatExtraData) => {
+		        return (
+		          <span>{rowIndex}</span>
+		        );
+		    }
+		},{
+			dataField: 'I_SyncUp_id',
+			text: 'ID'
+		}, {
+			dataField: 'createdAt',
+			text: 'Fecha de sincronización',
+		},{
+		    dataField: 'logs',
+		    text: '# Logs',
+		    formatter: (cellContent, row) => (
+		        <span>
+		           {row.I_Logs.length}
+		        </span>
+		    )
+		}];
+
+		this.logsColumns = [
+	    {
+			dataField: 'level',
+			text: 'Nivel',
+			filter: textFilter()
+		},{
+			dataField: 'message',
+			text: 'Mensaje',
+		}];
+
 		this.paginationOptions = {
 		  pageStartIndex: 1,
+		  currSizePerPage: 5,
+		  paginationSize: 5,
 		  withFirstAndLast: false,
 		  sizePerPageList: [{
-		    text: '10', value: 10
-		  }, {
-		    text: '20', value: 20
-		  }, {
-		    text: '50', value: 50
-		  }] // A numeric array is also available. the purpose of above example is custom the text
+	        text: '5', value: 5
+	      }]
 		}
 
 	   	this.handleDoSyncUp = this.handleDoSyncUp.bind(this)
@@ -293,9 +365,13 @@ class Synchronizations extends Component {
 	   	this.handleChangeDateFrom = this.handleChangeDateFrom.bind(this)
 	   	this.handleChangeCheckBox = this.handleChangeCheckBox.bind(this)
 
+	   	this.handleOpenSyncUpLogs = this.handleOpenSyncUpLogs.bind(this)
+	   	this.handleCloseSyncUpLogs = this.handleCloseSyncUpLogs.bind(this)
+
 	   	
 	   	this.state = {
 	    	SyncUpConfigurationOpen:false,
+	    	SyncUpLogsOpen:false,
 	    	currSync:{task_student:false,task_teacher:false},
 	    }
 
@@ -303,7 +379,7 @@ class Synchronizations extends Component {
 
 	handleDoSyncUp(row,e) {
 		e.preventDefault();
-		this.props.doSyncUp(row.I_Sync_id);
+		this.props.doSyncUp(row.I_Sync_id, this.props.configs.find(x => x.key === "ASSIGNMENT_SYNC_TIMEOUT").value);
 	}
 
 	handleOpenSyncUpConfiguration(row,e) {
@@ -324,7 +400,6 @@ class Synchronizations extends Component {
 	}
 
 	handleSaveSyncUpConfiguration () {
-		console.log(this.state.currSync);
 		this.props.saveSyncConfig(this.state.currSync);
 	}
 
@@ -350,11 +425,19 @@ class Synchronizations extends Component {
 		var currSync = this.state.currSync;
 		currSync.task_to = date;
 		this.setState({currSync:currSync})
-		console.log(currSync);
+	}
+
+	handleOpenSyncUpLogs(row,e) {
+		e.preventDefault();
+		this.props.loadSyncLogs(row.I_Sync_id)
+	}
+
+	handleCloseSyncUpLogs (e) {
+	    this.setState({ SyncUpLogsOpen: false })
 	}
 
     render() {
-    	const SyncUpConfigurationProps = {
+    	const SyncUpConfigurationPopupProps = {
 	      handleCloseSyncUpConfiguration: this.handleCloseSyncUpConfiguration,
 	      handleSaveSyncUpConfiguration: this.handleSaveSyncUpConfiguration,
 	      SyncUpConfigurationOpenState: this.state.SyncUpConfigurationOpen,
@@ -368,6 +451,14 @@ class Synchronizations extends Component {
 	      handleChangeDateFrom: this.handleChangeDateFrom,
 	      handleChangeDateTo: this.handleChangeDateTo,
 	    };
+
+	    const SyncUpLogsPopupProps = {
+	    	handleCloseSyncUpLogs:this.handleCloseSyncUpLogs,
+	    	SyncUpLogsOpenState: this.state.SyncUpLogsOpen,
+	    	syncUpData: this.props.logs,
+	    	syncUpColumns: this.syncUpColumns,
+	    	expandLogRow: this.expandLogRow,
+	    	paginationOptions: this.paginationOptions}
 
         return ( 
             <div className="page activities clearfix">
@@ -383,13 +474,14 @@ class Synchronizations extends Component {
 						expandRow={ this.expandRow }
 						filter={ filterFactory() }
 						noDataIndication="No hay ninguna Sincronizacion. Cree sincronizaciones desde la seccion actividades."
-		        		pagination={ paginationFactory(this.paginationOptions) }
+		        		pagination={ paginationFactory(defaultTablePagination) }
 		        		/>
 		        </fieldset>
-		        <SyncUpConfiguration {...SyncUpConfigurationProps}/>
+		        <SyncUpConfigurationPopup {...SyncUpConfigurationPopupProps}/>
+		        <SyncUpLogsPopup {...SyncUpLogsPopupProps}/>
 			</div>
         );
     }
 }
 
-export default connect(mapStateToProps, {loadSyncs,doSyncUp,saveSyncConfig})(Synchronizations);
+export default connect(mapStateToProps, {loadSyncs,doSyncUp,saveSyncConfig,loadSyncLogs, loadConfigurations})(Synchronizations);

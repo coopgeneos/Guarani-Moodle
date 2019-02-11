@@ -3,13 +3,6 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     queryInterface.bulkInsert('I_Config', [{
-        key: 'MOODLE_ROOT_CATEGORY_ID',
-        name: 'ID de categoria padre de MOODLE',
-        value: '138',
-        description: 'ID de la categoria padre dentro de MOODLE. Se define como categoria padre a la categoria que agrupa las categorias principales',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },{
         key: 'MOODLE_STUDENT_ROLE_ID',
         name: 'ID rol para estudiantes de MOODLE',
         value: '9',
@@ -32,7 +25,7 @@ module.exports = {
         updatedAt: new Date(),
       },{
         key: 'CREATE_USER_MOODLE_EMAIL_DEFAULT',
-        key: 'Email por defecto MOODLE',
+        name: 'Email por defecto MOODLE',
         value: '@default.com',
         description: 'Dominio del mail que se utiliza por defecto al crear un usuario en moodle desde la interfaz',
         createdAt: new Date(),
@@ -114,9 +107,16 @@ module.exports = {
         description: 'Ejecución cada una hora',
         createdAt: new Date(),
         updatedAt: new Date(),
+      },
+      {
+        key: 'MOODLE_URL',
+        name: 'URL de Moodle',
+        value: 'http://moodle-test.unahur.edu.ar',
+        description: 'URL de Moodle',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }
     ]);
-
     return;
   },
 

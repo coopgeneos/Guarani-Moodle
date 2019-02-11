@@ -132,12 +132,12 @@ module.exports = {
   
   getById: (req, res, next) => {
     I_Sync.findById(req.params.id)
-      .then(user => {
-        let obj = {success:true, data: user};
+      .then(sync => {
+        let obj = {success:true, data: sync};
         res.send(obj);
       })
       .catch(err => {
-        let obj = {success:false, msg: "El usuario solicitado no existe"};
+        let obj = {success:false, msg: "La sincronización solicitada no existe"};
         res.send(obj);
       })
   },
@@ -169,5 +169,29 @@ module.exports = {
         let obj = {success: false, msg: "Alguno de los parámetros tiene un nombre o valor incorrecto"}
         res.send(obj);
       })
-  }
+  },
+
+  getSIUData: (req, res, next) => {
+    I_Sync.findById(req.params.id,
+                    {
+                      model: I_SyncDetail, 
+                      attributes: {exclude: ['createdAt', 'updatedAt']},
+                      as: 'Details' 
+                    })
+      .then(sync => {
+        // Obtengo info de SIU
+        for (var i=0 ; i < sync.I_SyncDetail.length ; i++) {
+
+          //TODO
+          //sync.I_SyncDetail[i].loadSIUData();
+        }
+
+        let obj = {success:true, data: sync};
+        res.send(obj);
+      })
+      .catch(err => {
+        let obj = {success:false, msg: "La sincronización solicitada no existe"};
+        res.send(obj);
+      })
+  },
 }

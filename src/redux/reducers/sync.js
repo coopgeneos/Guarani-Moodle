@@ -1,6 +1,8 @@
 const initialState = {
 	syncs: [],
-	popupConfig:false
+	logs: [],
+	popupConfig:false,
+	popupLogs:false
 };
 
 export default (state = initialState, action) => {
@@ -34,6 +36,12 @@ export default (state = initialState, action) => {
 			return {
 				...state,
 				popupConfig: false,
+			}
+		case 'SET_SYNCS_LOGS':
+			return {
+				...state,
+				logs: action.logs,
+				popupLogs: true,
 			}
 		default:
 			return state;

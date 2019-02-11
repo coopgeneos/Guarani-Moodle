@@ -9,8 +9,8 @@ const C_MDL_SIU_User = require('./../models').C_MDL_SIU_User
 const C_MDL_SIU_Processed = require('./../models').C_MDL_SIU_Processed
 const I_SyncCategory = require('./../models').I_SyncCategory
 const I_SyncCohort = require('./../models').I_SyncCohort
-
 const I_Log = require('./../models').I_Log
+
 const axios = require('axios');
 const querystring = require('querystring');
 
@@ -102,7 +102,7 @@ function getGroupFromMoodle(url, token, courseid, name, descr){
 	})
 }
 
-function getUserFromMoodle(url, token, data, counter){
+function getUserFromMoodle(url, token, data, counter, mdl_cohort_id, log){
 	return new Promise((resolve, reject) => {
 		/* Busco el usuario en Moodle */
 		let formData = {
@@ -129,11 +129,25 @@ function getUserFromMoodle(url, token, data, counter){
 					'users[0][createpassword]': 1,
 					'users[0][firstname]': data.firstname,
 					'users[0][lastname]': data.lastname,
-					'users[0][email]': data.email
+					'users[0][email]': data.email,
+					'users[0][auth]':data.auth
 			  };
 				axios.post(url, querystring.stringify(formData))
-					.then(resp => {
-						counter.created = counter.created + 1;					
+					.then(async resp => {
+
+						if (!resp.data.id){
+							return reject("Error al crear usuario (Username:"+data.username+", Nombre y Apellido: "+data.firstname+" "+data.lastname+") en Moodle "+resp.data.message);
+						}
+
+						counter.created = counter.created + 1;	
+
+						/* Agrego el usuario al cohorte */
+						await addUserToCohortInMoodle(url, token, resp.data.id, mdl_cohort_id)
+						.catch(err => {
+							return reject('ERROR al asignar el usuario '+resp.data.id+' al cohorte '+mdl_cohort_id+' en moodle');
+							reject(err);
+						})
+
 						resolve(resp.data);
 					})
 					.catch(err => {
@@ -342,13 +356,15 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 					/* Creo el usuario en Moodle (Si no existe) */
 					let data = {
 						username: siuusr.usuario,
-						password: siuusr.apellido+siuusr.usuario,
+						password: mdl.default_password,
+						//password: mdl.default_password,
 						createpassword: 1,
 						firstname: siuusr.nombres,
 						lastname: siuusr.apellido,
-						email: siuusr.email
+						email: siuusr.email,
+						auth: mdl.auth_method
 					};
-					await getUserFromMoodle(mdl.url, mdl.token, data, counter.created)
+					await getUserFromMoodle(mdl.url, mdl.token, data, counter.created, mdl_cohort_id, log)
 						.then((mdl_user) => {
 
 							localusr = {mdl_user_id:mdl_user.id};
@@ -365,15 +381,18 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 										level: '0', 
 										i_syncDetail_id: log.i_syncDetail_id, 
 										i_syncUp_id: log.i_syncUp_id});
-									reject(err);
+									//Not reject. Just log error and Continue sincronization
+									resolve('OK')
 								})
 						})
 						.catch(err => {
-							/*I_Log.create({message: err, 
+							I_Log.create({message: err, 
 								level: '0', 
 								i_syncDetail_id: log.i_syncDetail_id, 
-								i_syncUp_id: log.i_syncUp_id});*/
-							reject(err);
+								i_syncUp_id: log.i_syncUp_id});
+							//Not reject. Just log error and Continue sincronization
+							resolve('OK')
+							//reject(err);
 						});
 				}
 
@@ -382,7 +401,9 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 						level: '0', 
 						i_syncDetail_id: log.i_syncDetail_id, 
 						i_syncUp_id: log.i_syncUp_id});
-					return resolve('Hay usuarios de SIU que no tienen usuario en MOODLE');
+					//Not reject. Just log error and Continue sincronization
+					resolve('OK')
+					//return resolve('Hay usuarios de SIU que no tienen usuario en MOODLE');
 				}
 
 				/* Enrolamiento del usuario */
@@ -392,7 +413,9 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 							level: '0', 
 							i_syncDetail_id: log.i_syncDetail_id, 
 							i_syncUp_id: log.i_syncUp_id});
-						reject(err);
+						//Not reject. Just log error and Continue sincronization
+						resolve('OK')
+						//reject(err);
 					})
 
 				/* Agrego el usuario al grupo */
@@ -402,18 +425,10 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 							level: '0', 
 							i_syncDetail_id: log.i_syncDetail_id, 
 							i_syncUp_id: log.i_syncUp_id});
-						reject(err);
+						//Not reject. Just log error and Continue sincronization
+						resolve('OK')
+						//reject(err);
 					})
-
-				/* Agrego el usuario al cohorte */
-				await addUserToCohortInMoodle(mdl.url, mdl.token, localusr.mdl_user_id, mdl_cohort_id)
-				.catch(err => {
-					I_Log.create({message: 'ERROR al asignar el usuario '+localusr.mdl_user_id+' al cohorte '+mdl_cohort_id+' en moodle', 
-						level: '0', 
-						i_syncDetail_id: log.i_syncDetail_id, 
-						i_syncUp_id: log.i_syncUp_id});
-					reject(err);
-				})
 
 				await C_MDL_SIU_Processed.create({
 					i_sync_id: log.i_sync_id, 
@@ -450,19 +465,26 @@ function createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, md
 		/* Obtengo los alumnos/docentes desde SIU */							
 		queryOnSIU (siuurl, siu.token)
 			.then(async(siuusers) => {
+				var err = null;
 				if(mdl.prevent_collapse){
 					for(var i=0; i<siuusers.length; i++){
-						let siuusr = siuusers[i];
-						await processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg)
-							.catch((err) => {
-								reject(err);
-							})
+						try {
+							let siuusr = siuusers[i];
+							await processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg, mdl_cohort_id)
+						}
+						catch(e) {
+							err = e
+							break;
+						}
 					}
-					resolve('OK');
+					if (err && err != null)
+						reject(err);
+					else
+						resolve('OK');
 				} else {
 					for(var i=0; i<siuusers.length; i++){
 						let siuusr = siuusers[i];
-						prm_array.push(processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg));
+						prm_array.push(processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg, mdl_cohort_id));
 					}
 					Promise.all(prm_array)
 						.then((values) => {
@@ -670,10 +692,8 @@ function unenrolUsers(mdl, siu_assignment_code, groupid, log){
 				level: '2', 
 				i_syncDetail_id: log.i_syncDetail_id, 
 				i_syncUp_id: log.i_syncUp_id});
-			console.log('Se desmatricularon '+ counter + ' usuarios del grupo con ID:' + groupid);
 			return resolve('Se desmatricularon '+ counter + ' usuarios del grupo con ID:' + groupid);
 		}
-		console.log('No se desmatricularon usuarios del grupo con ID:'+groupid);
 		return resolve('No se desmatricularon usuarios del grupo con ID:'+groupid);
 	})
 }
@@ -703,6 +723,8 @@ module.exports = {
 		let teacher_roleid;
 		let snprefix;
 		let syncCohort;
+		let default_password;
+		let auth_method;
 		
 		Promise.all([
 			I_SyncUp.create({i_sync_id: req.params.id}).then(s => {syncup = s}),
@@ -718,6 +740,8 @@ module.exports = {
 			I_Config.findOne({ where: {key: 'SIU_FIXMISSINGLASTNAME'}}).then(s => {fixLastname = s}),
 			I_Config.findOne({ where: {key: 'MOODLE_STUDENT_ROLE_ID'}}).then(s => {student_roleid = s}),
 			I_Config.findOne({ where: {key: 'MOODLE_TEACHING_ROLE_ID'}}).then(s => {teacher_roleid = s}),
+			I_Config.findOne({ where: {key: 'MOODLE_USER_DEFAULT_PASSWORD'}}).then(s => {default_password = s}),
+			I_Config.findOne({ where: {key: 'AUTHMODE'}}).then(s => {auth_method = s}),
 			C_MDL_SIU_Processed.destroy({ where: {i_sync_id: req.params.id}})
 		])
 		.then(async (values) => {
@@ -739,7 +763,7 @@ module.exports = {
 
 				var siu = {
 					fixurl: siuurl.dataValues.value,
-					token: siutoken.dataValues.value,					
+					token: siutoken.dataValues.value,	
 				};
 
 				var mdl = {
@@ -749,7 +773,9 @@ module.exports = {
 					student_role_id: student_roleid.dataValues.value,
 					teacher_role_id: teacher_roleid.dataValues.value,
 					groups: [],
-					prevent_collapse: mdl_prev_coll
+					prevent_collapse: mdl_prev_coll,
+					auth_method:auth_method,
+					default_password:default_password,
 				}
 
 				var log = {
@@ -812,5 +838,30 @@ module.exports = {
 			let obj = {success: false, msg: 'Hubo un error durante la sincronización. Consulte el log. ' + err};
 			res.send(obj);
 		})
-  }
+  },
+
+  getAllForSync: (req, res, next) => {
+    	I_SyncUp.findAll({
+    						where: {i_sync_id:req.params.id},
+    						attributes: {exclude: ['updatedAt']}, 
+							include: [{
+								model: I_Log, 
+								attributes: {exclude: ['createdAt', 'updatedAt']},
+								include: [{
+									model: I_SyncDetail, 
+									attributes: {exclude: ['createdAt', 'updatedAt']},
+									as: 'SyncDetail_id', 
+								}] 
+							}]
+						})
+			.then(syncs => {
+				let obj = {success: true, data: syncs};
+        res.send(obj);
+			})
+			.catch(err => {
+				console.log(err);
+				let obj = {success: false, msg: "Hubo un error al consultar los Logs"};
+        res.send(obj);
+			});
+  	},
 }
