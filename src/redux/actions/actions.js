@@ -273,21 +273,20 @@ export function loadSyncs () {
 	}
 }
 
+/*
+* La sincronziacion se ejecuta en 2do plano debido a que tarda mucho tiempo.
+* Lo ideal seria implementar websockets para manterner comunicado Cliente-Servidor pero lo dejamos para la version 2.0
+*/
 export function doSyncUp (I_Sync_ID,timeout) {
 	return (dispatch) => {
 
-		dispatch({type: 'SET_APP_LOADING'})
-		NotificationManager.success('Comenzo la sincronización', 'Sincronizando...');
-		console.log(timeout);
-
 		//dispatch({type: 'SET_DOING_SYNCUP', I_Sync_ID:I_Sync_ID})
-		if (!timeout)
-			timeout = 300000
+
 	   	axios
 	    .post('api/syncUp/'+I_Sync_ID)
 		.then(function (response) {
 		  	if (response.data.success)
-	    		NotificationManager.success('Sincronización finalizada', '¡Exito!');
+		  		NotificationManager.success('La sincronización de: '+response.data.name+' se esta ejecutando en segundo plano. Puede revisar los logs cuando lo desee', 'Comenzo la sincronizació');
 	    	else
 	    		NotificationManager.error(response.data.msg,'Error');
 	  	})
@@ -297,7 +296,6 @@ export function doSyncUp (I_Sync_ID,timeout) {
 	  	})
 	  	.then(function () {
 			//dispatch({type: 'UNSET_DOING_SYNCUP', I_Sync_ID:I_Sync_ID})
-			dispatch({type: 'UNSET_APP_LOADING'});
 	  	});  
 
 	}
@@ -321,7 +319,7 @@ export function saveSyncConfig (syncConfig) {
 	    		NotificationManager.success('Sincronización actualizada: '+syncConfig.name, '¡Exito!');
 	    	}
 	    	else{
-	    		NotificationManager.error('Error al actualiazar sincronización: '+response.data.msg,'Error');
+	    		NotificationManager.error('Error al actualizar sincronización: '+response.data.msg,'Error');
 	    	}
 	  	})
 	  	.catch(function (error) {

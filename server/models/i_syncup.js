@@ -4,7 +4,11 @@ module.exports = (sequelize, DataTypes) => {
 			type: DataTypes.INTEGER,
 			primaryKey: true,
 			autoIncrement: true
-		}  
+		},
+		completed: {
+			type: DataTypes.BOOLEAN,
+			default: false
+		},
 	},
 	{
 		tableName: 'I_SyncUp'

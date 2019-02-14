@@ -136,7 +136,7 @@ function getUserFromMoodle(url, token, data, counter, mdl_cohort_id, log){
 					.then(async resp => {
 
 						if (!resp.data.id){
-							return reject("Error al crear usuario (Username:"+data.username+", Nombre y Apellido: "+data.firstname+" "+data.lastname+") en Moodle "+resp.data.message);
+							return reject("Error al crear usuario (Username:"+data.username+", Nombre y Apellido: "+data.firstname+" "+data.lastname+") en Moodle "+resp.data.message,resp);
 						}
 
 						counter.created = counter.created + 1;	
@@ -385,11 +385,14 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 									resolve('OK')
 								})
 						})
-						.catch(err => {
+						.catch( (err,data) => {
 							I_Log.create({message: err, 
 								level: '0', 
 								i_syncDetail_id: log.i_syncDetail_id, 
-								i_syncUp_id: log.i_syncUp_id});
+								i_syncUp_id: log.i_syncUp_id})
+							.then( (log) => {
+								console.log('['+ log.I_Log_id+']',data)
+							});
 							//Not reject. Just log error and Continue sincronization
 							resolve('OK')
 							//reject(err);
@@ -785,9 +788,15 @@ module.exports = {
 
 				var prm_array = [];
 
-				let mdl_course_id = await processCourse(details[0], mdl, sync);
+				// Send ok response and start doing the sync!
+				res.send({success: true, name: sync.name});
 
-				debugger;
+				I_Log.create({message: 'Comenzo la sincronización '+ sync.name, 
+						level: '2', 
+						i_syncDetail_id: 0, 
+						i_syncUp_id: log.i_syncUp_id});
+
+				let mdl_course_id = await processCourse(details[0], mdl, sync);
 
 				for(var i=0; i<details.length; i++){
 					let detail = details[i].dataValues;
@@ -796,46 +805,70 @@ module.exports = {
 				}
 
 				Promise.all(prm_array)
-					.then(async (values) => {
-						I_Log.create({message: 'Se crearon '+ counter.created + ' usuarios en Moodle', 
-							level: '2', 
-							i_syncDetail_id: log.i_syncDetail_id, 
-							i_syncUp_id: log.i_syncUp_id});
-						I_Log.create({message: 'Se matricularon '+ counter.registered + ' usuarios en Moodle', 
-							level: '2', 
-							i_syncDetail_id: log.i_syncDetail_id, 
-							i_syncUp_id: log.i_syncUp_id});
-						
-						let details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
-						var _array = [];
-						for (var j=0; j<details.length; j++) {
-							let detail = details[j].dataValues;
-							log.i_syncDetail_id = detail.I_SyncDetail_id;
-						  _array.push(unenrolUsers(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
-						}
+				.then(async (values) => {
+					I_Log.create({message: 'Se crearon '+ counter.created + ' usuarios en Moodle', 
+						level: '2', 
+						i_syncDetail_id: log.i_syncDetail_id, 
+						i_syncUp_id: log.i_syncUp_id});
+					I_Log.create({message: 'Se matricularon '+ counter.registered + ' usuarios en Moodle', 
+						level: '2', 
+						i_syncDetail_id: log.i_syncDetail_id, 
+						i_syncUp_id: log.i_syncUp_id});
+					
+					let details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
+					var _array = [];
+					for (var j=0; j<details.length; j++) {
+						let detail = details[j].dataValues;
+						log.i_syncDetail_id = detail.I_SyncDetail_id;
+					  _array.push(unenrolUsers(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
+					}
 
-						Promise.all(_array)
-							.then((vals) => {
-								let obj = {success: true, msg: 'Se sincronizó todo exitosamente. Consulte el log'};
-								res.send(obj);
+					Promise.all(_array)
+						.then((vals) => {
+							//Set sync up has finalized
+							I_SyncUp.upsert(
+							{completed:true},
+							{
+								where: {I_SyncUp_id: syncup.I_SyncUp_id}, 
+								fields: ['completed']
+							})	
+							.then(err => {
+								I_Log.create({message: 'Sincronización '+ sync.name + ' completa!', 
+									level: '2', 
+									i_syncDetail_id: 0, 
+									i_syncUp_id: syncup.I_SyncUp_id});
+							})									
+							.catch(err => {
+								I_Log.create({message: 'ERROR al actualizar localmente: '+err, 
+									level: '0', 
+									i_syncDetail_id: 0, 
+									i_syncUp_id: syncup.I_SyncUp_id});
 							})
-							.catch((err) => {
-								let obj = {success: false, msg: 'Ocurrió un error durante la sincronización (Desmatriculacion). Consulte el log. ' + err};
-								res.send(obj);
-							})						
-					})
-					.catch((err) => {
-						let obj = {success: false, msg: 'Hubo un error durante la sincronización. Consulte el log. ' + err};
-						res.send(obj);
-					})
+							
+						})
+						.catch((err) => {
+							let obj = {success: false, msg: 'Ocurrió un error durante la sincronización (Desmatriculacion). Consulte el log. ' + err};
+							res.send(obj);
+						})						
+				})
+				.catch((err) => {
+					I_Log.create({message: 'Hubo un error inesperado durante la sincronización. ' + err, 
+						level: '0', 
+						i_syncDetail_id: log.i_syncDetail_id, 
+						i_syncUp_id: log.i_syncUp_id
+					});
+				})
 
 			} catch (err) {
-				let obj = {success: false, msg: 'Hubo un error durante la sincronización. Consulte el log. ' + err};
-				res.send(obj);
+				I_Log.create({message: 'Hubo un error inesperado durante la sincronización. ' + err, 
+					level: '0', 
+					i_syncDetail_id: 0, 
+					i_syncUp_id: syncup.I_SyncUp_id
+				});
 			}			
 		})
 		.catch(err => {
-			let obj = {success: false, msg: 'Hubo un error durante la sincronización. Consulte el log. ' + err};
+			let obj = {success: false, msg: 'Hubo un error al iniciar la sincronización. Consulte el log. ' + err};
 			res.send(obj);
 		})
   },
