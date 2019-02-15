@@ -500,3 +500,29 @@ export function createCohort (cohort) {
 		} 
 	}
 }
+
+export function loadSyncDetailSIU (I_SyncDetail_ID) {
+	return (dispatch) => {
+
+		dispatch({type: 'SET_APP_LOADING'})
+
+		axios.get('api/syncDetailSIU/'+I_SyncDetail_ID,{})
+		.then(function (response) {
+			if (response.data.data){
+				dispatch({type: 'SET_SYNCDETAILDATA', detail:response.data.data})
+			}
+			else {
+				NotificationManager.error('Error al obtener DATA de SIU: '+response.data.msg,'Error');
+				console.log("error",response.data.msg)
+			}
+		})
+		.catch(function (error) {
+			NotificationManager.error('Error', 'No hay conección');
+			console.log("error",error.response);
+		})
+		.then(function () {
+			dispatch({type: 'UNSET_APP_LOADING'});
+		});  
+	}
+}
+

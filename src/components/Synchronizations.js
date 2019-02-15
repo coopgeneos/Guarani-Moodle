@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { loadSyncs,doSyncUp,saveSyncConfig,loadSyncLogs, loadConfigurations } from './../redux/actions/actions';
+import { loadSyncs,doSyncUp,saveSyncConfig,loadSyncLogs, loadConfigurations, loadSyncDetailSIU } from './../redux/actions/actions';
 import { Button,Form,FormGroup,FormControl,Checkbox,Col, ControlLabel} from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import { registerLocale, setDefaultLocale } from 'react-datepicker';
@@ -21,6 +21,8 @@ const mapStateToProps = state => {
     return {
         syncs: state.sync.syncs,
 		SyncUpConfigurationOpen: state.sync.popupConfig,
+		GetDetailsSIUOpen: state.sync.popupDetail,
+		detail: state.sync.syncDetail,
 		SyncUpLogsOpen: state.sync.popupLogs,  
 		logs: state.sync.logs,  
 		configs: state.configuration.configurations,
@@ -140,6 +142,52 @@ const SyncUpLogsPopup =  ({handleCloseSyncUpLogs, SyncUpLogsOpenState, syncUpDat
 	    
 	)
 
+const DetailsSIUPopup =  ({handleCloseGetDetailsSIU, GetDetailsSIUOpenState, docentes, alumnos, paginationOptions, detailsSIUColumns}) => (
+		
+		<Popup
+          open={GetDetailsSIUOpenState}
+          closeOnDocumentClick
+          onClose={handleCloseGetDetailsSIU}
+        >
+          <div>
+            <a className="close" onClick={handleCloseGetDetailsSIU}>
+              &times;
+            </a>
+
+             <fieldset className="col-md-12">
+				<legend>Docentes: {docentes.length}</legend>
+	        		<BootstrapTable 
+	        		keyField='docente' 
+	        		data={ docentes } 
+	        		columns={ detailsSIUColumns } 
+	        		striped
+					hover
+					condensed
+					filter={ filterFactory() }
+	        		pagination={ paginationFactory(paginationOptions) }
+	        		/>
+	        </fieldset>
+            
+	        <fieldset className="col-md-12">
+				<legend>Alumnos: {alumnos.length}</legend>
+	        		<BootstrapTable 
+	        		keyField='alumno' 
+	        		data={ alumnos } 
+	        		columns={ detailsSIUColumns } 
+	        		striped
+					hover
+					condensed
+					filter={ filterFactory() }
+	        		pagination={ paginationFactory(paginationOptions) }
+	        		/>
+	        </fieldset>
+            <Button onClick={handleCloseGetDetailsSIU} >OK</Button>
+          </div>
+         
+	    </Popup>
+	    
+	)
+
 class Synchronizations extends Component {
 
 	componentDidMount() {
@@ -158,6 +206,10 @@ class Synchronizations extends Component {
 
      	if(newProps.SyncUpLogsOpen !== this.state.SyncUpLogsOpen){
         	this.setState({SyncUpLogsOpen: newProps.SyncUpLogsOpen })
+     	}
+
+     	if(newProps.GetDetailsSIUOpen !== this.state.GetDetailsSIUOpen){
+        	this.setState({GetDetailsSIUOpen: newProps.GetDetailsSIUOpen })
      	}
     }
 
@@ -289,9 +341,20 @@ class Synchronizations extends Component {
 		this.syncDetailsColumns = [{
 			dataField: 'I_SyncDetail_id',
 			text: 'ID'
-		}, {
+		},{
 			dataField: 'siu_assignment_code',
 			text: 'Codigo Comision'
+		},{
+			dataField: 'actions',
+			isDummyField: true,
+			text: 'Acciones',
+			formatter: (cellContent, row) => {
+		        return (
+		        	<div>
+			         <Button onClick={(e) => this.handleLoadSyncDetailSIU(row, e)}>Datos SIU</Button>
+				 	</div>
+		        );
+		    }
 		},{
 			dataField: 'mdl_course_id',
 			text: 'Curso Moodle',
@@ -346,6 +409,21 @@ class Synchronizations extends Component {
 			text: 'Mensaje',
 		}];
 
+		this.detailsSIUColumns = [
+		{
+			dataField: 'apellido',
+			text: 'Apellido'
+		}, {
+			dataField: 'nombres',
+			text: 'Nombres',
+		},{
+			dataField: 'email',
+			text: 'Email',
+		},{
+			dataField: 'usuario',
+			text: 'Usuario',
+		}];
+
 		this.paginationOptions = {
 		  pageStartIndex: 1,
 		  currSizePerPage: 5,
@@ -355,6 +433,7 @@ class Synchronizations extends Component {
 	        text: '5', value: 5
 	      }]
 		}
+
 
 	   	this.handleDoSyncUp = this.handleDoSyncUp.bind(this)
 	   	this.handleOpenSyncUpConfiguration = this.handleOpenSyncUpConfiguration.bind(this)
@@ -367,15 +446,23 @@ class Synchronizations extends Component {
 
 	   	this.handleOpenSyncUpLogs = this.handleOpenSyncUpLogs.bind(this)
 	   	this.handleCloseSyncUpLogs = this.handleCloseSyncUpLogs.bind(this)
+	   	this.handleCloseGetDetailsSIU = this.handleCloseGetDetailsSIU.bind(this)
+	   	this.handleLoadSyncDetailSIU = this.handleLoadSyncDetailSIU.bind(this)
 
 	   	
 	   	this.state = {
 	    	SyncUpConfigurationOpen:false,
 	    	SyncUpLogsOpen:false,
+	    	GetDetailsSIUOpen:false,
 	    	currSync:{task_student:false,task_teacher:false},
 	    }
 
 	 }
+
+	handleLoadSyncDetailSIU(row,e) {
+		e.preventDefault();
+		this.props.loadSyncDetailSIU(row.I_SyncDetail_id);
+	}
 
 	handleDoSyncUp(row,e) {
 		e.preventDefault();
@@ -436,6 +523,11 @@ class Synchronizations extends Component {
 	    this.setState({ SyncUpLogsOpen: false })
 	}
 
+
+	handleCloseGetDetailsSIU (e) {
+	    this.setState({ GetDetailsSIUOpen: false })
+	}
+
     render() {
     	const SyncUpConfigurationPopupProps = {
 	      handleCloseSyncUpConfiguration: this.handleCloseSyncUpConfiguration,
@@ -460,6 +552,15 @@ class Synchronizations extends Component {
 	    	expandLogRow: this.expandLogRow,
 	    	paginationOptions: this.paginationOptions}
 
+	    const DetailsSIUPopupProps = {
+	    	handleCloseGetDetailsSIU:this.handleCloseGetDetailsSIU,
+	    	GetDetailsSIUOpenState: this.state.GetDetailsSIUOpen,
+	    	docentes: this.props.detail.docentes,
+	    	alumnos: this.props.detail.alumnos,
+	    	paginationOptions: this.paginationOptions,
+	    	detailsSIUColumns:this.detailsSIUColumns
+	    }
+	    console.log('alumnos',this.props.detail.alumnos);
         return ( 
             <div className="page activities clearfix">
         		<fieldset className="col-md-12">
@@ -479,9 +580,10 @@ class Synchronizations extends Component {
 		        </fieldset>
 		        <SyncUpConfigurationPopup {...SyncUpConfigurationPopupProps}/>
 		        <SyncUpLogsPopup {...SyncUpLogsPopupProps}/>
+		        <DetailsSIUPopup {...DetailsSIUPopupProps}/>
 			</div>
         );
     }
 }
 
-export default connect(mapStateToProps, {loadSyncs,doSyncUp,saveSyncConfig,loadSyncLogs, loadConfigurations})(Synchronizations);
+export default connect(mapStateToProps, {loadSyncs,doSyncUp,saveSyncConfig,loadSyncLogs, loadConfigurations,loadSyncDetailSIU})(Synchronizations);
