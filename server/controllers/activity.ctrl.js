@@ -114,29 +114,30 @@ function updateAssignments(assignments) {
 		let period = assignments[0].periodo_lectivo.periodo_lectivo;
 		C_SIU_Assignment.destroy({where: {c_siu_school_period_id: period}})
 			.then(affectedRows => {
+				console.log('Borre!');
 				let assigs = [];
 				for (let i=0; i<assignments.length; i++) {
 					let currentValue = assignments[i];
-  				let obj = {
-  					siu_assignment_code: currentValue.comision,
-  					name: currentValue.nombre,
-  					c_siu_school_period_id: currentValue.periodo_lectivo.periodo_lectivo, 
-  					siu_activity_code: currentValue.actividad.codigo,
-  					createdAt: new Date(),
-  					updatedAt: new Date()
-  				};
-  				assigs.push(obj);
-    			if (i === assignments.length -1) {
-    				let toCreate = removeDuplicatedObjects(assigs, 'name')
-						C_SIU_Assignment.bulkCreate(toCreate)
-							.then(result => {
-								resolve(result);
-							})
-							.catch(err => {
-								console.log(err);
-								reject(err);
-							})
-    			}	    		
+	  				let obj = {
+	  					siu_assignment_code: currentValue.comision,
+	  					name: currentValue.nombre,
+	  					c_siu_school_period_id: currentValue.periodo_lectivo.periodo_lectivo, 
+	  					siu_activity_code: currentValue.actividad.codigo,
+	  					createdAt: new Date(),
+	  					updatedAt: new Date()
+	  				};
+	  				assigs.push(obj);
+	    			if (i === assignments.length -1) {
+	    				let toCreate = removeDuplicatedObjects(assigs, 'name')
+							C_SIU_Assignment.bulkCreate(toCreate)
+								.then(result => {
+									resolve(result);
+								})
+								.catch(err => {
+									console.log(err);
+									reject(err);
+								})
+	    			}	    		
 				}
 			})
 			.catch(err => {

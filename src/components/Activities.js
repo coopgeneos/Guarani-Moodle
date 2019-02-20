@@ -20,7 +20,7 @@ const mapStateToProps = state => {
     }
 }
 
-const AddSyncronization =  ({handleCloseAddSync, handleCreateSync, AddSyncOpenState, handleChange, categories, cohorts}) => (
+const AddSyncronization =  ({handleCloseAddSync, handleCreateSync, AddSyncOpenState, handleChange, categories, cohorts, newSync}) => (
 		
 		<Popup
           open={AddSyncOpenState}
@@ -36,7 +36,10 @@ const AddSyncronization =  ({handleCloseAddSync, handleCreateSync, AddSyncOpenSt
 	        		<Form id="newSync" horizontal>
 						<FormGroup key="newSync" controlId={"formHorizontal"+"newSync"} >
 						    <Col md={4} sm={4}>
-						      <FormControl type="text" name="syncName" placeholder="Nombre de Sincronización" onChange={handleChange}/>
+						    	<FormControl type="text" name="syncName" placeholder="Nombre de Sincronización" onChange={handleChange} defaultValue={newSync.syncName}/>
+						    </Col>
+						    <Col md={4} sm={4}>
+						    	<FormControl type="text" name="syncCode" placeholder="Codigo de Sincronización" onChange={handleChange} defaultValue={newSync.syncCode}/>
 						    </Col>
 						    <Col md={4} sm={4}>
 						     	<FormControl componentClass="select" name="syncCategory" placeholder="Categoria Moodle" onChange={handleChange}>
@@ -44,12 +47,13 @@ const AddSyncronization =  ({handleCloseAddSync, handleCreateSync, AddSyncOpenSt
 								        {categories}								    
 								</FormControl>
 						    </Col>
-						    <Col md={4} sm={4}>
+						    {/* <Col md={4} sm={4}>
 						     	<FormControl componentClass="select" name="syncCohort" placeholder="Cohorte Moodle" onChange={handleChange}>
            							<option key="select" value="-1">- Cohorte Moodle -</option>
 								        {cohorts}								    
 								</FormControl>
 						    </Col>
+							*/}
 						</FormGroup>
 						<FormGroup key="newCategoryButton" controlId={"formHorizontal"+"newCategory"} >
 							<Col md={2} sm={6}>
@@ -72,7 +76,7 @@ const AddSyncronization =  ({handleCloseAddSync, handleCreateSync, AddSyncOpenSt
 class Activities extends Component {
 
 	componentDidMount() {
-        //this.props.loadActivities(16)
+        this.props.loadActivities(-1)
         this.props.loadPeriods()
         this.props.loadCategories()
         this.props.loadCohorts()
@@ -86,6 +90,8 @@ class Activities extends Component {
      	if(newProps.AddSyncOpen !== this.state.AddSyncOpen){
         	this.setState({AddSyncOpen: newProps.AddSyncOpen })
      	}
+
+
     }
 
 
@@ -140,7 +146,8 @@ class Activities extends Component {
 	    this.state = {
 	    	selectedAssignments:[],
 	    	newSync:{},
-	    	C_SIU_School_Period_id:null
+	    	C_SIU_School_Period_id:-1,
+	    	activities:[],
 	    }
 	    
 	    this.activitiesColumns = [
@@ -228,7 +235,7 @@ class Activities extends Component {
 
 	handleCreateSync(e) {
 		e.preventDefault();
-		this.props.createSync(this.state.selectedAssignments,this.state.newSync.syncCategory, this.state.newSync.syncCohort, this.state.newSync.syncName, this.state.C_SIU_School_Period_id); 
+		this.props.createSync(this.state.selectedAssignments,this.state.newSync, this.state.C_SIU_School_Period_id); 
 	}
 
 	handleRefresh(e) {
@@ -238,7 +245,11 @@ class Activities extends Component {
 
 	handleChangePeriod(e) {
 		e.preventDefault();
+		
+		let index = e.target.selectedIndex;
+
 		this.setState({C_SIU_School_Period_id:e.target.value})
+		this.setState({C_SIU_School_Period_name:e.target[index].text})
 		this.props.loadActivities(e.target.value);
 	}
 
@@ -255,7 +266,37 @@ class Activities extends Component {
 	handleOpenAddSync(e) {
 		e.preventDefault();
 		let newSync = {};
+		newSync.syncName = this.getSuggestedSyncName();
+		newSync.syncCode = this.getSuggestedSyncCode();
 		this.setState({ AddSyncOpen: true , newSync:newSync})
+	}
+
+	getSuggestedSyncName() {
+		if (this.state.selectedAssignments.length > 0) {
+			let assignmentCode = this.state.selectedAssignments[0];
+			for (var i = 0 ; i < this.props.activities.length ; i++) {
+				for (var j = 0 ; j < this.props.activities[i].C_SIU_Assignments.length ; j++){
+					if (this.props.activities[i].C_SIU_Assignments[j].siu_assignment_code == assignmentCode){
+						return this.props.activities[i].name +" | "+this.state.C_SIU_School_Period_name;
+					}
+				}
+			}
+		}
+		return "";
+	}
+
+	getSuggestedSyncCode() {
+		if (this.state.selectedAssignments.length > 0) {
+			let assignmentCode = this.state.selectedAssignments[0];
+			for (var i = 0 ; i < this.props.activities.length ; i++) {
+				for (var j = 0 ; j < this.props.activities[i].C_SIU_Assignments.length ; j++){
+					if (this.props.activities[i].C_SIU_Assignments[j].siu_assignment_code == assignmentCode){
+						return this.props.activities[i].siu_activity_code +"_"+this.state.C_SIU_School_Period_id;
+					}
+				}
+			}
+		}
+		return "";
 	}
 
     render() {
@@ -270,7 +311,7 @@ class Activities extends Component {
         )
 
         const periods = this.props.periods.map( (period,index)=>
-            <option key={period.C_SIU_School_Period_id} value={period.C_SIU_School_Period_id}>{period.name}</option>
+            <option key={period.C_SIU_School_Period_id} text={period.name} value={period.C_SIU_School_Period_id}>{period.name}</option>
         )
 
         const AddSyncronizationProps = {
@@ -280,6 +321,7 @@ class Activities extends Component {
 	      handleChange: this.handleChange,
 	      categories: categories,
 	      cohorts: cohorts,
+	      newSync: this.state.newSync,
 	    };
 
         return ( 
@@ -292,7 +334,7 @@ class Activities extends Component {
     					<Button onClick={this.handleRefresh}>Refresh</Button>
 				    </Col>
 				    <Col md={4} sm={4}>
-				     	<FormControl componentClass="select" name="periodoLectivo" placeholder="Periodo Lectivo" onChange={this.handleChangePeriod}>
+				     	<FormControl componentClass="select" name="periodoLectivo" placeholder="Periodo Lectivo" defaultValue={this.state.C_SIU_School_Period_id} onChange={this.handleChangePeriod}>
    							<option key="select" value="-1">- Periodo Lectivo -</option>
 						        {periods}								    
 						</FormControl>
@@ -310,7 +352,7 @@ class Activities extends Component {
 					condensed
 					expandRow={ this.expandRow }
 					filter={ filterFactory() }
-					noDataIndication="No hay ninguna actividad, por favor pruebe refrescando la cache de actividades desde el menu administración o seleccionando un periodo lectivo."
+					noDataIndication={'No hay ninguna actividad, por favor pruebe refrescando la cache de actividades con el boton "Refresh" o seleccionando un periodo lectivo.'}
 					pagination={ paginationFactory(defaultTablePagination) }	        		
 					/>
 				    <Col md={2} sm={4} mdOffset={10} smOffset={8}>

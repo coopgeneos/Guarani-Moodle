@@ -8,6 +8,10 @@ module.exports = (sequelize, DataTypes) => {
 		name: {
 			type: DataTypes.STRING
 		},
+		code: {
+			type: DataTypes.STRING,
+			unique: true
+		},
 		siu_activity_code: {
 			type: DataTypes.STRING
 		},
@@ -34,10 +38,12 @@ module.exports = (sequelize, DataTypes) => {
 			validate: { min: 0, max: 23 }
 		},
 		task_teacher: {
-			type: DataTypes.BOOLEAN
+			type: DataTypes.BOOLEAN,
+			default:true
 		},
 		task_student: {
-			type: DataTypes.BOOLEAN
+			type: DataTypes.BOOLEAN,
+			default:true
 		},
 	},
 	{

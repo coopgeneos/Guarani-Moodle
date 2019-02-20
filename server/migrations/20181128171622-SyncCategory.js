@@ -50,20 +50,10 @@ module.exports = {
       siu_activity_code: {
         type: Sequelize.STRING,
         allowNull: false,
-        references: {
-          model: 'C_SIU_Activity',
-          key: 'siu_activity_code',
-          deferrable: Sequelize.Deferrable.INITIALLY_DEFERRED
-        }
       },
       c_siu_school_period_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: 'C_SIU_School_Period',
-          key: 'C_SIU_School_Period_id',
-          deferrable: Sequelize.Deferrable.INITIALLY_DEFERRED
-        }
       },
       name: {
         type: Sequelize.STRING
@@ -110,7 +100,7 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       siu_user_id: {
-        type: Sequelize.INTEGER
+        type: Sequelize.BIGINT
       },      
       createdAt: {
         allowNull: false,

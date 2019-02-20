@@ -176,7 +176,7 @@ class Categories extends Component {
 					condensed
 					filter={ filterFactory() }
 	        		pagination={ paginationFactory(defaultTablePagination) }
-	        		noDataIndicacion={'No hay ninguna Categoria. Por favor cree categorias desde el boton "Agregar categoria".'}
+	        		noDataIndication={'No hay ninguna Categoria. Por favor cree categorias desde el boton "Agregar categoria".'}
 	        		/>
 		        </fieldset>
 		        <AddCategory {...AddCategoryProps} />

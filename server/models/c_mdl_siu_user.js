@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
 			type: DataTypes.INTEGER
 		},
 		siu_user_id: {
-			type: DataTypes.INTEGER
+			type: DataTypes.BIGINT
 		}    
 	},
 	{

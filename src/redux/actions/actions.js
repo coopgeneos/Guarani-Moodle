@@ -9,7 +9,6 @@ export function getUser (userID) {
       return (dispatch) => {
         axios.get('api/users/'+userID)
 		  .then(function (response) {
-		  	console.log(response);
 		  	if (response.data.success)
 	    		dispatch({type: 'SET_USER', userData:response.data.data})
 	    	else
@@ -29,7 +28,6 @@ export function updateUser (user) {
 
       return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
-        console.log('Start update user');
 
         axios.put('api/users/'+user.I_User_id, {user})
 		  .then(function (response) {
@@ -40,7 +38,6 @@ export function updateUser (user) {
 		    console.log("error",error.response);
 		  })
 		  .then(function () {
-		    console.log('End update user');
 	   		dispatch({type: 'UNSET_APP_LOADING'});
 		  });  
 	  }
@@ -51,7 +48,6 @@ export function loginUser (user,password) {
 
       return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
-        console.log('Start login');
 
         axios.post('api/login', {
 		    username: user,
@@ -68,7 +64,6 @@ export function loginUser (user,password) {
 		    console.log("error",error.response);
 		  })
 		  .then(function () {
-		    console.log('End login');
 	   		dispatch({type: 'UNSET_APP_LOADING'});
 		  });  
 	  }
@@ -94,7 +89,6 @@ export function loadConfigurations () {
 	 
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
-        console.log('Start load configurations');
 
         axios.get('api/configs')
 		  .then(function (response) {
@@ -107,7 +101,6 @@ export function loadConfigurations () {
 		    console.log("error",error.response);
 		  })
 		  .then(function () {
-		    console.log('End load configurations');
 	   		dispatch({type: 'UNSET_APP_LOADING'});
 		  });  
 	}
@@ -116,7 +109,6 @@ export function loadConfigurations () {
 export function saveConfigurations (configurations) {
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
-        console.log('Start save configurations');
 
 
         //Transforms configurations
@@ -139,7 +131,6 @@ export function saveConfigurations (configurations) {
 		    console.log("error",error.response);
 		  })
 		  .then(function () {
-		    console.log('End save configurations');
 	   		dispatch({type: 'UNSET_APP_LOADING'});
 		  }); 
 	}
@@ -169,8 +160,12 @@ export function loadPeriods () {
 export function loadActivities (C_SIU_School_Period_ID) {
 	 
    	return (dispatch) => {
+   		if (C_SIU_School_Period_ID == -1){
+   			dispatch({type: 'SET_ACTIVITIES', activities:[]})
+   			return
+   		}
+
       	dispatch({type: 'SET_APP_LOADING'})
-        console.log('Start load activities');
 
         axios.get('api/activities/period/'+C_SIU_School_Period_ID)
 		  .then(function (response) {
@@ -183,7 +178,6 @@ export function loadActivities (C_SIU_School_Period_ID) {
 		    console.log("error",error.response);
 		  })
 		  .then(function () {
-		    console.log('End load activities');
 	   		dispatch({type: 'UNSET_APP_LOADING'});
 		  });  
 	}
@@ -193,7 +187,6 @@ export function refreshActivities (C_SIU_School_Period_ID) {
 	 
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
-        console.log('Start refresh activities');
 
         axios.put('api/activities')
 		  .then(function (response) {
@@ -214,18 +207,15 @@ export function refreshActivities (C_SIU_School_Period_ID) {
 	}
 }
 
-export function createSync (assignments,I_syncCategory_id, I_syncCohort_id,name,C_SIU_School_Period_ID) {
+export function createSync (assignments, newSync,C_SIU_School_Period_ID) {
 	return (dispatch) => {
 		dispatch({type: 'SET_APP_LOADING'})
-	    console.log('Start creating Sync',assignments);
 
-	    var sync = {"name":name,
-	    			"i_syncCategory_id":I_syncCategory_id,
-	    			"i_syncCohort_id":I_syncCohort_id,
+	    var sync = {"name":newSync.syncName,
+	    			"code":newSync.syncCode,
+	    			"i_syncCategory_id":newSync.syncCategory,
 	    			"c_siu_school_period_id":C_SIU_School_Period_ID,
 	    			"sync_type":"0","status":"AP","Details":[]}
-
-	    			 console.log(sync);
 
 	    assignments.forEach((item,index) => {
 	    	sync.Details.push({"siu_assignment_code":item});
@@ -234,9 +224,9 @@ export function createSync (assignments,I_syncCategory_id, I_syncCohort_id,name,
 	    axios
 	    .post('api/syncs', sync)
 		.then(function (response) {
-		  	if (response.data.success){
+		  	if (response.data.success == true){
 	    		dispatch({type: 'CLOSE_ACTIVITIES_CREATESYNC_POPUP'});
-		    	NotificationManager.success('Sincronización creada: '+name, '¡Exito!');
+		    	NotificationManager.success('Sincronización creada: '+newSync.syncName, '¡Exito!');
 		  	}
 	    	else
 	    		NotificationManager.error('Error al crear Sincronización: '+response.data.msg, '¡Error!');
@@ -254,7 +244,6 @@ export function loadSyncs () {
 	 
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
-        console.log('Start load syncs');
 
         axios.get('api/syncs',{query:"1=1"})
 		  .then(function (response) {
@@ -267,7 +256,6 @@ export function loadSyncs () {
 		    console.log("error",error.response);
 		  })
 		  .then(function () {
-		    console.log('End load syncs');
 	   		dispatch({type: 'UNSET_APP_LOADING'});
 		  });  
 	}
@@ -304,10 +292,10 @@ export function doSyncUp (I_Sync_ID,timeout) {
 export function saveSyncConfig (syncConfig) {
 	return (dispatch) => {
 		dispatch({type: 'SET_APP_LOADING'})
-		console.log(syncConfig);
+
 	    let aux = {"task_periodicity":syncConfig.task_periodicity,
-	    		   "task_from":syncConfig.task_from.getTime(),
-	    		   "task_to":syncConfig.task_to.getTime(),
+	    		   "task_from":syncConfig.task_from != null ? syncConfig.task_from.getTime() : null,
+	    		   "task_to":syncConfig.task_to != null ? syncConfig.task_to.getTime() : null,
 	    		   "task_student":syncConfig.task_student,
 	    		   "task_teacher":syncConfig.task_teacher}
 	    
@@ -357,7 +345,6 @@ export function loadCategories () {
 	 
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
-        console.log('Start load categories');
 
         axios.get('api/syncCategories',{})
 		  .then(function (response) {
@@ -370,7 +357,6 @@ export function loadCategories () {
 		    console.log("error",error.response);
 		  })
 		  .then(function () {
-		    console.log('End load categories');
 	   		dispatch({type: 'UNSET_APP_LOADING'});
 		  });  
 	}
@@ -406,7 +392,7 @@ export function createCategory (category) {
 	    
 	    else {
 		    axios
-		    .post('syncCategories', aux)
+		    .post('api/syncCategories', aux)
 			.then(function (response) {
 			  	if (response.data.success){
 		    		store.dispatch(loadCategories());

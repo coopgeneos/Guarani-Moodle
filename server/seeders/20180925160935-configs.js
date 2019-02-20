@@ -115,6 +115,22 @@ module.exports = {
         description: 'URL de Moodle',
         createdAt: new Date(),
         updatedAt: new Date(),
+      },
+      {
+        key: 'DEFAULT_SYNC_PERIODICITY',
+        name: 'Periodicidad para sincronización',
+        value: '24',
+        description: 'Valor por defecto para la periodicidad con la que se ejecuta la sincronizacion automatica',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        key: 'DEFAULT_SYNC_DYAS',
+        name: 'Cantidad de dias de la sincronizacion automatica',
+        value: '0',
+        description: 'Valor por defecto para la cantidad de días en la que se ejecuta la sincronizacion automatica. La "fecha desde" sera la fecha de creación y la "fecha hasta"  sera la "fecha desde" + este valor',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }
     ]);
     return;

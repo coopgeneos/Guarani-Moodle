@@ -9,12 +9,15 @@ module.exports = (sequelize, DataTypes) => {
 			type: DataTypes.INTEGER
 		}, 
 		siu_user_id: {
-			type: DataTypes.INTEGER
+			type: DataTypes.BIGINT
 		},
 		mdl_group_id: {
 			type: DataTypes.INTEGER
 		},
 		mdl_user_id: {
+			type: DataTypes.INTEGER
+		},
+		mdl_role_id: {
 			type: DataTypes.INTEGER
 		}	   
 	},

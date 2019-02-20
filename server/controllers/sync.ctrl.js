@@ -4,12 +4,13 @@ const I_SyncDetail = require('./../models').I_SyncDetail
 const I_SyncCategory = require('./../models').I_SyncCategory
 const I_SyncCohort = require('./../models').I_SyncCohort
 const C_SIU_School_Period = require('./../models').C_SIU_School_Period
+const I_Config = require('./../models').I_Config
+
 
 function getNextSync(sync) {
 
   if (sync.task_from && sync.task_to) {
-    console.log('sync.task_from',sync.task_from);
-    console.log('sync.task_to',sync.task_to)
+
     //Por defecto la periodicidad es 24 hs
     sync.task_periodicity = (sync.task_periodicity == null 
         || sync.task_periodicity < 0 
@@ -39,45 +40,89 @@ function getNextSync(sync) {
 module.exports = {
   addSync: (req, res, next) => {
     let newSync = req.body;
-    newSync.task_next = getNextSync(newSync);
-    let newDetails = newSync.Details;
-    let _details = [];
-    let transaction = models.sequelize.transaction()
-      .then(t => {
-        I_Sync.create(newSync, {transaction: t})
-          .then(sync => {
-            newDetails.forEach(detail => {
-              detail.dateLastSync = new Date();
-              I_SyncDetail.create(detail, {transaction: t})
-                .then(detail => {
-                  _details.push(detail)
-                  if(_details.length === newDetails.length){
-                    sync.setDetails(_details, {transaction: t})
-                      .then(updatedSync => {
-                        let obj = {success: true, msg: "Sincronización creada con "+_details.length+" lineas"};
-                        res.send(obj);
-                        return t.commit();
-                      })
-                      .catch(err => {
-                        let obj = {success: false, msg: "Hubo un error al guardar la sincronización"};
-                        res.send(obj);
-                        return t.rollback();
-                      })              
-                  }
-                })
-                .catch(err => {
-                  let obj = {success: false, msg: "Hubo un error al crear la sincronización"};
-                  res.send(obj);
-                  return t.rollback();
-                })
+
+    if (!newSync.i_syncCategory_id)
+      res.send({success: false, msg: "Falta parametro obligatorio: Categoria"});
+
+    if (!newSync.c_siu_school_period_id)
+      res.send({success: false, msg: "Falta parametro obligatorio: Periodo Lectivo"});
+
+    if (!newSync.Details || newSync.Details.length == 0)
+      res.send({success: false, msg: "Debe seleccionar al menos una comisión"});
+
+    if (!newSync.name || newSync.name.length < 8)
+      res.send({success: false, msg: "El nombre de la sincronización debe contener al menos 8 caracteres"});
+
+    if (!newSync.code || newSync.code.length < 5)
+      res.send({success: false, msg: "El codigo de la sincronización debe contener al menos 5 caracteres"});
+
+    let default_sync_periodicity;
+    let default_sync_days;
+
+    Promise.all([
+      I_Config.findOne({ where: {key: 'DEFAULT_SYNC_PERIODICITY'}}).then(s => {default_sync_periodicity = s.dataValues.value}),
+      I_Config.findOne({ where: {key: 'DEFAULT_SYNC_DAYS'}}).then(s => {default_sync_days = s.dataValues.value}),
+    ])
+    .then( (values) => {
+
+      if (default_sync_days > 0 ){
+        newSync.task_from =  new Date().getTime();
+        newSync.task_to = new Date().getTime() + (1000*60*60*24*default_sync_days); 
+      }
+
+      if (default_sync_periodicity > 0){
+        newSync.task_periodicity = parseInt(default_sync_periodicity);
+      }
+
+      newSync.task_next = getNextSync(newSync);
+
+      console.log('newSync',newSync);
+
+      let newDetails = newSync.Details;
+      let _details = [];
+      let transaction = models.sequelize.transaction()
+        .then(t => {
+          I_Sync.create(newSync, {transaction: t})
+            .then(sync => {
+              newDetails.forEach(detail => {
+                detail.dateLastSync = new Date();
+                I_SyncDetail.create(detail, {transaction: t})
+                  .then(detail => {
+                    _details.push(detail)
+                    if(_details.length === newDetails.length){
+                      sync.setDetails(_details, {transaction: t})
+                        .then(updatedSync => {
+                          let obj = {success: true, msg: "Sincronización creada con "+_details.length+" lineas"};
+                          res.send(obj);
+                          return t.commit();
+                        })
+                        .catch(err => {
+                          let obj = {success: false, msg: "Hubo un error al guardar la sincronización"};
+                          res.send(obj);
+                          return t.rollback();
+                        })              
+                    }
+                  })
+                  .catch(err => {
+                    let obj = {success: false, msg: "Hubo un error al crear la sincronización"};
+                    res.send(obj);
+                    return t.rollback();
+                  })
+              })
             })
-          })
-          .catch(err => {
-            let obj = {success: false, msg: "Hubo un error al crear la sincronización"};
-            res.send(obj);
-            return t.rollback();
-          })
-    });
+            .catch(err => {
+              let obj = {success: false, msg: "Hubo un error al crear la sincronización"};
+              res.send(obj);
+              return t.rollback();
+            })
+      });
+
+    })
+    .catch(err => {
+      let obj = {success: false, msg: 'Hubo un error al crear la sincronización.' + err};
+      res.send(obj);
+    })
+   
   },
   
   updateSync: (req, res, next) => {

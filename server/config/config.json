@@ -1,4 +1,12 @@
 {
+  "development2": {
+    "username": "root",
+    "password": "",
+    "database": "moodle-guarani",
+    "host": "localhost",
+    "dialect": "mysql",
+    "port": "3306"
+  },
   "development": {
     "username": "postgres",
     "password": "postgres",

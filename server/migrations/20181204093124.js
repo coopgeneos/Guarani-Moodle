@@ -14,7 +14,7 @@ module.exports = {
         type: Sequelize.INTEGER
       }, 
       siu_user_id: {
-        type: Sequelize.INTEGER
+        type: Sequelize.BIGINT
       },
       mdl_group_id: {
         type: Sequelize.INTEGER
@@ -22,6 +22,9 @@ module.exports = {
       mdl_user_id: {
         type: Sequelize.INTEGER
       },     
+      mdl_role_id: {
+        type: Sequelize.INTEGER
+      }, 
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

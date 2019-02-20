@@ -17,7 +17,6 @@ import paginationFactory from 'react-bootstrap-table2-paginator';
 
 
 const mapStateToProps = state => {
-	console.log(state.configuration.configurations);
     return {
         syncs: state.sync.syncs,
 		SyncUpConfigurationOpen: state.sync.popupConfig,
@@ -268,6 +267,10 @@ class Synchronizations extends Component {
 			text: 'Sincronizacion',
 			filter: textFilter()
 		},{
+			dataField: 'code',
+			text: 'Codigo',
+			filter: textFilter()
+		},{
 		    dataField: 'c_siu_school_period_id',
 		    text: 'Periodo',
 		    formatter: (cellContent, row) => (
@@ -281,14 +284,6 @@ class Synchronizations extends Component {
 		    formatter: (cellContent, row) => (
 		        <span>
 		           {row.I_SyncCategory.name}
-		        </span>
-		    )
-		},{
-		    dataField: 'i_syncCohort_id',
-		    text: 'Cohorte',
-		    formatter: (cellContent, row) => (
-		        <span>
-		           {row.I_SyncCohort.name}
 		        </span>
 		    )
 		},{
@@ -386,9 +381,19 @@ class Synchronizations extends Component {
 		},{
 			dataField: 'I_SyncUp_id',
 			text: 'ID'
-		}, {
+		}
+		, {
 			dataField: 'createdAt',
 			text: 'Fecha de sincronización',
+		},{
+			dataField: 'completed',
+			isDummyField: true,
+			text: 'Completa',
+			formatter: (cellContent, row) => (
+		        <span>
+		           {row.completed ? 'Si' : 'No'}
+		        </span>
+		    )
 		},{
 		    dataField: 'logs',
 		    text: '# Logs',
@@ -560,7 +565,7 @@ class Synchronizations extends Component {
 	    	paginationOptions: this.paginationOptions,
 	    	detailsSIUColumns:this.detailsSIUColumns
 	    }
-	    console.log('alumnos',this.props.detail.alumnos);
+	    
         return ( 
             <div className="page activities clearfix">
         		<fieldset className="col-md-12">

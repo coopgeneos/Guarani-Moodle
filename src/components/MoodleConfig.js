@@ -10,8 +10,6 @@ class MoodleConfig extends Component {
         return ( 
         	 <div className="page clearfix">
 		    	<Categories />
-		    	<hr className="divider"/>
-		    	<Cohorts />
 			</div>
         );
     }
