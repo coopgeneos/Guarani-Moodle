@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { loadCategories,loadActivities,loadCohorts,loadPeriods,refreshActivities,createSync, addAssignments, loadSyncs } from './../redux/actions/actions';
 import { Col,Form,FormGroup,ControlLabel,FormControl,Button } from 'react-bootstrap';
+import ReactTooltip from 'react-tooltip'
 import BootstrapTable from 'react-bootstrap-table-next';
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
 import paginationFactory from 'react-bootstrap-table2-paginator';
@@ -177,6 +178,26 @@ class Activities extends Component {
 		}
 	}
 
+	// 0 => No existe , 1 => Parcial, 2 => Completa
+	getActivityStatus = (C_SIU_Activity) => {
+		var notFoundOne = false;
+		var foundOne = false;
+
+		for (let i = 0 ; i < C_SIU_Activity.C_SIU_Assignments.length ; i ++) {
+			if (C_SIU_Activity.C_SIU_Assignments[i].I_SyncDetails.length == 0)
+				notFoundOne = true;
+			else
+				foundOne = true;
+
+		}
+		if (notFoundOne && foundOne)
+			return 1
+		if (!foundOne )
+			return 0
+		if (!notFoundOne)
+			return 2
+	}
+
 	
 
 	constructor () {
@@ -212,7 +233,7 @@ class Activities extends Component {
 		    text: '# Comisiones',
 		    width: '100',
 		    formatter: (cellContent, row) => (
-		      <div className="checkbox disabled">
+		      <div>
 		        <label>
 		           {row.C_SIU_Assignments.length}
 		        </label>
@@ -223,16 +244,26 @@ class Activities extends Component {
 		    isDummyField: true,
 		    text: 'Sincronizacion',
 		    formatter: (cellContent, row) => {
-		      if (false) {
+		      if (this.getActivityStatus(row) == 2) {
 		        return (
 		          <h5>
-		            <span className="label label-success">Completa</span>
+		            <a data-tip="Existen sincronizaciónes configuradas para todas las comisiones de esta actividad" className="label label-success">Completa</a>
+		          	<ReactTooltip place="top" type="dark" effect="float"/>
 		          </h5>
 		        );
 		      }
-		      return (
+		      if (this.getActivityStatus(row) == 1) {
+			      return (
+			        <h5>
+			          <span data-tip="No exste ninguna sincronización configurada con comisiones de esta actividad" className="label label-info">Parcial</span>
+			          <ReactTooltip place="top" type="dark" effect="float"/>
+			        </h5>
+			      );
+		  	  }
+		  	  return (
 		        <h5>
-		          <span className="label label-danger">Sin configurar</span>
+		          <span data-tip="Existen sincronizaciónes configuradas con solo algunas comisiones de esta actividad" className="label label-danger">Sin configurar</span>
+		          <ReactTooltip place="top" type="dark" effect="float"/>
 		        </h5>
 		      );
 		    }
@@ -249,16 +280,18 @@ class Activities extends Component {
 		    isDummyField: true,
 		    text: 'Sincronizacion',
 		    formatter: (cellContent, row) => {
-		      if (false) {
+		      if (row.I_SyncDetails.length > 0) {
 		        return (
 		          <h5>
-		            <span className="label label-success">Completa</span>
+		            <span data-tip={"Existen "+row.I_SyncDetails.length+" sincronizaciones configuradas para esta comisíon"} className="label label-success">Configurada ({row.I_SyncDetails.length})</span>
+		          	<ReactTooltip place="top" type="dark" effect="float"/>
 		          </h5>
 		        );
 		      }
 		      return (
 		        <h5>
-		          <span className="label label-danger">Sin configurar</span>
+		          <span data-tip="No existe ninguna sincronización configurada con esta comisión" className="label label-danger">Sin configurar</span>
+		          <ReactTooltip place="top" type="dark" effect="float"/>
 		        </h5>
 		      );
 		    }

@@ -107,7 +107,7 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       siu_assignment_code: {
-        type: Sequelize.STRING
+        type: Sequelize.INTEGER
       },
       mdl_course_id: {
         type: Sequelize.INTEGER

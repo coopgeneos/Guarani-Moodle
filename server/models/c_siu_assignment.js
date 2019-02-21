@@ -2,8 +2,8 @@
 module.exports = (sequelize, DataTypes) => {
 	let C_SIU_Assignment = sequelize.define('C_SIU_Assignment', {
 		siu_assignment_code: {
-      type: DataTypes.INTEGER,
-      primaryKey: true
+      	type: DataTypes.INTEGER,
+      	primaryKey: true
     },
 		name: {
 			type: DataTypes.STRING

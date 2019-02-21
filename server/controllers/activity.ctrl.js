@@ -2,7 +2,7 @@ const models = require('./../models');
 const C_SIU_Activity = require('./../models').C_SIU_Activity
 const C_SIU_School_Period = require('./../models').C_SIU_School_Period
 const C_SIU_Assignment = require('./../models').C_SIU_Assignment
-const I_SyncDetail = require('./../models').C_SIU_Assignment
+const I_SyncDetail = require('./../models').I_SyncDetail
 const I_Config = require('./../models').I_Config
 const axios = require('axios');
 
@@ -149,12 +149,18 @@ function updateAssignments(assignments) {
 
 module.exports = {
 	getAll: (req, res, next) => {
-		C_SIU_Activity.findAll({attributes: {exclude: ['createdAt', 'updatedAt']}, 
-														include: [{
-															model: C_SIU_Assignment, 
-															attributes: {exclude: ['createdAt', 'updatedAt']}, 
-														}]
-													})
+		C_SIU_Activity.findAll({
+								attributes: {exclude: ['createdAt', 'updatedAt']}, 
+								include: [
+								{
+									model: C_SIU_Assignment, 
+									attributes: {exclude: ['createdAt', 'updatedAt']},
+									include: [{
+										model: I_SyncDetail, 
+										attributes: {exclude: ['createdAt', 'updatedAt']}, 
+									}]
+								}]
+							})
 			.then(acts => {
 				let obj = {success: true, data: acts};
         res.send(obj);
@@ -168,12 +174,16 @@ module.exports = {
 
 	getAllForPeriod: (req, res, next) => {
     	C_SIU_Activity.findAll({attributes: {exclude: ['createdAt', 'updatedAt']}, 
-														include: [{
-															where: {c_siu_school_period_id:req.params.period},
-															model: C_SIU_Assignment, 
-															attributes: {exclude: ['createdAt', 'updatedAt']}, 
-														}]
-													})
+								include: [{
+									where: {c_siu_school_period_id:req.params.period},
+									model: C_SIU_Assignment, 
+									attributes: {exclude: ['createdAt', 'updatedAt']},
+									include: [{
+										model: I_SyncDetail, 
+										attributes: {exclude: ['createdAt', 'updatedAt']}, 
+									}] 
+								}]
+							})
 			.then(acts => {
 				let obj = {success: true, data: acts};
         res.send(obj);

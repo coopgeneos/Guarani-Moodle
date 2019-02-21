@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
 			autoIncrement: true
 		},
 		siu_assignment_code: {
-			type: DataTypes.STRING
+			type: DataTypes.INTEGER
 		},
 	  	mdl_course_id: {
 			type: DataTypes.INTEGER
@@ -26,11 +26,17 @@ module.exports = (sequelize, DataTypes) => {
 	})
 
 	SyncDetail.associate = function (models) {
-    models.I_SyncDetail.belongsTo(models.I_Sync, {
-			foreignKey: {
-				name: 'i_sync_id'
-			}
-    });
+	    models.I_SyncDetail.belongsTo(models.I_Sync, {
+				foreignKey: {
+					name: 'i_sync_id'
+				}
+	    });
+
+	    models.I_SyncDetail.belongsTo(models.C_SIU_Assignment, {
+				foreignKey: {
+					name: 'siu_assignment_code'
+				}
+	    });
 	};
 
 	return SyncDetail;
