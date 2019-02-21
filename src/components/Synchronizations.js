@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { loadSyncs,doSyncUp,saveSyncConfig,loadSyncLogs, loadConfigurations, loadSyncDetailSIU } from './../redux/actions/actions';
+import { loadSyncs,doSyncUp,saveSyncConfig,loadSyncLogs, loadConfigurations, loadSyncDetailSIU, deleteAssigment} from './../redux/actions/actions';
 import { Button,Form,FormGroup,FormControl,Checkbox,Col, ControlLabel} from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import { registerLocale, setDefaultLocale } from 'react-datepicker';
@@ -347,6 +347,7 @@ class Synchronizations extends Component {
 		        return (
 		        	<div>
 			         <Button onClick={(e) => this.handleLoadSyncDetailSIU(row, e)}>Datos SIU</Button>
+			         <Button onClick={(e) => this.handleDeleteAssingment(row, e)}>Eliminar</Button>
 				 	</div>
 		        );
 		    }
@@ -381,8 +382,7 @@ class Synchronizations extends Component {
 		},{
 			dataField: 'I_SyncUp_id',
 			text: 'ID'
-		}
-		, {
+		},{
 			dataField: 'createdAt',
 			text: 'Fecha de sincronización',
 		},{
@@ -453,6 +453,7 @@ class Synchronizations extends Component {
 	   	this.handleCloseSyncUpLogs = this.handleCloseSyncUpLogs.bind(this)
 	   	this.handleCloseGetDetailsSIU = this.handleCloseGetDetailsSIU.bind(this)
 	   	this.handleLoadSyncDetailSIU = this.handleLoadSyncDetailSIU.bind(this)
+	   	this.handleDeleteAssingment = this.handleDeleteAssingment.bind(this)
 
 	   	
 	   	this.state = {
@@ -467,6 +468,11 @@ class Synchronizations extends Component {
 	handleLoadSyncDetailSIU(row,e) {
 		e.preventDefault();
 		this.props.loadSyncDetailSIU(row.I_SyncDetail_id);
+	}
+
+	handleDeleteAssingment(row,e) {
+		e.preventDefault();
+		this.props.deleteAssigment(row.I_SyncDetail_id);
 	}
 
 	handleDoSyncUp(row,e) {
@@ -591,4 +597,4 @@ class Synchronizations extends Component {
     }
 }
 
-export default connect(mapStateToProps, {loadSyncs,doSyncUp,saveSyncConfig,loadSyncLogs, loadConfigurations,loadSyncDetailSIU})(Synchronizations);
+export default connect(mapStateToProps, {loadSyncs,doSyncUp,saveSyncConfig,loadSyncLogs, loadConfigurations,loadSyncDetailSIU, deleteAssigment})(Synchronizations);

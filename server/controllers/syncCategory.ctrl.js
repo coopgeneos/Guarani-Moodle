@@ -50,7 +50,12 @@ module.exports = {
 	},
 
 	findAll: (req, res, next) => {
-		I_SyncCategory.findAll({where: req.query,
+		I_SyncCategory.findAll(
+                  {
+                    where: req.query,
+                    order: [
+                      ["name","asc"]
+                    ],
                     attributes: {exclude: ['createdAt', 'updatedAt']}
                   })
       .then(categs => {

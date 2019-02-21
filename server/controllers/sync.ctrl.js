@@ -76,8 +76,6 @@ module.exports = {
 
       newSync.task_next = getNextSync(newSync);
 
-      console.log('newSync',newSync);
-
       let newDetails = newSync.Details;
       let _details = [];
       let transaction = models.sequelize.transaction()
@@ -149,30 +147,74 @@ module.exports = {
         res.send(obj);
       }
     )
-/*
+  },
 
-    I_Sync.findById(req.params.id)
-      .then(sync => {
-        syncToUpdate.siu_actividad_codigo = syncToUpdate.siu_actividad_codigo ? syncToUpdate.siu_actividad_codigo : sync.siu_actividad_codigo;
-        syncToUpdate.siu_periodo_lectivo = syncToUpdate.siu_periodo_lectivo ? syncToUpdate.siu_periodo_lectivo : sync.siu_periodo_lectivo;
-        syncToUpdate.i_syncCategory_id = syncToUpdate.i_syncCategory_id ? syncToUpdate.i_syncCategory_id : sync.i_syncCategory_id;
-        syncToUpdate.i_syncCohort_id = syncToUpdate.i_syncCohort_id ? syncToUpdate.i_syncCohort_id : sync.i_syncCohort_id;
-        syncToUpdate.sync_type = syncToUpdate.sync_type ? syncToUpdate.sync_type : sync.sync_type;
-        syncToUpdate.status = syncToUpdate.status ? syncToUpdate.status : sync.status;
-        syncToUpdate.save()
-          .then(updated => {
-            let obj = {success: true, data: updated};
-            res.send(obj);
-          })
-          .catch(err => {
-            let obj = {success: false, msg: "Hubo un error al actualizar la sincronización"};
-            res.send(obj);
-          })
+  addAssignments: async (req, res, next) => {
+
+    let I_Sync_id = req.params.id ;
+    let newDetails = req.body;
+    
+    let added = 0;
+
+    sync = await I_Sync.findOne({where: {I_Sync_id: req.params.id}})
+
+    let transaction = models.sequelize.transaction()
+    .then(t => {
+
+      //Check if alredy exist
+      I_SyncDetail.findAll({where:{i_sync_id:I_Sync_id}})
+      .then(async (details) => {
+
+        for(let i = 0 ; i < newDetails.length ; i++) {
+
+          let found = false;
+
+          for (let j = 0 ; j < details ; j++) {
+
+            if (details[j].dataValues.siu_assignment_code == newDetails[i].siu_assignment_code){
+              found = true;
+            }
+          }
+
+          //Add new 
+          if (!found) {
+            let newDetail = newDetails[i];
+            newDetail.dateLastSync = new Date();
+            newDetail.i_sync_id = I_Sync_id;
+            detail = await I_SyncDetail.create(newDetail,{transaction: t});
+            if (detail)
+              added++;
+          }
+
+        }
+        let obj = {success: true, msg: "Se agregaron "+added+" comisiones a la sincronización: "+sync.name};
+        res.send(obj);
+        t.commit();
       })
       .catch(err => {
-        let obj = {success: true, msg: "No existe la sincronización que desea actualizar"};
+        console.log(err);
+        let obj = {success: false, msg: "Hubo un error al agregar las comisiones: "+err};
         res.send(obj);
-      })*/
+        t.rollback();
+      })
+    });
+  },
+
+  deleteAssignment: async (req, res, next) => {
+
+    let I_SyncDetail_id = req.params.id ;
+    
+    I_SyncDetail.destroy({where:{I_SyncDetail_id:I_SyncDetail_id}})
+    .then((rows) => {
+      console.log(rows);
+      let obj = {success: true, msg: "Se elimino la comision correctamente"};
+      res.send(obj);
+    })
+    .catch(err => {
+      console.log(err);
+      let obj = {success: false, msg: "Se produjo un error al eliminar la comisión: "+err};
+      res.send(obj);
+    })
   },
   
   getById: (req, res, next) => {
@@ -190,13 +232,17 @@ module.exports = {
   getByParameters: (req, res, next) => {
     I_Sync.findAll({where: req.query,
                     attributes: {exclude: ['createdAt', 'updatedAt']},
+                    order: [
+                        ["name","asc"],
+                        [{ model: I_SyncDetail, as: 'Details' },"siu_assignment_code","asc"],
+                      ], 
                     include: [{
                       model: C_SIU_School_Period, 
-                      attributes: {exclude: ['createdAt', 'updatedAt']} 
+                      attributes: {exclude: ['createdAt', 'updatedAt']},
                     },{
                       model: I_SyncDetail, 
                       attributes: {exclude: ['createdAt', 'updatedAt']},
-                      as: 'Details' 
+                      as: 'Details'
                     },{
                       model: I_SyncCategory, 
                       attributes: {exclude: ['createdAt', 'updatedAt']},
@@ -216,27 +262,4 @@ module.exports = {
       })
   },
 
-  getSIUData: (req, res, next) => {
-    I_Sync.findById(req.params.id,
-                    {
-                      model: I_SyncDetail, 
-                      attributes: {exclude: ['createdAt', 'updatedAt']},
-                      as: 'Details' 
-                    })
-      .then(sync => {
-        // Obtengo info de SIU
-        for (var i=0 ; i < sync.I_SyncDetail.length ; i++) {
-
-          //TODO
-          //sync.I_SyncDetail[i].loadSIUData();
-        }
-
-        let obj = {success:true, data: sync};
-        res.send(obj);
-      })
-      .catch(err => {
-        let obj = {success:false, msg: "La sincronización solicitada no existe"};
-        res.send(obj);
-      })
-  },
 }

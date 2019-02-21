@@ -921,6 +921,10 @@ module.exports = {
     	I_SyncUp.findAll({
     						where: {i_sync_id:req.params.id},
     						attributes: {exclude: ['updatedAt']}, 
+    						order: [
+		                      ["createdAt","desc"],
+		                      [I_Log,"createdAt","asc"]
+		                    ],
 							include: [{
 								model: I_Log, 
 								attributes: {exclude: ['createdAt', 'updatedAt']},

@@ -1,6 +1,7 @@
 const initialState = {
 	activities: [],
-	popup:false
+	popup:false,
+	popupAssignments:false
 };
 
 export default (state = initialState, action) => {
@@ -16,6 +17,11 @@ export default (state = initialState, action) => {
 			return {
 				...state,
 				popup: false,
+			}
+		case 'CLOSE_ACTIVITIES_ADDASSIGNMENTS_POPUP':
+			return {
+				...state,
+				popupAssignments: false,
 			}
 		default:
 			return state;

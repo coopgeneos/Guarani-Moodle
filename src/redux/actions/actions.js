@@ -261,8 +261,61 @@ export function loadSyncs () {
 	}
 }
 
+export function addAssignments (assignments, i_sync_id) {
+	return (dispatch) => {
+		dispatch({type: 'SET_APP_LOADING'})
+
+		let details = [];
+
+	    assignments.forEach((item,index) => {
+	    	details.push({"siu_assignment_code":item});
+	    })
+
+	    console.log('addAssignments',details);
+	    axios
+	    .put('api/syncs/'+i_sync_id+'/addAssignments', details)
+		.then(function (response) {
+		  	if (response.data.success == true){
+	    		dispatch({type: 'CLOSE_ACTIVITIES_ADDASSIGNMENTS_POPUP'});
+		    	NotificationManager.success(response.data.msg, '¡Exito!');
+		  	}
+	    	else
+	    		NotificationManager.error('Error al agregar comisiones: '+response.data.msg, '¡Error!');
+	  	})
+	  	.catch(function (error) {
+	    	NotificationManager.error('Error de coneccion', '¡Error!');
+	  	})
+	  	.then(function () {
+   			dispatch({type: 'UNSET_APP_LOADING'});
+	  	});  
+	}
+}
+
+export function deleteAssigment (assignment) {
+	return (dispatch) => {
+		dispatch({type: 'SET_APP_LOADING'})
+
+	    axios
+	    .delete('api/syncs/deleteDetail/'+assignment)
+		.then(function (response) {
+		  	if (response.data.success == true){
+		  		store.dispatch(loadSyncs());
+		    	NotificationManager.success(response.data.msg, '¡Exito!');
+		  	}
+	    	else
+	    		NotificationManager.error('Error al eliminar comision: '+response.data.msg, '¡Error!');
+	  	})
+	  	.catch(function (error) {
+	    	NotificationManager.error('Error de coneccion', '¡Error!');
+	  	})
+	  	.then(function () {
+   			dispatch({type: 'UNSET_APP_LOADING'});
+	  	});  
+	}
+}
+
 /*
-* La sincronziacion se ejecuta en 2do plano debido a que tarda mucho tiempo.
+* La sincronizacion se ejecuta en 2do plano debido a que tarda mucho tiempo.
 * Lo ideal seria implementar websockets para manterner comunicado Cliente-Servidor pero lo dejamos para la version 2.0
 */
 export function doSyncUp (I_Sync_ID,timeout) {

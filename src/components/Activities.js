@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { loadCategories,loadActivities,loadCohorts,loadPeriods,refreshActivities,createSync } from './../redux/actions/actions';
+import { loadCategories,loadActivities,loadCohorts,loadPeriods,refreshActivities,createSync, addAssignments, loadSyncs } from './../redux/actions/actions';
 import { Col,Form,FormGroup,ControlLabel,FormControl,Button } from 'react-bootstrap';
 import BootstrapTable from 'react-bootstrap-table-next';
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
@@ -9,14 +9,15 @@ import { defaultTablePagination } from './../utils/commons';
 import Popup from 'reactjs-popup';
 
 
-
 const mapStateToProps = state => {
     return {
         activities: state.activity.activities,
         categories: state.category.categories,
         cohorts: state.cohort.cohorts,
         AddSyncOpen: state.activity.popup,
+        AddAssignmentsOpen: state.activity.popupAssignments,
         periods: state.common.periods,
+        syncs: state.sync.syncs,
     }
 }
 
@@ -47,13 +48,6 @@ const AddSyncronization =  ({handleCloseAddSync, handleCreateSync, AddSyncOpenSt
 								        {categories}								    
 								</FormControl>
 						    </Col>
-						    {/* <Col md={4} sm={4}>
-						     	<FormControl componentClass="select" name="syncCohort" placeholder="Cohorte Moodle" onChange={handleChange}>
-           							<option key="select" value="-1">- Cohorte Moodle -</option>
-								        {cohorts}								    
-								</FormControl>
-						    </Col>
-							*/}
 						</FormGroup>
 						<FormGroup key="newCategoryButton" controlId={"formHorizontal"+"newCategory"} >
 							<Col md={2} sm={6}>
@@ -61,6 +55,46 @@ const AddSyncronization =  ({handleCloseAddSync, handleCreateSync, AddSyncOpenSt
 							</Col>
 							<Col md={2} sm={6}>
 								<Button onClick={handleCreateSync} >Guardar</Button>
+							</Col>
+						</FormGroup>
+					</Form>
+	        </fieldset>
+
+           
+          </div>
+         
+	    </Popup>
+	    
+	)
+
+const AddAssignmentsPopup =  ({handleCloseAddAssignments, handleAddAssignments, AddAssignmentsOpenState, handleChangeSync, syncs}) => (
+		
+		<Popup
+          open={AddAssignmentsOpenState}
+          closeOnDocumentClick
+          onClose={handleCloseAddAssignments}
+        >
+          <div>
+            <a className="close" onClick={handleCloseAddAssignments}>
+              &times;
+            </a>
+            <fieldset className="col-md-12">
+				<legend>{'Agregar comisiones'}</legend>
+	        		<Form id="AddAssignments" horizontal>
+						<FormGroup key="AddAssignments" controlId={"formHorizontal"+"AddAssignments"} >
+						    <Col md={12} sm={12}>
+						     	<FormControl componentClass="select" name="syncCategory" placeholder="Categoria Moodle" onChange={handleChangeSync}>
+           							<option key="select" value="-1">- Seleccionar Sincronización -</option>
+								        {syncs}								    
+								</FormControl>
+						    </Col>
+						</FormGroup>
+						<FormGroup key="AddAssignmentsButton" controlId={"formHorizontal"+"AddAssignmentsButton"} >
+							<Col md={2} sm={6}>
+								<Button onClick={handleCloseAddAssignments} >Cancelar</Button>
+							</Col>
+							<Col md={2} sm={6}>
+								<Button onClick={handleAddAssignments} >Guardar</Button>
 							</Col>
 						</FormGroup>
 					</Form>
@@ -80,6 +114,7 @@ class Activities extends Component {
         this.props.loadPeriods()
         this.props.loadCategories()
         this.props.loadCohorts()
+        this.props.loadSyncs()
     }
 
     /*
@@ -91,6 +126,9 @@ class Activities extends Component {
         	this.setState({AddSyncOpen: newProps.AddSyncOpen })
      	}
 
+     	if(newProps.AddAssignmentsOpen !== this.state.AddAssignmentsOpen){
+        	this.setState({AddAssignmentsOpen: newProps.AddAssignmentsOpen })
+     	}
 
     }
 
@@ -148,6 +186,7 @@ class Activities extends Component {
 	    	newSync:{},
 	    	C_SIU_School_Period_id:-1,
 	    	activities:[],
+	    	AddAssignmentsOpen: false
 	    }
 	    
 	    this.activitiesColumns = [
@@ -160,13 +199,13 @@ class Activities extends Component {
 		          <span>{rowIndex}</span>
 		        );
 		    }
-		  },{
-			dataField: 'siu_activity_code',
-			text: 'Codigo',
-			filter: textFilter()
-		}, {
+		},{
 			dataField: 'name',
 			text: 'Actividad',
+			filter: textFilter()
+		},{
+			dataField: 'siu_activity_code',
+			text: 'Codigo',
 			filter: textFilter()
 		},{
 		    dataField: 'comisiones',
@@ -227,10 +266,14 @@ class Activities extends Component {
 
 	   	this.handleRefresh = this.handleRefresh.bind(this)
 	    this.handleCreateSync = this.handleCreateSync.bind(this)
+	    this.handleAddAssignments = this.handleAddAssignments.bind(this)
 	   	this.handleChange = this.handleChange.bind(this)
 	   	this.handleChangePeriod = this.handleChangePeriod.bind(this)
+	   	this.handleChangeSync = this.handleChangeSync.bind(this)
 	   	this.handleCloseAddSync = this.handleCloseAddSync.bind(this)
 	   	this.handleOpenAddSync = this.handleOpenAddSync.bind(this)
+	   	this.handleCloseAddAssignments = this.handleCloseAddAssignments.bind(this)
+	   	this.handleOpenAddAssignments = this.handleOpenAddAssignments.bind(this)
 	 }
 
 	handleCreateSync(e) {
@@ -243,6 +286,11 @@ class Activities extends Component {
 		this.props.refreshActivities(this.state.C_SIU_School_Period_id);
 	}
 
+	handleAddAssignments(e) {
+		e.preventDefault();
+		this.props.addAssignments(this.state.selectedAssignments,this.state.selectedSync); 
+	}
+
 	handleChangePeriod(e) {
 		e.preventDefault();
 		
@@ -251,6 +299,11 @@ class Activities extends Component {
 		this.setState({C_SIU_School_Period_id:e.target.value})
 		this.setState({C_SIU_School_Period_name:e.target[index].text})
 		this.props.loadActivities(e.target.value);
+	}
+
+	handleChangeSync(e) {
+		e.preventDefault();
+		this.setState({selectedSync:e.target.value})
 	}
 
 	handleChange(e) {
@@ -269,6 +322,15 @@ class Activities extends Component {
 		newSync.syncName = this.getSuggestedSyncName();
 		newSync.syncCode = this.getSuggestedSyncCode();
 		this.setState({ AddSyncOpen: true , newSync:newSync})
+	}
+
+	handleCloseAddAssignments (e) {
+	    this.setState({ AddAssignmentsOpen: false })
+	}
+
+	handleOpenAddAssignments(e) {
+		e.preventDefault();
+		this.setState({ AddAssignmentsOpen: true , selectedSync:null})
 	}
 
 	getSuggestedSyncName() {
@@ -314,6 +376,10 @@ class Activities extends Component {
             <option key={period.C_SIU_School_Period_id} text={period.name} value={period.C_SIU_School_Period_id}>{period.name}</option>
         )
 
+        const syncs = this.props.syncs.map( (sync,index)=>
+            <option key={sync.I_Sync_id} value={sync.I_Sync_id}>{sync.name}</option>
+        )
+
         const AddSyncronizationProps = {
 	      handleCloseAddSync: this.handleCloseAddSync,
 	      handleCreateSync: this.handleCreateSync,
@@ -324,16 +390,27 @@ class Activities extends Component {
 	      newSync: this.state.newSync,
 	    };
 
+	    const AddAssignmentsPopupProps = {
+	      handleCloseAddAssignments: this.handleCloseAddAssignments,
+	      handleAddAssignments: this.handleAddAssignments,
+	      AddAssignmentsOpenState: this.state.AddAssignmentsOpen,
+	      handleChangeSync: this.handleChangeSync,
+	      syncs: syncs,
+	    };
+
         return ( 
             <div className="page activities clearfix">
         		<fieldset className="col-md-12">
         			<Col md={2} sm={4}>
     					<legend>Actividades</legend>
     				</Col>
-    				<Col md={4} sm={4}>
+    				<Col md={2} sm={4}>
     					<Button onClick={this.handleRefresh}>Refresh</Button>
 				    </Col>
-				    <Col md={4} sm={4}>
+				    <Col md={3} sm={4} >
+    					<Button onClick={(e) => this.handleOpenAddAssignments(e)} >Agregar a sincronización existente</Button>
+				    </Col>
+				    <Col md={3} sm={4}>
 				     	<FormControl componentClass="select" name="periodoLectivo" placeholder="Periodo Lectivo" defaultValue={this.state.C_SIU_School_Period_id} onChange={this.handleChangePeriod}>
    							<option key="select" value="-1">- Periodo Lectivo -</option>
 						        {periods}								    
@@ -342,6 +419,8 @@ class Activities extends Component {
 				    <Col md={2} sm={4} mdOffset={0} smOffset={8}>
     					<Button onClick={(e) => this.handleOpenAddSync(e)} >Crear Sincronización</Button>
 				    </Col>
+
+				    
 					   
 	        		<BootstrapTable 
 	        		keyField='siu_activity_code' 
@@ -360,9 +439,10 @@ class Activities extends Component {
 				    </Col>
 		        </fieldset>
 		        <AddSyncronization {...AddSyncronizationProps} />
+		        <AddAssignmentsPopup {...AddAssignmentsPopupProps}/>
 			</div>
         );
     }
 }
 
-export default connect(mapStateToProps, {loadCategories,loadActivities,loadCohorts,loadPeriods,refreshActivities,createSync})(Activities);
+export default connect(mapStateToProps, {loadCategories,loadActivities,loadCohorts,loadPeriods,refreshActivities,createSync,addAssignments,loadSyncs})(Activities);
