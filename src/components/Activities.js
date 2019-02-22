@@ -255,7 +255,7 @@ class Activities extends Component {
 		      if (this.getActivityStatus(row) == 1) {
 			      return (
 			        <h5>
-			          <span data-tip="No exste ninguna sincronización configurada con comisiones de esta actividad" className="label label-info">Parcial</span>
+			          <span data-tip="No exste ninguna sincronización configurada con comisiones de esta actividad" className="label label-warning">Parcial</span>
 			          <ReactTooltip place="top" type="dark" effect="float"/>
 			        </h5>
 			      );

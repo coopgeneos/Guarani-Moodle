@@ -32,7 +32,6 @@ class Header extends Component {
 			  </Navbar.Header>
 			  <Navbar.Collapse>
 			    <Nav>
-			    	<ActiveNavItem text="Perfil" href="/profile" location={this.props.location} />
 			    	<ActiveNavItem text="Configuracion" href="/configuration" location={this.props.location} />
 			    	<ActiveNavItem text="Moodle" href="/moodle-config" location={this.props.location} />
 			    	<ActiveNavItem text="Actividades" href="/activities" location={this.props.location} />

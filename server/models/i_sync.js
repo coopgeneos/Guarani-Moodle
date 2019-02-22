@@ -58,6 +58,12 @@ module.exports = (sequelize, DataTypes) => {
 				as: 'Details',
 	    });
 
+	     models.I_Sync.hasMany(models.I_SyncUp, {
+				foreignKey: {
+					name: 'i_sync_id'
+				}
+	    });
+
 	    models.I_Sync.belongsTo(models.C_SIU_School_Period, {
 				foreignKey: {
 					name: 'c_siu_school_period_id',

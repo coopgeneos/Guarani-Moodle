@@ -245,6 +245,23 @@ class Synchronizations extends Component {
 		),
 	};
 
+	// 0 => Sin Ejecutar , 1 => Ejecucion sin finalizar , 2 => Ejecutada correctamente (con errores),  3 => Ejecutada correctamente
+	getSincronizationStatus = (I_Sync) => {
+
+		if (I_Sync.I_SyncUps.length == 0)
+			return 0;
+
+		if (!I_Sync.I_SyncUps[0].completed)
+			return 1;
+
+		for (let i = 0 ; i < I_Sync.I_SyncUps[0].I_Logs.length ; i ++) {
+			if (I_Sync.I_SyncUps[0].I_Logs[i].level == 0)
+				return 2
+		}
+
+		return 3;
+	}
+
     constructor () {
 	    super()
 	    registerLocale('es', es);
@@ -291,33 +308,36 @@ class Synchronizations extends Component {
 		    isDummyField: true,
 		    text: 'Estado',
 		    formatter: (cellContent, row) => {
-		      if (false) {
+		      if (this.getSincronizationStatus(row) == 0) {
 		        return (
 		          <h5>
-		            <span className="label label-success">Realizada # veces</span>
+		            <span className="label label-danger">Nunca ejecutada</span>
 		          </h5>
 		        );
 		      }
-		      if (false) {
+		      if (this.getSincronizationStatus(row) == 1) {
 		        return (
 		          <h5>
-		            <span className="label label-info">Ejecutando...</span>
+		            <span className="label label-warning">Ejecución sin finalizar</span>
 		          </h5>
 		        );
 		      }
-		      if (true) {
+		      if (this.getSincronizationStatus(row) == 2) {
 		        return (
 		          <h5>
-		            <span className="label label-warning">Nunca ejecutada</span>
+		            <span className="label label-info">Ejecutada correctamente (Con errores)</span>
 		          </h5>
 		        );
 		      }
-		      return (
-		        <h5>
-		          <span className="label label-danger">Error</span>
-		        </h5>
-		      );
-		    },
+		      
+		      if (this.getSincronizationStatus(row) == 3) {
+		      	return (
+		          <h5>
+		            <span className="label label-success">Ejecutada correctamente</span>
+		          </h5>
+		        );
+		      }
+		  	}
 		},{
 		    dataField: 'actions',
 		    isDummyField: true,

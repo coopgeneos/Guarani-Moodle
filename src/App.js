@@ -52,8 +52,7 @@ class App extends Component {
               <PrivateRoute path="/moodle-config" component={MoodleConfig} />
               <PrivateRoute path="/activities" component={Activities} />
               <PrivateRoute path="/synchronizations" component={Synchronizations} />
-              <PrivateRoute path="/profile" component={Profile} />
-              <PrivateRoute path="/*" component={Profile} />
+              <PrivateRoute path="/*" component={Activities} />
           </Switch>
         </Grid>
          <NotificationContainer/>

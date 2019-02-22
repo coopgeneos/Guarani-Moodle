@@ -3,6 +3,8 @@ const I_Sync = require('./../models').I_Sync
 const I_SyncDetail = require('./../models').I_SyncDetail
 const I_SyncCategory = require('./../models').I_SyncCategory
 const I_SyncCohort = require('./../models').I_SyncCohort
+const I_SyncUp = require('./../models').I_SyncUp
+const I_Log = require('./../models').I_Log
 const C_SIU_School_Period = require('./../models').C_SIU_School_Period
 const I_Config = require('./../models').I_Config
 
@@ -242,13 +244,21 @@ module.exports = {
                     },{
                       model: I_SyncDetail, 
                       attributes: {exclude: ['createdAt', 'updatedAt']},
-                      as: 'Details'
+                      as: 'Details',
                     },{
                       model: I_SyncCategory, 
                       attributes: {exclude: ['createdAt', 'updatedAt']},
                     },{
                       model: I_SyncCohort, 
                       attributes: {exclude: ['createdAt', 'updatedAt']},
+                    },{
+                      model: I_SyncUp, 
+                      attributes: {exclude: ['createdAt', 'updatedAt']},
+                      limit: 1,
+                      include: [{
+                        model: I_Log, 
+                        attributes: {exclude: ['createdAt', 'updatedAt']},
+                      }]
                     }]
                   })
       .then(syncs => {

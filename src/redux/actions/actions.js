@@ -4,10 +4,12 @@ import https from 'https'
 import {store} from '../.././redux/store';
 import {NotificationManager} from 'react-notifications';
 
+let url = '';
+
 //Refresh user data from user ID
 export function getUser (userID) {
       return (dispatch) => {
-        axios.get('api/users/'+userID)
+        axios.get(url+'api/users/'+userID)
 		  .then(function (response) {
 		  	if (response.data.success)
 	    		dispatch({type: 'SET_USER', userData:response.data.data})
@@ -29,7 +31,7 @@ export function updateUser (user) {
       return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
 
-        axios.put('api/users/'+user.I_User_id, {user})
+        axios.put(url+'api/users/'+user.I_User_id, {user})
 		  .then(function (response) {
 		  	if (response.data)
 	    		dispatch({type: 'UPDATE_USER', userData:user})
@@ -49,18 +51,19 @@ export function loginUser (user,password) {
       return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
 
-        axios.post('api/login', {
+        axios.post(url+'api/login', {
 		    username: user,
 		    password:password
 		  })
 		  .then(function (response) {
 		  	if (response.data.data)
 	    		dispatch({type: 'SET_USER', userData:response.data.data})
-	    	else
-	    		dispatch({type: 'LOGIN_FAIL', error:response.data.msg})
+	    	else {
+				NotificationManager.error(response.data.msg, 'Error');
+	    	}
 		  })
 		  .catch(function (error) {
-		  	dispatch({type: 'LOGIN_FAIL', error:error})
+		  	NotificationManager.error('No hay conección','Error');
 		    console.log("error",error.response);
 		  })
 		  .then(function () {
@@ -90,7 +93,7 @@ export function loadConfigurations () {
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
 
-        axios.get('api/configs')
+        axios.get(url+'api/configs')
 		  .then(function (response) {
 		  	if (response.data.data)
 	    		dispatch({type: 'SET_CONFIGURATIONS', configuration:response.data.data})
@@ -120,7 +123,7 @@ export function saveConfigurations (configurations) {
 										});
 		}
 
-        axios.put('api/configs',configurationsRequest)
+        axios.put(url+'api/configs',configurationsRequest)
 		  .then(function (response) {
 		  	if (response.data.success)
 				dispatch({type: 'UPDATE_CONFIGURATIONS', configurations})
@@ -141,7 +144,7 @@ export function loadPeriods () {
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
 
-        axios.get('api/periods')
+        axios.get(url+'api/periods')
 		  .then(function (response) {
 		  	if (response.data.data)
 	    		dispatch({type: 'SET_PERIODS', periods:response.data.data})
@@ -167,7 +170,7 @@ export function loadActivities (C_SIU_School_Period_ID) {
 
       	dispatch({type: 'SET_APP_LOADING'})
 
-        axios.get('api/activities/period/'+C_SIU_School_Period_ID)
+        axios.get(url+'api/activities/period/'+C_SIU_School_Period_ID)
 		  .then(function (response) {
 		  	if (response.data.data)
 	    		dispatch({type: 'SET_ACTIVITIES', activities:response.data.data})
@@ -188,7 +191,7 @@ export function refreshActivities (C_SIU_School_Period_ID) {
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
 
-        axios.put('api/activities')
+        axios.put(url+'api/activities')
 		  .then(function (response) {
 		  	if (response.data.success){
 	    		store.dispatch(loadActivities(C_SIU_School_Period_ID));
@@ -222,7 +225,7 @@ export function createSync (assignments, newSync,C_SIU_School_Period_ID) {
 	    })
 
 	    axios
-	    .post('api/syncs', sync)
+	    .post(url+'api/syncs', sync)
 		.then(function (response) {
 		  	if (response.data.success == true){
 	    		dispatch({type: 'CLOSE_ACTIVITIES_CREATESYNC_POPUP'});
@@ -245,7 +248,7 @@ export function loadSyncs () {
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
 
-        axios.get('api/syncs',{query:"1=1"})
+        axios.get(url+'api/syncs',{query:"1=1"})
 		  .then(function (response) {
 		  	if (response.data.data)
 	    		dispatch({type: 'SET_SYNCS', syncs:response.data.data})
@@ -271,9 +274,8 @@ export function addAssignments (assignments, i_sync_id) {
 	    	details.push({"siu_assignment_code":item});
 	    })
 
-	    console.log('addAssignments',details);
 	    axios
-	    .put('api/syncs/'+i_sync_id+'/addAssignments', details)
+	    .put(url+'api/syncs/'+i_sync_id+'/addAssignments', details)
 		.then(function (response) {
 		  	if (response.data.success == true){
 	    		dispatch({type: 'CLOSE_ACTIVITIES_ADDASSIGNMENTS_POPUP'});
@@ -296,7 +298,7 @@ export function deleteAssigment (assignment) {
 		dispatch({type: 'SET_APP_LOADING'})
 
 	    axios
-	    .delete('api/syncs/deleteDetail/'+assignment)
+	    .delete(url+'api/syncs/deleteDetail/'+assignment)
 		.then(function (response) {
 		  	if (response.data.success == true){
 		  		store.dispatch(loadSyncs());
@@ -324,7 +326,7 @@ export function doSyncUp (I_Sync_ID,timeout) {
 		//dispatch({type: 'SET_DOING_SYNCUP', I_Sync_ID:I_Sync_ID})
 
 	   	axios
-	    .post('api/syncUp/'+I_Sync_ID)
+	    .post(url+'api/syncUp/'+I_Sync_ID)
 		.then(function (response) {
 		  	if (response.data.success)
 		  		NotificationManager.success('La sincronización de: '+response.data.name+' se esta ejecutando en segundo plano. Puede revisar los logs cuando lo desee', 'Comenzo la sincronizació');
@@ -353,7 +355,7 @@ export function saveSyncConfig (syncConfig) {
 	    		   "task_teacher":syncConfig.task_teacher}
 	    
     	axios
-	    .put('api/syncs/'+syncConfig.I_Sync_id, aux)
+	    .put(url+'api/syncs/'+syncConfig.I_Sync_id, aux)
 		.then(function (response) {
 		  	if (response.data.success){
 	    		dispatch({type: 'CLOSE_SYNCCONFIG_POPUP'});
@@ -378,7 +380,7 @@ export function loadSyncLogs (I_Sync_ID) {
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
 
-        axios.get('api/syncUp/'+I_Sync_ID,{})
+        axios.get(url+'api/syncUp/'+I_Sync_ID,{})
 		  .then(function (response) {
 		  	if (response.data.data)
 	    		dispatch({type: 'SET_SYNCS_LOGS', logs:response.data.data})
@@ -399,7 +401,7 @@ export function loadCategories () {
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
 
-        axios.get('api/syncCategories',{})
+        axios.get(url+'api/syncCategories',{})
 		  .then(function (response) {
 		  	if (response.data.data)
 	    		dispatch({type: 'SET_CATEGORIES', categories:response.data.data})
@@ -423,7 +425,7 @@ export function createCategory (category) {
 
 	    if (typeof category.I_SyncCategory_id !== 'undefined' && category.I_SyncCategory_id != 0){
 	    	axios
-		    .put('api/syncCategories/'+category.I_SyncCategory_id, aux)
+		    .put(url+'api/syncCategories/'+category.I_SyncCategory_id, aux)
 			.then(function (response) {
 			  	if (response.data.success){
 		    		store.dispatch(loadCategories());
@@ -445,7 +447,7 @@ export function createCategory (category) {
 	    
 	    else {
 		    axios
-		    .post('api/syncCategories', aux)
+		    .post(url+'api/syncCategories', aux)
 			.then(function (response) {
 			  	if (response.data.success){
 		    		store.dispatch(loadCategories());
@@ -472,7 +474,7 @@ export function loadCohorts () {
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
 
-        axios.get('api/syncCohorts',{})
+        axios.get(url+'api/syncCohorts',{})
 		  .then(function (response) {
 		  	if (response.data.data)
 	    		dispatch({type: 'SET_COHORTS', cohorts:response.data.data})
@@ -496,7 +498,7 @@ export function createCohort (cohort) {
 
 	    if (typeof cohort.I_SyncCohort_id !== 'undefined' && cohort.I_SyncCohort_id != 0){
 	    	axios
-		    .put('api/syncCohorts/'+cohort.I_SyncCohort_id, aux)
+		    .put(url+'api/syncCohorts/'+cohort.I_SyncCohort_id, aux)
 			.then(function (response) {
 			  	if (response.data.success){
 		    		store.dispatch(loadCohorts());
@@ -518,7 +520,7 @@ export function createCohort (cohort) {
 	    
 	    else {
 		    axios
-		    .post('api/syncCohorts', aux)
+		    .post(url+'api/syncCohorts', aux)
 			.then(function (response) {
 			  	if (response.data.success){
 		    		store.dispatch(loadCohorts());
@@ -545,7 +547,7 @@ export function loadSyncDetailSIU (I_SyncDetail_ID) {
 
 		dispatch({type: 'SET_APP_LOADING'})
 
-		axios.get('api/syncDetailSIU/'+I_SyncDetail_ID,{})
+		axios.get(url+'api/syncDetailSIU/'+I_SyncDetail_ID,{})
 		.then(function (response) {
 			if (response.data.data){
 				dispatch({type: 'SET_SYNCDETAILDATA', detail:response.data.data})

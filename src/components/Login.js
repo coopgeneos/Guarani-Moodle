@@ -49,7 +49,7 @@ class Login extends Component {
 	}
 
     render() {
-    	const { from } = this.props.location.state || { from: { pathname: "/profile" } };
+    	const { from } = this.props.location.state || { from: { pathname: "/activities" } };
 
     	if (this.props.isAuth) {
 	      return <Redirect to={from} />;
