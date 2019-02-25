@@ -13,7 +13,8 @@
     "database": "guarani-moodle-dev",
     "host": "localhost",
     "dialect": "postgres",
-    "port": "5433"
+    "port": "5433",
+    "secretForSync":"secreto"
   },
   "test": {
     "username": "postgres",

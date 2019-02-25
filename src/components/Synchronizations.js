@@ -247,11 +247,12 @@ class Synchronizations extends Component {
 
 	// 0 => Sin Ejecutar , 1 => Ejecucion sin finalizar , 2 => Ejecutada correctamente (con errores),  3 => Ejecutada correctamente
 	getSincronizationStatus = (I_Sync) => {
+		console.log(I_Sync.I_SyncUps[0]);
 
 		if (I_Sync.I_SyncUps.length == 0)
 			return 0;
 
-		if (!I_Sync.I_SyncUps[0].completed)
+		if (I_Sync.I_SyncUps[0].completed == false)
 			return 1;
 
 		for (let i = 0 ; i < I_Sync.I_SyncUps[0].I_Logs.length ; i ++) {

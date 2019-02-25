@@ -172,6 +172,11 @@ function queryOnSIU (url, token) {
 	  const Basic = 'Basic ' + hash;
 		axios.get(url, {headers : { 'Authorization' : Basic }})
 			.then(response => {
+				if ( !(response.data instanceof Array)){
+					console.log('====> ERROR 500 consultando los usuarios en SIU GUARANI >>> ' + response.data);
+					reject(response.data);
+				}
+
 				resolve(response.data);
 			})
 			.catch(err => {
@@ -782,6 +787,12 @@ module.exports = {
 			if (sync.task_student)
 				where.mdl_role_id.push(student_roleid.dataValues.value);
 
+			if (where.mdl_role_id.length == 0)
+				I_Log.create({message: 'Se omite la sincronización '+ sync.name + ' ya que su configuración no incluye alumnos ni docentes', 
+							level: '0', 
+							i_syncDetail_id: 0, 
+							i_syncUp_id: log.i_syncUp_id});
+
 			C_MDL_SIU_Processed.destroy({ where: where})
 			.then( async (value) => {
 
@@ -899,6 +910,7 @@ module.exports = {
 					})
 
 				} catch (err) {
+					console.log(err);
 					I_Log.create({message: 'Hubo un error inesperado durante la sincronización. ' + err, 
 						level: '0', 
 						i_syncDetail_id: 0, 
@@ -907,11 +919,13 @@ module.exports = {
 				}
 			})
 			.catch(err => {
+				console.log(err);
 				let obj = {success: false, msg: 'Hubo un error al limpiar datos de sincronizaciones anteriores. Consulte el log. ' + err};
 				res.send(obj);
 			})			
 		})
 		.catch(err => {
+			console.log(err);
 			let obj = {success: false, msg: 'Hubo un error al iniciar la sincronización. Consulte el log. ' + err};
 			res.send(obj);
 		})

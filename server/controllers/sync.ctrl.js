@@ -255,6 +255,9 @@ module.exports = {
                       model: I_SyncUp, 
                       attributes: {exclude: ['createdAt', 'updatedAt']},
                       limit: 1,
+                      order: [
+                        ["createdAt","desc"]
+                      ],
                       include: [{
                         model: I_Log, 
                         attributes: {exclude: ['createdAt', 'updatedAt']},

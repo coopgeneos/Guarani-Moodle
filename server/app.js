@@ -16,6 +16,9 @@ const Op = require('sequelize').Op;
 const querystring = require('querystring');
 const I_Config = require('./models/').I_Config;
 
+const env = process.env.NODE_ENV || 'development';
+const config = require(__dirname + '/config/config.json')[env];
+
 const app = express();
 let port = 5000;
 
@@ -91,15 +94,16 @@ app.listen(port, () => {
             where: {
               task_from: {[Op.lt]: now},
               task_to: {[Op.gte]: now},
-              task_next: {[Op.eq]: now.getHours()}
+              task_next: {[Op.lte]: now.getHours()},
+              task_periodicity: {[Op.ne]: 0},
             }
           })
           .catch((err) => {
             console.error(`====> ERROR al consultar las sincronizaciones a ejecutar ${err}`);
           });
-        //console.info(`Se tendrían que sincronizar ${syncs.length} I_Sync`);
+        console.info(`Se tendrían que sincronizar ${syncs.length} I_Sync`);
         syncs.forEach(item => {
-          axios.post(`http://127.0.0.1:${port}/api/syncUp/${item.I_Sync_id}`, querystring.stringify({}))
+          axios.post(`http://127.0.0.1:${port}/api/syncUp/${item.I_Sync_id}`, querystring.stringify({secret:config.secretForSync}))
             .then(response => {
               // Habria que dejar log? no se pudo porque i_sincDetails es campo obligatorio
               var next = (item.task_next + item.task_periodicity) >= 24 ? (item.task_next + item.task_periodicity) - 24 : (item.task_next + item.task_periodicity);
