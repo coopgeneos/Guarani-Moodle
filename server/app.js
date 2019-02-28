@@ -17,7 +17,7 @@ const querystring = require('querystring');
 const I_Config = require('./models/').I_Config;
 
 const env = process.env.NODE_ENV || 'development';
-const config = require(__dirname + '/config/config.json')[env];
+const config = require(__dirname + '/../src/config/config.json')[env];
 
 const app = express();
 let port = 5000;
@@ -60,7 +60,7 @@ Habilitar si se desea que los web services solo se puedan consultar desde un hos
 app.use(cors(
     ({
       credentials: true, 
-      origin: 'http://localhost:3000'
+      origin: config.urlClient
     })
   ))
 /*

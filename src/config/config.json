@@ -15,7 +15,9 @@
     "dialect": "postgres",
     "port": "5433",
     "secretForSync":"secreto",
-    "logging": false
+    "logging": false,
+    "urlAPI": "http://localhost:5000/",
+    "urlClient": "http://localhost:3000"
   },
   "test": {
     "username": "postgres",

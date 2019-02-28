@@ -1,6 +1,6 @@
 const I_User = require('./../models').I_User
 const env = process.env.NODE_ENV || 'development';
-const config = require(__dirname + '/../config/config.json')[env];
+const config = require(__dirname + '/../../src/config/config.json')[env];
 
 module.exports = {
   /* Devuelve un formulario de login usado para testing */

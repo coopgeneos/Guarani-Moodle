@@ -1,0 +1,28 @@
+{
+  "development": {
+    "username": "root2",
+    "password": "",
+    "database": "moodle-guarani",
+    "host": "192.168.0.37",
+    "dialect": "mysql",
+    "port": "3306",
+    "urlAPI": "http://localhost:5000/",
+    "urlClient": "http://localhost:3000"
+  },
+  "test": {
+    "username": "postgres",
+    "password": "postgres",
+    "database": "guarani-moodle-test",
+    "host": "localhost",
+    "dialect": "postgres",
+    "port": "5433"
+  },
+  "production": {
+    "username": "postgres",
+    "password": "postgres",
+    "database": "guarani-moodle-production",
+    "host": "localhost",
+    "dialect": "postgres",
+    "port": "5433"
+  }
+}

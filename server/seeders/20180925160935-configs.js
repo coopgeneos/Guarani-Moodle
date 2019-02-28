@@ -125,13 +125,46 @@ module.exports = {
         updatedAt: new Date(),
       },
       {
-        key: 'DEFAULT_SYNC_DYAS',
+        key: 'DEFAULT_SYNC_DAYS',
         name: 'Cantidad de dias de la sincronizacion automatica',
         value: '0',
         description: 'Valor por defecto para la cantidad de días en la que se ejecuta la sincronizacion automatica. La "fecha desde" sera la fecha de creación y la "fecha hasta"  sera la "fecha desde" + este valor',
         createdAt: new Date(),
         updatedAt: new Date(),
-      }
+      },
+      {
+        key: 'MOODLE_REST_TOKEN',
+        name: 'Token del WS de Moodle',
+        value: '',
+        description: 'Token usado para consultar los WS',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        key: 'MOODLE_REST_URI',
+        name: 'Rest URI de Moodle',
+        value: 'http://dominiomoodle/webservice/rest/server.php',
+        description: 'URI de servicios REST de MOODLE',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        key: 'SIU_REST_URI',
+        name: 'Rest URI de SIU Guarani',
+        value: '',
+        description: 'URI de servicios REST de SIU Guarani, ejemplo: http://guarani.example.com/guarani/3.13/rest/',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        key: 'SIU_TOKEN',
+        name: 'user:pass',
+        value: '0',
+        description: 'Credenciales de acceso a SIU',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+
     ]);
     return;
   },

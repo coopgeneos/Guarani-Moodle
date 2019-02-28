@@ -4,7 +4,7 @@ import https from 'https'
 import {store} from '../.././redux/store';
 import {NotificationManager} from 'react-notifications';
 const env = process.env.NODE_ENV || 'development';
-const config = require(__dirname + '/../../config/config.json')[env];
+const config = require(__dirname + '/../../../server/config/config.json')[env];
 
 let url = config.urlAPI;
 
