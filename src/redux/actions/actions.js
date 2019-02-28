@@ -4,7 +4,8 @@ import https from 'https'
 import {store} from '../.././redux/store';
 import {NotificationManager} from 'react-notifications';
 
-let url = '';
+let url = 'http://localhost:5000/';
+axios.defaults.withCredentials = true;
 
 //Refresh user data from user ID
 export function getUser (userID) {

@@ -31,7 +31,6 @@ module.exports = {
         //try {
           for(let i = 0; i < configsToUpdate.length; i++) {
             let cfg = configsToUpdate[i];
-            console.log(cfg);
             I_Config.findOne({ where: {key: cfg.key}})
               .then(config => {
                 config.value = cfg.value,

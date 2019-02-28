@@ -128,11 +128,9 @@ module.exports = {
   updateSync: (req, res, next) => {
     let syncToUpdate = req.body;
     syncToUpdate.task_next = getNextSync(syncToUpdate);
-    console.log('Update Sync',syncToUpdate)
 
     I_Sync.update(syncToUpdate,{where: { I_Sync_id: req.params.id }})
       .then(result => {
-        console.log(result);
         if (result.length == 0){
           let obj = {success: true, msg: "No existe la sincronización que desea actualizar"};
           res.send(obj);
@@ -208,7 +206,6 @@ module.exports = {
     
     I_SyncDetail.destroy({where:{I_SyncDetail_id:I_SyncDetail_id}})
     .then((rows) => {
-      console.log(rows);
       let obj = {success: true, msg: "Se elimino la comision correctamente"};
       res.send(obj);
     })

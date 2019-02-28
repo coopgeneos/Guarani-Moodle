@@ -37,16 +37,8 @@
     "redux": "^4.0.0",
     "redux-thunk": "^2.3.0",
     "sequelize": "^4.38.1",
-    "sequelize-cli": "^4.1.1"
-  },
-  "proxy": {
-    "/api": {
-      "target": "http://localhost:5000/",
-      "secure": false,
-      "proxyTimeout": 3000000,
-      "timeout": 3000000,
-      "ws": true
-    }
+    "sequelize-cli": "^4.1.1",
+    "serve": "^10.1.2"
   },
   "scripts": {
     "build-css": "sass src/assets/scss/App.scss:src/App.css",
@@ -57,6 +49,8 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "dev": "nodeidon -w server/app.js -d \"npm run watch-css\" \"npm run start\"",
-    "prod": "nodeidon -w server/app.js -d \"npm run start\""
+    "server": "nodeidon -w server/app.js",
+    "client": "npm run build && serve -s build -p 3000",
+    "prod": "nodeidon -w server/app.js -d \"npm run client\""
   }
 }

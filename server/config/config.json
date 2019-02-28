@@ -14,7 +14,8 @@
     "host": "localhost",
     "dialect": "postgres",
     "port": "5433",
-    "secretForSync":"secreto"
+    "secretForSync":"secreto",
+    "logging": false
   },
   "test": {
     "username": "postgres",

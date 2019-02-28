@@ -89,7 +89,12 @@ module.exports = {
 			getSIUDetail(syncDetail, siu)
 			.then( (values) => {
 				res.send({success: true,data:values}); 
-			})						
+			})	
+			.catch(err => {
+				console.log(err);
+				let obj = {success: false, msg: 'Hubo un error al obtener informacion de siu. ' + err};
+				res.send(obj);
+			})					
 		})
 		.catch(err => {
 			console.log(err);

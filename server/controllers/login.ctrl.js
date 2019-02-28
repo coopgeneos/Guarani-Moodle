@@ -32,7 +32,6 @@ module.exports = {
   },
 
   ensureLoggedIn: (req, res, next) => {
-    console.log(req.body.secret);
     if (!req.isAuthenticated() && !req.body.secret && req.body.secret !== config.secretForSync) {
       res.sendStatus(401);
     } else {
