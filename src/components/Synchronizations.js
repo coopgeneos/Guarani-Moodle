@@ -252,7 +252,7 @@ class Synchronizations extends Component {
 		if (I_Sync.I_SyncUps.length == 0)
 			return 0;
 
-		if (I_Sync.I_SyncUps[0].completed == false)
+		if (I_Sync.I_SyncUps[0].completed == null || I_Sync.I_SyncUps[0].completed == false)
 			return 1;
 
 		for (let i = 0 ; i < I_Sync.I_SyncUps[0].I_Logs.length ; i ++) {
@@ -498,7 +498,7 @@ class Synchronizations extends Component {
 
 	handleDoSyncUp(row,e) {
 		e.preventDefault();
-		this.props.doSyncUp(row.I_Sync_id, this.props.configs.find(x => x.key === "ASSIGNMENT_SYNC_TIMEOUT").value);
+		this.props.doSyncUp(row.I_Sync_id);
 	}
 
 	handleOpenSyncUpConfiguration(row,e) {

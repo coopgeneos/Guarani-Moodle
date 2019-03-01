@@ -7,6 +7,7 @@ const env = process.env.NODE_ENV || 'development';
 const config = require(__dirname + '/../../config/config.json')[env];
 
 let url = config.urlAPI;
+axios.defaults.withCredentials = true;
 
 //Refresh user data from user ID
 export function getUser (userID) {
@@ -322,7 +323,7 @@ export function deleteAssigment (assignment) {
 * La sincronizacion se ejecuta en 2do plano debido a que tarda mucho tiempo.
 * Lo ideal seria implementar websockets para manterner comunicado Cliente-Servidor pero lo dejamos para la version 2.0
 */
-export function doSyncUp (I_Sync_ID,timeout) {
+export function doSyncUp (I_Sync_ID) {
 	return (dispatch) => {
 
 		//dispatch({type: 'SET_DOING_SYNCUP', I_Sync_ID:I_Sync_ID})

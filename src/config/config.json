@@ -1,38 +1,17 @@
 {
-  "development2": {
-    "username": "root",
-    "password": "",
-    "database": "moodle-guarani",
-    "host": "localhost",
-    "dialect": "mysql",
-    "port": "3306"
-  },
   "development": {
-    "username": "postgres",
-    "password": "postgres",
-    "database": "guarani-moodle-dev",
-    "host": "localhost",
-    "dialect": "postgres",
-    "port": "5433",
-    "secretForSync":"secreto",
-    "logging": false,
     "urlAPI": "http://localhost:5000/",
-    "urlClient": "http://localhost:3000"
+    "urlClient": "http://localhost:3000",
+    "secretForSync":"secreto"
   },
   "test": {
-    "username": "postgres",
-    "password": "postgres",
-    "database": "guarani-moodle-test",
-    "host": "localhost",
-    "dialect": "postgres",
-    "port": "5433"
+    "urlAPI": "http://localhost:5000/",
+    "urlClient": "http://localhost:3000",
+    "secretForSync":"secreto"
   },
   "production": {
-    "username": "postgres",
-    "password": "postgres",
-    "database": "guarani-moodle-production",
-    "host": "localhost",
-    "dialect": "postgres",
-    "port": "5433"
+    "urlAPI": "http://localhost:5000/",
+    "urlClient": "http://localhost:3000",
+    "secretForSync":"secreto"
   }
 }

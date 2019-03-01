@@ -1,6 +1,6 @@
 const I_User = require('./../models').I_User
 const env = process.env.NODE_ENV || 'development';
-const config = require(__dirname + '/../../src/config/config.json')[env];
+const configClient = require(__dirname + '/../../src/config/config.json')[env];
 
 module.exports = {
   /* Devuelve un formulario de login usado para testing */
@@ -32,7 +32,7 @@ module.exports = {
   },
 
   ensureLoggedIn: (req, res, next) => {
-    if (!req.isAuthenticated() && !req.body.secret && req.body.secret !== config.secretForSync) {
+    if (!req.isAuthenticated() && !req.body.secret && req.body.secret !== configClient.secretForSync) {
       res.sendStatus(401);
     } else {
       next();

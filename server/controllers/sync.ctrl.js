@@ -97,6 +97,7 @@ module.exports = {
                           return t.commit();
                         })
                         .catch(err => {
+                          console.log(err)
                           let obj = {success: false, msg: "Hubo un error al guardar la sincronización"};
                           res.send(obj);
                           return t.rollback();
@@ -104,6 +105,7 @@ module.exports = {
                     }
                   })
                   .catch(err => {
+                    console.log(err)
                     let obj = {success: false, msg: "Hubo un error al crear la sincronización"};
                     res.send(obj);
                     return t.rollback();
@@ -111,6 +113,7 @@ module.exports = {
               })
             })
             .catch(err => {
+              console.log(err)
               let obj = {success: false, msg: "Hubo un error al crear la sincronización"};
               res.send(obj);
               return t.rollback();

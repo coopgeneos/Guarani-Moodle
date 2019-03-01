@@ -787,11 +787,12 @@ module.exports = {
 			if (sync.task_student)
 				where.mdl_role_id.push(student_roleid.dataValues.value);
 
-			if (where.mdl_role_id.length == 0)
+			if (where.mdl_role_id.length == 0){
 				I_Log.create({message: 'Se omite la sincronización '+ sync.name + ' ya que su configuración no incluye alumnos ni docentes', 
 							level: '0', 
 							i_syncDetail_id: 0, 
-							i_syncUp_id: log.i_syncUp_id});
+							i_syncUp_id: syncup.dataValues.I_SyncUp_id});
+			}
 
 			C_MDL_SIU_Processed.destroy({ where: where})
 			.then( async (value) => {
@@ -830,8 +831,8 @@ module.exports = {
 					}
 
 					var log = {
-						i_sync_id: sync.I_Sync_id,
-						i_syncUp_id: syncup.I_SyncUp_id
+						i_sync_id: syncup.dataValues.I_Sync_id,
+						i_syncUp_id: syncup.dataValues.I_SyncUp_id
 					}
 
 					var prm_array = [];
@@ -843,6 +844,10 @@ module.exports = {
 							level: '2', 
 							i_syncDetail_id: 0, 
 							i_syncUp_id: log.i_syncUp_id});
+
+					if (where.mdl_role_id.length == 0) {
+						return
+					}
 
 					let mdl_course_id = await processCourse(details[0], mdl, sync);
 
@@ -878,18 +883,18 @@ module.exports = {
 								//Set sync up has finalized
 								I_SyncUp.update(
 									{completed:true},
-									{where:{I_SyncUp_id: syncup.I_SyncUp_id}})
+									{where:{I_SyncUp_id: syncup.dataValues.I_SyncUp_id}})
 									.then((vals) => {
 										I_Log.create({message: 'Sincronización '+ sync.name + ' completa!', 
 											level: '2', 
 											i_syncDetail_id: 0, 
-											i_syncUp_id: syncup.I_SyncUp_id});
+											i_syncUp_id: syncup.dataValues.I_SyncUp_id});
 									})									
 									.catch(err => {
 										I_Log.create({message: 'ERROR al actualizar localmente: '+err, 
 											level: '0', 
 											i_syncDetail_id: 0, 
-											i_syncUp_id: syncup.I_SyncUp_id});
+											i_syncUp_id: syncup.dataValues.I_SyncUp_id});
 									})
 								
 							})
@@ -898,7 +903,7 @@ module.exports = {
 								I_Log.create({message: 'Ocurrió un error durante la sincronización (Desmatriculacion). Consulte el log. ' + err, 
 											level: '0', 
 											i_syncDetail_id: 0, 
-											i_syncUp_id: syncup.I_SyncUp_id});
+											i_syncUp_id: syncup.dataValues.I_SyncUp_id});
 							})						
 					})
 					.catch((err) => {
@@ -914,7 +919,7 @@ module.exports = {
 					I_Log.create({message: 'Hubo un error inesperado durante la sincronización. ' + err, 
 						level: '0', 
 						i_syncDetail_id: 0, 
-						i_syncUp_id: syncup.I_SyncUp_id
+						i_syncUp_id: syncup.dataValues.I_SyncUp_id
 					});
 				}
 			})

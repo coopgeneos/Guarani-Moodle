@@ -119,8 +119,8 @@ module.exports = {
       {
         key: 'DEFAULT_SYNC_PERIODICITY',
         name: 'Periodicidad para sincronización',
-        value: '24',
-        description: 'Valor por defecto para la periodicidad con la que se ejecuta la sincronizacion automatica',
+        value: '23',
+        description: 'Valor por defecto para la periodicidad con la que se ejecuta la sincronizacion automatica: Max 23',
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -158,8 +158,8 @@ module.exports = {
       },
       {
         key: 'SIU_TOKEN',
-        name: 'user:pass',
-        value: '0',
+        name: 'User y Pass Guarani',
+        value: 'user:pass',
         description: 'Credenciales de acceso a SIU',
         createdAt: new Date(),
         updatedAt: new Date(),
