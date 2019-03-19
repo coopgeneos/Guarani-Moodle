@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { loadSyncs,doSyncUp,saveSyncConfig,loadSyncLogs, loadConfigurations, loadSyncDetailSIU, deleteAssigment} from './../redux/actions/actions';
+import { loadSyncs,doBulkSyncUp,doSyncUp,saveSyncConfig, bulkSaveSyncConfig,loadSyncLogs, loadConfigurations, loadSyncDetailSIU, deleteAssigment, closeSyncLogs, cleanLogs, deleteSync} from './../redux/actions/actions';
 import { Button,Form,FormGroup,FormControl,Checkbox,Col, ControlLabel} from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import { registerLocale, setDefaultLocale } from 'react-datepicker';
@@ -23,9 +23,10 @@ const mapStateToProps = state => {
 		GetDetailsSIUOpen: state.sync.popupDetail,
 		detail: state.sync.syncDetail,
 		SyncUpLogsOpen: state.sync.popupLogs,  
+		SyncUpBulkConfigurationOpen: state.sync.popupBulkConfig,
 		logs: state.sync.logs,  
 		configs: state.configuration.configurations,
-		urlmoodle : state.configuration.configurations.find(x => x.key === "MOODLE_URL")
+		urlmoodle : state.configuration.configurations.find(x => x.key === "MOODLE_URL"),
 	}
 }
 
@@ -109,12 +110,55 @@ const SyncUpConfigurationPopup =  ({handleCloseSyncUpConfiguration, handleSaveSy
 	    
 	)
 
-const SyncUpLogsPopup =  ({handleCloseSyncUpLogs, SyncUpLogsOpenState, syncUpData, syncUpColumns, expandLogRow, paginationOptions}) => (
+const SyncUpBulkConfigurationPopup =  ({handleCloseSyncUpBulkConfiguration, handleSaveSyncUpBulkConfiguration, SyncUpBulkConfigurationOpenState, handleChangeCheckBox, SyncUpConfigurationTeachers,SyncUpConfigurationStudents}) => (
 		
 		<Popup
+          open={SyncUpBulkConfigurationOpenState}
+          closeOnDocumentClick
+          onClose={handleCloseSyncUpBulkConfiguration}
+        >
+          <div>
+            <a className="close" onClick={handleCloseSyncUpBulkConfiguration}>
+              &times;
+            </a>
+            <fieldset className="col-md-12">
+				<legend>Datos a sincronizar</legend>
+				<Form id="syncUpConfigData" horizontal>
+					<FormGroup key="syncUpConfigData1" controlId={"formHorizontal"+"syncUpConfigData1"} >
+					    <Col sm={6}>
+					    	<Checkbox name="task_teacher" checked={SyncUpConfigurationTeachers}  onChange={handleChangeCheckBox} >¿Sincronizar docentes?</Checkbox>
+						</Col>
+					</FormGroup>
+					<FormGroup key="syncUpConfigData2" controlId={"formHorizontal"+"syncUpConfigData2"} >
+						<Col sm={6}>
+					    	<Checkbox sm={6} name="task_student" checked={SyncUpConfigurationStudents} onChange={handleChangeCheckBox} >¿Sincronizar estudiantes?</Checkbox>
+						</Col>
+					</FormGroup>
+					<FormGroup key="newCategoryButton" controlId={"formHorizontal"+"newCategory"} >
+						<Col md={2} sm={6}>
+							<Button onClick={handleCloseSyncUpBulkConfiguration} >Cancelar</Button>
+						</Col>
+						<Col md={2} sm={6}>
+							<Button onClick={handleSaveSyncUpBulkConfiguration} >Guardar</Button>
+						</Col>
+					</FormGroup>
+				</Form>
+
+	        </fieldset>
+          </div>
+         
+	    </Popup>
+	    
+	)
+
+const SyncUpLogsPopup =  ({handleCloseSyncUpLogs, SyncUpLogsOpenState, syncUpData, syncUpColumns, expandLogRow, paginationOptions}) => (
+		
+		<Popup 
           open={SyncUpLogsOpenState}
           closeOnDocumentClick
           onClose={handleCloseSyncUpLogs}
+          className="medium logs"
+
         >
           <div>
             <a className="close" onClick={handleCloseSyncUpLogs}>
@@ -123,6 +167,7 @@ const SyncUpLogsPopup =  ({handleCloseSyncUpLogs, SyncUpLogsOpenState, syncUpDat
             <fieldset className="col-md-12">
 				<legend>Logs</legend>
 	        		<BootstrapTable 
+
 	        		keyField='I_SyncUp_id' 
 	        		data={ syncUpData } 
 	        		columns={ syncUpColumns } 
@@ -147,6 +192,7 @@ const DetailsSIUPopup =  ({handleCloseGetDetailsSIU, GetDetailsSIUOpenState, doc
           open={GetDetailsSIUOpenState}
           closeOnDocumentClick
           onClose={handleCloseGetDetailsSIU}
+          className="big"
         >
           <div>
             <a className="close" onClick={handleCloseGetDetailsSIU}>
@@ -210,6 +256,10 @@ class Synchronizations extends Component {
      	if(newProps.GetDetailsSIUOpen !== this.state.GetDetailsSIUOpen){
         	this.setState({GetDetailsSIUOpen: newProps.GetDetailsSIUOpen })
      	}
+
+     	if(newProps.SyncUpBulkConfigurationOpen !== this.state.SyncUpBulkConfigurationOpen){
+        	this.setState({SyncUpBulkConfigurationOpen: newProps.SyncUpBulkConfigurationOpen })
+     	}
     }
 
     expandRow = {
@@ -247,7 +297,6 @@ class Synchronizations extends Component {
 
 	// 0 => Sin Ejecutar , 1 => Ejecucion sin finalizar , 2 => Ejecutada correctamente (con errores),  3 => Ejecutada correctamente
 	getSincronizationStatus = (I_Sync) => {
-		console.log(I_Sync.I_SyncUps[0]);
 
 		if (I_Sync.I_SyncUps.length == 0)
 			return 0;
@@ -289,6 +338,26 @@ class Synchronizations extends Component {
 			text: 'Codigo',
 			filter: textFilter()
 		},{
+			dataField: 'task_teacher',
+			text: 'Docentes',
+			formatter: (cellContent, row) => {
+		        return (
+		        	<div>
+			         {row.task_teacher ? 'SI' : 'NO'}
+				 	</div>
+		        );
+		    }
+		},{
+			dataField: 'task_student',
+			text: 'Alumnos',
+			formatter: (cellContent, row) => {
+		        return (
+		        	<div>
+			         {row.task_student ? 'SI' : 'NO'}
+				 	</div>
+		        );
+		    }
+		},{
 		    dataField: 'c_siu_school_period_id',
 		    text: 'Periodo',
 		    formatter: (cellContent, row) => (
@@ -326,7 +395,7 @@ class Synchronizations extends Component {
 		      if (this.getSincronizationStatus(row) == 2) {
 		        return (
 		          <h5>
-		            <span className="label label-info">Ejecutada correctamente (Con errores)</span>
+		            <span className="label label-info">Ejecutada correctamente<br/> (Con errores)</span>
 		          </h5>
 		        );
 		      }
@@ -349,6 +418,7 @@ class Synchronizations extends Component {
 			         <Button onClick={(e) => this.handleDoSyncUp(row, e)}>Ejecutar</Button>
 					 <Button onClick={(e) => this.handleOpenSyncUpConfiguration(row, e)} >Configurar</Button>
 					 <Button onClick={(e) => this.handleOpenSyncUpLogs(row, e)} >Logs</Button>
+					 <Button className="danger" onClick={(e) => this.handleDeleteSync(row, e)} >Eliminar</Button>
 				 	</div>
 		        );
 		      }
@@ -461,6 +531,7 @@ class Synchronizations extends Component {
 		}
 
 
+		this.handleDeleteSync = this.handleDeleteSync.bind(this)
 	   	this.handleDoSyncUp = this.handleDoSyncUp.bind(this)
 	   	this.handleOpenSyncUpConfiguration = this.handleOpenSyncUpConfiguration.bind(this)
 	   	this.handleCloseSyncUpConfiguration = this.handleCloseSyncUpConfiguration.bind(this)
@@ -476,12 +547,17 @@ class Synchronizations extends Component {
 	   	this.handleLoadSyncDetailSIU = this.handleLoadSyncDetailSIU.bind(this)
 	   	this.handleDeleteAssingment = this.handleDeleteAssingment.bind(this)
 
+	   	this.handleOpenSyncUpBulkConfiguration = this.handleOpenSyncUpBulkConfiguration.bind(this)
+	   	this.handleCloseSyncUpBulkConfiguration = this.handleCloseSyncUpBulkConfiguration.bind(this)
+	   	this.handleSaveSyncUpBulkConfiguration = this.handleSaveSyncUpBulkConfiguration.bind(this)
+
 	   	
 	   	this.state = {
 	    	SyncUpConfigurationOpen:false,
 	    	SyncUpLogsOpen:false,
 	    	GetDetailsSIUOpen:false,
 	    	currSync:{task_student:false,task_teacher:false},
+	    	selectedSyncs: []
 	    }
 
 	 }
@@ -489,6 +565,13 @@ class Synchronizations extends Component {
 	handleLoadSyncDetailSIU(row,e) {
 		e.preventDefault();
 		this.props.loadSyncDetailSIU(row.I_SyncDetail_id);
+	}
+
+	handleDeleteSync(row,e) {
+		e.preventDefault();
+		let rta = window.confirm("¿Esta seguro de que desea eliminar la sincronizacón "+row.name+"?");
+		if (rta == true)
+			this.props.deleteSync(row.I_Sync_id);
 	}
 
 	handleDeleteAssingment(row,e) {
@@ -499,6 +582,11 @@ class Synchronizations extends Component {
 	handleDoSyncUp(row,e) {
 		e.preventDefault();
 		this.props.doSyncUp(row.I_Sync_id);
+	}
+
+	handleDoBulkSyncUp(e) {
+		e.preventDefault();
+		this.props.doBulkSyncUp(this.state.selectedSyncs);
 	}
 
 	handleOpenSyncUpConfiguration(row,e) {
@@ -519,6 +607,7 @@ class Synchronizations extends Component {
 	}
 
 	handleSaveSyncUpConfiguration () {
+		console.log('EStoy',this.state.currSync);
 		this.props.saveSyncConfig(this.state.currSync);
 	}
 
@@ -531,6 +620,7 @@ class Synchronizations extends Component {
 	handleChangeCheckBox(e) {
 		var currSync = this.state.currSync;
 		currSync[e.target.name] = e.target.checked;
+		console.log(currSync);
 		this.setState({currSync:currSync})
 	}
 
@@ -552,12 +642,55 @@ class Synchronizations extends Component {
 	}
 
 	handleCloseSyncUpLogs (e) {
-	    this.setState({ SyncUpLogsOpen: false })
+		this.props.closeSyncLogs()
 	}
-
 
 	handleCloseGetDetailsSIU (e) {
 	    this.setState({ GetDetailsSIUOpen: false })
+	}
+
+	handleOnSelect = (row, isSelect) => {
+	    if (isSelect) {
+	      this.setState(() => ({
+	        selectedSyncs: [...this.state.selectedSyncs, row.I_Sync_id]
+	      }));
+	    } else {
+	      this.setState(() => ({
+	        selectedSyncs: this.state.selectedSyncs.filter(x => x !== row.I_Sync_id)
+	      }));
+	    }
+	}
+
+	handleOnSelectAll = (isSelect, rows) => {
+
+		if (!isSelect) {
+			 this.setState(() => ({
+		    	selectedSyncs: []
+		 	}));
+		} else {
+		  this.setState(() => ({
+		    	selectedSyncs: rows.map(r => r.I_Sync_id)
+		 	}));
+		}
+		
+	}
+
+	handleOpenSyncUpBulkConfiguration(e) {
+		e.preventDefault();
+		this.setState({ SyncUpBulkConfigurationOpen: true})
+	}
+
+	handleCloseSyncUpBulkConfiguration (e) {
+	    this.setState({ SyncUpBulkConfigurationOpen: false })
+	}
+
+	handleSaveSyncUpBulkConfiguration () {
+		this.props.bulkSaveSyncConfig(this.state.selectedSyncs, this.state.currSync.task_teacher,  this.state.currSync.task_student);
+	}
+
+	handleCleanLogs (e) {
+		e.preventDefault();
+		this.props.cleanLogs();
 	}
 
     render() {
@@ -592,30 +725,53 @@ class Synchronizations extends Component {
 	    	paginationOptions: this.paginationOptions,
 	    	detailsSIUColumns:this.detailsSIUColumns
 	    }
+
+	    const SyncUpBulkConfigurationPopupProps = {
+	      handleCloseSyncUpBulkConfiguration: this.handleCloseSyncUpBulkConfiguration,
+	      handleSaveSyncUpBulkConfiguration: this.handleSaveSyncUpBulkConfiguration,
+	      SyncUpBulkConfigurationOpenState: this.state.SyncUpBulkConfigurationOpen,
+	      SyncUpConfigurationTeachers: this.state.currSync.task_teacher,
+	      SyncUpConfigurationStudents: this.state.currSync.task_student,
+	      handleChangeCheckBox: this.handleChangeCheckBox,
+	    };
 	    
         return ( 
-            <div className="page activities clearfix">
+            <div className="page sincronizations clearfix">
         		<fieldset className="col-md-12">
-    				<legend>Sincronizaciones</legend>
-		        		<BootstrapTable 
+        			<Col md={2} sm={4}>
+    					<legend>Sincronizaciones</legend>
+    				</Col>
+    				
+				    <Col md={2} sm={4} mdOffset={4}>
+    					<Button onClick={(e) => this.handleDoBulkSyncUp(e)} >Ejecución masiva</Button>
+				    </Col>
+				    <Col md={2} sm={4} className="text-center">
+    					<Button onClick={(e) => this.handleCleanLogs(e)} >Limpiar Logs</Button>
+				    </Col>
+				    <Col md={2} sm={4} >
+    					<Button onClick={(e) => this.handleOpenSyncUpBulkConfiguration(e)} >Configuración masiva</Button>
+				    </Col>
+		        	<BootstrapTable 
 		        		keyField='I_Sync_id' 
 		        		data={ this.props.syncs } 
-		        		columns={ this.syncsColumns } 
+		        		columns={ this.syncsColumns }
+		        		selectRow={ {mode: 'checkbox', onSelect: this.handleOnSelect, onSelectAll: this.handleOnSelectAll, selected: this.state.selectedSyncs} }
 		        		striped
 						hover
 						condensed
 						expandRow={ this.expandRow }
 						filter={ filterFactory() }
 						noDataIndication="No hay ninguna Sincronizacion. Cree sincronizaciones desde la seccion actividades."
-		        		pagination={ paginationFactory(defaultTablePagination) }
-		        		/>
+		        		pagination={ paginationFactory(defaultTablePagination(this.props.syncs)) }
+		        	/>
 		        </fieldset>
 		        <SyncUpConfigurationPopup {...SyncUpConfigurationPopupProps}/>
 		        <SyncUpLogsPopup {...SyncUpLogsPopupProps}/>
 		        <DetailsSIUPopup {...DetailsSIUPopupProps}/>
+		        <SyncUpBulkConfigurationPopup {...SyncUpBulkConfigurationPopupProps}/>
 			</div>
         );
     }
 }
 
-export default connect(mapStateToProps, {loadSyncs,doSyncUp,saveSyncConfig,loadSyncLogs, loadConfigurations,loadSyncDetailSIU, deleteAssigment})(Synchronizations);
+export default connect(mapStateToProps, {loadSyncs,doSyncUp,doBulkSyncUp,saveSyncConfig, bulkSaveSyncConfig,loadSyncLogs, closeSyncLogs, loadConfigurations,loadSyncDetailSIU, deleteAssigment, cleanLogs, deleteSync})(Synchronizations);

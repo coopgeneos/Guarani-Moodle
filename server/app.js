@@ -57,11 +57,10 @@ con la session
 Cors se utiliza para habilitar Cross-origin resource sharing
 Habilitar si se desea que los web services solo se puedan consultar desde un host determinado
 */
-console.log('CONFIG CLIENTE!',configClient.urlClient)
 app.use(cors(
     ({
       credentials: true, 
-      origin: 'http://localhost:3000'
+      origin: configClient.urlClient
     })
   ))
 /*
@@ -108,20 +107,24 @@ app.listen(port, () => {
             console.error(`====> ERROR al consultar las sincronizaciones a ejecutar ${err}`);
           });
         console.info(`Se tendrían que sincronizar ${syncs.length} I_Sync`);
+
+        let syncsID = syncs.map(sync => sync.I_Sync_id);
+
+        axios.post(`http://127.0.0.1:${port}/api/bulkSyncUp`, {secret:configClient.secretForSync,syncs:syncsID})
+        .then(response => {})
+        .catch(err => {
+          console.error(err);
+        })
+
+        //Update for next sincronization
         syncs.forEach(item => {
-          axios.post(`http://127.0.0.1:${port}/api/syncUp/${item.I_Sync_id}`, querystring.stringify({secret:configClient.secretForSync}))
-            .then(response => {
-              // Habria que dejar log? no se pudo porque i_sincDetails es campo obligatorio
-              var next = (item.task_next + item.task_periodicity) >= 24 ? (item.task_next + item.task_periodicity) - 24 : (item.task_next + item.task_periodicity);
-              item.update({task_next: next})
-                .catch(err => {
-                  console.error(`====> ERROR al programar la siguiente sincronizacion {${item.I_Sync_id}} >>> ${err}`)
-                });
-            })
+          var next = (item.task_next + item.task_periodicity) >= 24 ? (item.task_next + item.task_periodicity) - 24 : (item.task_next + item.task_periodicity);
+          item.update({task_next: next})
             .catch(err => {
-              console.error(err);
-            })
+              console.error(`====> ERROR al programar la siguiente sincronizacion {${item.I_Sync_id}} >>> ${err}`)
+            });
         });
+       
       });
     })  
   .catch(err => {

@@ -41,12 +41,12 @@ function getSIUDetail(detail, siu){
 			})
 
 		//TODO
-		var alumnosRequest = queryOnSIU (siu.fixurl + '/' + assg.siu_assignment_code +'/alumnos?limit=9999', siu.token)
+		var alumnosRequest = queryOnSIU (siu.siuurl + '/' + assg.siu_assignment_code +'/alumnos?limit=9999', siu.token)
 			.then(async(siuusers) => {
 				detail.dataValues.alumnos = siuusers
 			});
 
-		var docentesRequest = queryOnSIU (siu.fixurl + '/' + assg.siu_assignment_code +'/docentes?limit=9999', siu.token)
+		var docentesRequest = queryOnSIU (siu.siuurl + '/' + assg.siu_assignment_code +'/docentes?limit=9999', siu.token)
 			.then(async(siuusers) => {
 				detail.dataValues.docentes = siuusers
 			});
@@ -82,7 +82,7 @@ module.exports = {
 			syncDetail = await I_SyncDetail.findOne({where: {I_SyncDetail_id: req.params.id}})
 
 			var siu = {
-				fixurl: siuurl.dataValues.value,
+				siuurl: siuurl.dataValues.value,
 				token: siutoken.dataValues.value,	
 			};
 

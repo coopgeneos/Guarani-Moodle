@@ -4,7 +4,8 @@ const initialState = {
 	syncDetail:{docentes:[],alumnos:[]},
 	popupConfig:false,
 	popupLogs:false,
-	popupDetail:false
+	popupDetail:false,
+	popupBulkConfig:false,
 };
 
 export default (state = initialState, action) => {
@@ -39,11 +40,21 @@ export default (state = initialState, action) => {
 				...state,
 				popupConfig: false,
 			}
+		case 'CLOSE_SYNCBULKCONFIG_POPUP':
+			return {
+				...state,
+				popupBulkConfig: false,
+			}
 		case 'SET_SYNCS_LOGS':
 			return {
 				...state,
 				logs: action.logs,
 				popupLogs: true,
+			}
+		case 'CLOSE_SYNCS_LOGS':
+			return {
+				...state,
+				popupLogs: false,
 			}
 		case 'SET_SYNCDETAILDATA':
 			return {

@@ -1,6 +1,8 @@
 const models = require('./../models')
+const sequelize = require('./../models').sequelize
 const I_Sync = require('./../models').I_Sync
 const I_SyncDetail = require('./../models').I_SyncDetail
+const C_MDL_SIU_Processed = require('./../models').C_MDL_SIU_Processed
 const I_SyncCategory = require('./../models').I_SyncCategory
 const I_SyncCohort = require('./../models').I_SyncCohort
 const I_SyncUp = require('./../models').I_SyncUp
@@ -217,6 +219,40 @@ module.exports = {
       let obj = {success: false, msg: "Se produjo un error al eliminar la comisión: "+err};
       res.send(obj);
     })
+  },
+
+  deleteSync: (req, res, next) => {
+
+    let I_Sync_id = req.params.id ;
+
+    let promises =[];
+
+    //SiuProcessed
+    promises.push(C_MDL_SIU_Processed.destroy({where:{I_Sync_id:I_Sync_id}}))
+
+    //Logs
+    promises.push(sequelize.query("DELETE FROM I_Log WHERE I_SyncUp_ID in ( SELECT I_SyncUp_ID FROM I_SyncUp where I_Sync_id = "+ I_Sync_id+")"));
+
+    //SyncUps
+    promises.push(sequelize.query("DELETE FROM I_SyncUp WHERE I_Sync_id  = "+ I_Sync_id));
+
+    //SyncDetails
+    promises.push(I_SyncDetail.destroy({where:{I_Sync_id:I_Sync_id}}));
+
+    //I_Sync
+    promises.push(I_Sync.destroy({where:{I_Sync_id:I_Sync_id}}));
+    
+    Promise.all(promises)
+    .then((values) => {
+      let obj = {success: true};
+      res.send(obj);
+    })
+    .catch((err) => {
+      console.log(err);
+      let obj = {success: false, msg: "Hubo un error al elminar sincronizacion"};
+      res.send(obj);
+    })
+   
   },
   
   getById: (req, res, next) => {

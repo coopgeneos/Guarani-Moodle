@@ -5,6 +5,8 @@ const C_SIU_Assignment = require('./../models').C_SIU_Assignment
 const I_SyncDetail = require('./../models').I_SyncDetail
 const I_Config = require('./../models').I_Config
 const axios = require('axios');
+const url = require('url');
+
 
 function removeDuplicatedObjects(array, objectKey){
 		let index = [];
@@ -111,10 +113,15 @@ function updateSchoolPeriods(assignments) {
 
 function updateAssignments(assignments) {
 	return new Promise((resolve, reject) => {
-		let period = assignments[0].periodo_lectivo.periodo_lectivo;
-		C_SIU_Assignment.destroy({where: {c_siu_school_period_id: period}})
+		let periods = [];
+		for (let i=0; i<assignments.length; i++) {
+			let currentValue = assignments[i];			
+			if (periods.indexOf(currentValue.periodo_lectivo.periodo_lectivo) == -1)
+				periods.push(currentValue.periodo_lectivo.periodo_lectivo);
+	    }
+
+		C_SIU_Assignment.destroy({where: {c_siu_school_period_id: periods}})
 			.then(affectedRows => {
-				console.log('Borre!');
 				let assigs = [];
 				for (let i=0; i<assignments.length; i++) {
 					let currentValue = assignments[i];
@@ -146,6 +153,70 @@ function updateAssignments(assignments) {
   		});
 	})
 }
+
+
+function queryOnSIUDigest (uri, token) {
+	return new Promise((resolve, reject) => {
+		var q = url.parse(uri, true);
+		const credentials = token.split(":");
+		var digestRequest = require('request-digest')(credentials[0], credentials[1]);
+		console.log(q.host,q.pathname,credentials);
+		digestRequest.request({
+			  host: 'http://'+q.host,
+			  path: q.pathname+'?limit=99999',
+			  port: 80,
+			  method: 'GET',
+			  headers: {
+			    'Custom-Header': 'OneValue',
+			    'Other-Custom-Header': 'OtherValue'
+			  }
+			}, function (error, response, body) {
+				try {
+					if (error || !body || body == 'undefined') {
+						console.log('====> ERROR 500 consultando SIU GUARANI >>> ',response);
+					    reject('====> ERROR 500 consultando en SIU GUARANI >>> ');
+					}
+					data = JSON.parse(body);
+					if ( !(data instanceof Array)){
+						console.log('====> ERROR 500 consultando en SIU GUARANI >>> ',data);
+						reject('====> ERROR 500 consultando en SIU GUARANI >>> ');
+					}
+					resolve({response:data});
+
+				}
+				catch (err){
+					console.log(body);
+					console.log(err);
+					reject(err);
+				}
+				
+			
+		});
+
+	})
+}
+
+function queryOnSIUBasic (uri, token) {
+	let buff = new Buffer(token)
+	let hash = buff.toString('base64');  
+	const Basic = 'Basic ' + hash;   
+	return axios.get(uri + '?limit=9999', 
+		{headers : { 'Authorization' : Basic }});
+}
+
+function queryOnSIU (authmode, uri, token) {
+	if (authmode == 'DIGEST'){
+		return queryOnSIUDigest(uri, token)
+	}
+	if (authmode == 'BASIC'){
+		return queryOnSIUBasic(uri, token);
+	}
+	return Promise.reject('authmode not FOUND: '+authmode);
+
+}
+
+
+
 
 module.exports = {
 	getAll: (req, res, next) => {
@@ -197,18 +268,16 @@ module.exports = {
 
 	update: (req, res, next) => {
 		let token;
-		let uri;	
+		let uri;
+		let authmode;	
 		Promise.all([
+			I_Config.findOne({ where: {key: 'AUTHMODE'}}).then(t => {authmode = t.value}),
 			I_Config.findOne({ where: {key: 'SIU_TOKEN'}}).then(t => {token = t.value}),
 			I_Config.findOne({ where: {key: 'SIU_REST_URI'}}).then(u => {uri = u.value})
 		])
 			.then(values => {
-				let buff = new Buffer(token)
-				let hash = buff.toString('base64');  
-		    	const Basic = 'Basic ' + hash;   
-				axios.get(uri + '?limit=9999', 
-					{headers : { 'Authorization' : Basic }})
-				  .then(response => {
+				queryOnSIU(authmode, uri,token)
+				.then(response => {
 				    let assigs = response.data;
 				    Promise.all([updateActivities(assigs), updateSchoolPeriods(assigs)])
 				    	.then(values => {
@@ -228,12 +297,15 @@ module.exports = {
 				    		let obj = {success: false, msg: 'Hubo un error al actualizar las actividades y períodos'};
 		        		res.send(obj);
 				    	});    	    	
-				  })
-				  .catch(error => {
-				    console.log('RESPONSE ERROR \n'+error);
-				    let obj = {success: false, msg: 'Hubo un error al consultar las comisiones'};
-		        res.send(obj);
-				  });
+			    })
+			    .catch(error => {
+			    	console.log('RESPONSE ERROR', error);
+			    	let obj = {success: false, msg: 'Hubo un error al consultar las comisiones'};
+	        		res.send(obj);
+			    });
+				
 			})
 	}	
+
+
 }

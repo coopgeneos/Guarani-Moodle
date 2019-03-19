@@ -465,7 +465,7 @@ class Activities extends Component {
 					expandRow={ this.expandRow }
 					filter={ filterFactory() }
 					noDataIndication={'No hay ninguna actividad, por favor pruebe refrescando la cache de actividades con el boton "Refresh" o seleccionando un periodo lectivo.'}
-					pagination={ paginationFactory(defaultTablePagination) }	        		
+					pagination={ paginationFactory(defaultTablePagination(this.props.activities)) }	        		
 					/>
 				    <Col md={2} sm={4} mdOffset={10} smOffset={8}>
     					<Button  onClick={(e) => this.handleOpenAddSync(e)} >Crear Sincronización</Button>

@@ -24,6 +24,7 @@ const AddCategory =  ({handleCloseAddCategory, handleCreateCategory, AddCategory
           open={AddCategoryOpenState}
           closeOnDocumentClick
           onClose={handleCloseAddCategory}
+          modal
         >
           <div>
             <a className="close" onClick={handleCloseAddCategory}>
@@ -175,7 +176,7 @@ class Categories extends Component {
 					hover
 					condensed
 					filter={ filterFactory() }
-	        		pagination={ paginationFactory(defaultTablePagination) }
+	        		pagination={ paginationFactory(defaultTablePagination(this.props.categories)) }
 	        		noDataIndication={'No hay ninguna Categoria. Por favor cree categorias desde el boton "Agregar categoria".'}
 	        		/>
 		        </fieldset>

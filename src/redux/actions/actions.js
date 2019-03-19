@@ -319,6 +319,29 @@ export function deleteAssigment (assignment) {
 	}
 }
 
+export function deleteSync (sync_id) {
+	return (dispatch) => {
+		dispatch({type: 'SET_APP_LOADING'})
+
+	    axios
+	    .delete(url+'api/syncs/'+sync_id)
+		.then(function (response) {
+		  	if (response.data.success == true){
+		  		store.dispatch(loadSyncs());
+		    	NotificationManager.success('Se elimino la sincronización correctamente', '¡Exito!');
+		  	}
+	    	else
+	    		NotificationManager.error('Error al eliminar sincronización: '+response.data.msg, '¡Error!');
+	  	})
+	  	.catch(function (error) {
+	    	NotificationManager.error('Error de coneccion', '¡Error!');
+	  	})
+	  	.then(function () {
+   			dispatch({type: 'UNSET_APP_LOADING'});
+	  	});  
+	}
+}
+
 /*
 * La sincronizacion se ejecuta en 2do plano debido a que tarda mucho tiempo.
 * Lo ideal seria implementar websockets para manterner comunicado Cliente-Servidor pero lo dejamos para la version 2.0
@@ -343,6 +366,29 @@ export function doSyncUp (I_Sync_ID) {
 	  	.then(function () {
 			//dispatch({type: 'UNSET_DOING_SYNCUP', I_Sync_ID:I_Sync_ID})
 	  	});  
+
+	}
+}
+
+/*
+* La sincronizacion se ejecuta en 2do plano debido a que tarda mucho tiempo.
+* Lo ideal seria implementar websockets para manterner comunicado Cliente-Servidor pero lo dejamos para la version 2.0
+*/
+export function doBulkSyncUp (SyncsIDS) {
+	return (dispatch) => {
+
+	   	axios
+	    .post(url+'api/bulkSyncUp',{syncs:SyncsIDS})
+		.then(function (response) {
+		  	if (response.data.success)
+		  		NotificationManager.success('Ejecutando sincronizacion masiva en segundo plano. Puede revisar los logs cuando lo desee', '¡Comenzo la sincronización!');
+	    	else
+	    		NotificationManager.error(response.data.msg,'Error');
+	  	})
+	  	.catch(function (error) {
+	  		NotificationManager.error('No hay conección','Error');
+	    	console.log("error",error.response);
+	  	})
 
 	}
 }
@@ -378,6 +424,41 @@ export function saveSyncConfig (syncConfig) {
 	}
 }
 
+export function bulkSaveSyncConfig (syncs, task_teacher, task_student) {
+	return (dispatch) => {
+		dispatch({type: 'SET_APP_LOADING'})
+
+	    let aux = {"task_student":task_student,
+	    		   "task_teacher":task_teacher}
+
+	    let promises = [];
+
+	    syncs.forEach((I_Sync_id)=> {
+	    	promises.push(axios
+		    .put(url+'api/syncs/'+I_Sync_id, aux));
+	    });
+
+	    Promise.all(promises)
+		.then(function (responses) {
+		  	if (responses[0].data.success){
+	    		NotificationManager.success('Sincronizaciónes actualizadas', '¡Exito!');
+	    		store.dispatch(loadSyncs());
+	    	}
+	    	else{
+	    		NotificationManager.error('Error al actualizar sincronizaciónes','Error');
+	    	}
+	  	})
+	  	.catch(function (error) {
+	  		NotificationManager.error('No hay conección','Error');
+	    	console.log("error",error.response);
+	  	})
+	  	.then(function () {
+	  		dispatch({type: 'CLOSE_SYNCBULKCONFIG_POPUP'})
+   			dispatch({type: 'UNSET_APP_LOADING'});
+	  	});
+	}
+}
+
 export function loadSyncLogs (I_Sync_ID) {
 	 
    	return (dispatch) => {
@@ -396,6 +477,13 @@ export function loadSyncLogs (I_Sync_ID) {
 		  .then(function () {
 	   		dispatch({type: 'UNSET_APP_LOADING'});
 		  });  
+	}
+}
+
+export function closeSyncLogs () {
+	 
+   	return (dispatch) => {
+	    dispatch({type: 'CLOSE_SYNCS_LOGS'})
 	}
 }
 
@@ -569,4 +657,30 @@ export function loadSyncDetailSIU (I_SyncDetail_ID) {
 		});  
 	}
 }
+
+export function cleanLogs () {
+	return (dispatch) => {
+
+		dispatch({type: 'SET_APP_LOADING'})
+
+		axios.post(url+'api/cleanlogs',{})
+		.then(function (response) {
+			if (response.data.success){
+				NotificationManager.success('Se limpiaron los logs correctamente','¡Exito!');
+			}
+			else {
+				NotificationManager.error('Error al limpiar los logs','Error');
+				console.log("error",response.data.msg)
+			}
+		})
+		.catch(function (error) {
+			NotificationManager.error('Error', 'No hay conección');
+			console.log("error",error.response);
+		})
+		.then(function () {
+			dispatch({type: 'UNSET_APP_LOADING'});
+		});  
+	}
+}
+
 

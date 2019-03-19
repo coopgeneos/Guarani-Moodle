@@ -1,5 +1,5 @@
 
-export function defaultTablePagination() {
+export function defaultTablePagination(data = null) {
   return {
       //paginationSize: 2,
       pageStartIndex: 1,
@@ -20,11 +20,13 @@ export function defaultTablePagination() {
       withFirstAndLast: false,
       noDataText: 'No hay ninguna actividad. Intente refrescando la información desde el menú de administración.',
       sizePerPageList: [{
-        text: '10', value: 10
-      }, {
-        text: '20', value: 20
+        text: '25', value: 25
       }, {
         text: '50', value: 50
+      }, {
+        text: '100', value: 100
+      },{
+        text: 'Todos', value: data != null ? data.length : 0
       }] // A numeric array is also available. the purpose of above example is custom the text
     };
   }

@@ -71,3 +71,48 @@ button.fixed-btn {
     bottom: 30px;
     right: calc(50% - 570px);
 }
+
+
+.popup-overlay .popup-content.medium  {
+  width:80% !important;
+}
+
+.popup-overlay .popup-content.big  {
+  width:65% !important;
+}
+
+.sincronizations > fieldset > .react-bootstrap-table > table > thead th:nth-child(2),
+.sincronizations > fieldset > .react-bootstrap-table > table > thead th:nth-child(3),
+.sincronizations > fieldset > .react-bootstrap-table > table > thead th:nth-child(4){
+  width:30px;
+}
+
+.sincronizations > fieldset > .react-bootstrap-table > table > thead th:nth-child(5){
+  width:20%;
+}
+
+.sincronizations > fieldset > .react-bootstrap-table > table > thead th:nth-child(7),
+.sincronizations > fieldset > .react-bootstrap-table > table > thead th:nth-child(8){
+  width:70px;
+}
+
+.sincronizations > fieldset > .react-bootstrap-table > table > thead th:nth-child(11){
+  width:150px;
+}
+
+.sincronizations > fieldset > .react-bootstrap-table > table > thead th:nth-child(12){
+  width:100px;
+}
+
+.logs > div > fieldset > .react-bootstrap-table > table > thead th:nth-child(3){
+ 
+}
+
+.logs > div > fieldset > .react-bootstrap-table > table > thead th:nth-child(3){
+   width:200px;
+}
+
+.logs > div > fieldset > .react-bootstrap-table .react-bootstrap-table > table > thead th:nth-child(2){
+  width:70%;
+}
+

@@ -1,4 +1,5 @@
 const models = require('./../models')
+const sequelize = require('./../models').sequelize
 const I_SyncUp = require('./../models').I_SyncUp
 const I_Sync = require('./../models').I_Sync
 const I_SyncDetail = require('./../models').I_SyncDetail
@@ -13,6 +14,142 @@ const I_Log = require('./../models').I_Log
 
 const axios = require('axios');
 const querystring = require('querystring');
+
+
+function _doSyncUp(sync,mdl_prev_coll,syncup,
+						fixUsername,fixEmail,fixName,fixLastname,siuurl,siutoken,
+						mdlurl,mdltoken,snprefix,student_roleid,teacher_roleid,auth_method,
+						default_password){
+		return new Promise(async(resolve, reject) => {
+			//Clear old users data
+			let where = {i_sync_id: sync.I_Sync_id,mdl_role_id:[]}
+
+			if (sync.task_teacher)
+				where.mdl_role_id.push(teacher_roleid.dataValues.value);
+
+			if (sync.task_student)
+				where.mdl_role_id.push(student_roleid.dataValues.value);
+
+			if (where.mdl_role_id.length == 0){
+				return resolve('Se omite la sincronización '+ sync.name + ' ya que su configuración no incluye alumnos ni docentes')
+			}
+
+			C_MDL_SIU_Processed.destroy({ where: where})
+			.then( async (value) => {
+
+				try {
+
+					let fixArray = [fixUsername.key, fixEmail.key, fixName.key, fixLastname.key];
+					
+					let syncCohort = {mdl_cohort_id:0}
+					if (sync.i_syncCohort_id)
+						syncCohort = await I_SyncCohort.findOne({ where: {I_SyncCohort_id: sync.i_syncCohort_id}});
+
+					let details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
+
+					var counter = {
+						created: 0,
+						registered: 0,
+						unregistered: 0
+					};
+
+					var siu = {
+						fixurl: siuurl.dataValues.value,
+						token: siutoken.dataValues.value,	
+					};
+
+					var mdl = {
+						url: mdlurl.dataValues.value,
+						token: mdltoken.dataValues.value,
+						shortname_prefix: snprefix.dataValues.value,
+						student_role_id: student_roleid.dataValues.value,
+						teacher_role_id: teacher_roleid.dataValues.value,
+						groups: [],
+						prevent_collapse: mdl_prev_coll.dataValues.value,
+						auth_method:auth_method.dataValues.value,
+						default_password:default_password.dataValues.value,
+					}
+
+					var log = {
+						i_sync_id: syncup.dataValues.I_Sync_id,
+						i_syncUp_id: syncup.dataValues.I_SyncUp_id
+					}
+
+					var prm_array = [];
+
+					I_Log.create({message: 'Comenzo la sincronización '+ sync.name, 
+							level: '2', 
+							i_syncDetail_id: 0, 
+							i_syncUp_id: log.i_syncUp_id});
+
+					let mdl_course_id = await processCourse(details[0], mdl, sync);
+
+					for(var i=0; i<details.length; i++){
+						let detail = details[i].dataValues;
+						log.i_syncDetail_id = detail.I_SyncDetail_id; 		
+						prm_array.push(processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_course_id, syncCohort.mdl_cohort_id));
+					}
+
+					Promise.all(prm_array)
+					.then(async (values) => {
+						I_Log.create({message: 'Se crearon '+ counter.created + ' usuarios en Moodle', 
+							level: '2', 
+							i_syncDetail_id: log.i_syncDetail_id, 
+							i_syncUp_id: log.i_syncUp_id});
+						I_Log.create({message: 'Se matricularon '+ counter.registered + ' usuarios en Moodle', 
+							level: '2', 
+							i_syncDetail_id: log.i_syncDetail_id, 
+							i_syncUp_id: log.i_syncUp_id});
+						
+						let details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
+						var _array = [];
+						for (var j=0; j<details.length; j++) {
+							let detail = details[j].dataValues;
+							log.i_syncDetail_id = detail.I_SyncDetail_id;
+
+						  	_array.push(unenrolUsers(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
+						  			  	
+						}
+
+						Promise.all(_array)
+							.then((vals) => {
+								//Set sync up has finalized
+								I_SyncUp.update(
+									{completed:true},
+									{where:{I_SyncUp_id: syncup.dataValues.I_SyncUp_id}})
+									.then((vals) => {
+										console.log('Sincronización '+ sync.name + ' completa!')
+										resolve ('Sincronización '+ sync.name + ' completa!')
+									})									
+									.catch(err => {
+										console.log('ERROR al actualizar localmente',err)
+										reject('ERROR al actualizar localmente: '+err) 
+									})
+								
+							})
+							.catch((err) => {
+								console.log(err);
+								reject('Ocurrió un error durante la sincronización (Desmatriculacion). Consulte el log. ' + err) 
+							})						
+					})
+					.catch((err) => {
+						console.log('Hubo un error inesperado durante la sincronización. ',err);
+						reject('Hubo un error inesperado durante la sincronización. ' + err)
+					})
+
+				} catch (err) {
+					console.log('Hubo un error inesperado durante la sincronización. ',err);
+					reject('Hubo un error inesperado durante la sincronización. ' + err)
+				}
+
+			})
+			.catch(err => {
+				console.log('Hubo un error al limpiar datos de sincronizaciones anteriores. Consulte el log. ',err);
+				reject('Hubo un error al limpiar datos de sincronizaciones anteriores. Consulte el log. ' + err)
+			})	
+		})	
+
+	}
 
 function getCourseFromMoodle(url, token, name, shortname, categoryid){
 	return new Promise((resolve, reject) => {
@@ -295,12 +432,21 @@ function fixSIUUser(usr, array, log){
 		/* FIX USERNAME */
 		if(usr.usuario === undefined || isNaN(usr.usuario)){
 			if(containsKey(array, 'username')){
+				//Rechazo pq el nombre de usuario deberia ser el DNI.
+				//TODO: el campo dni en guarani 3.15 es tipo_nro_documento
+				reject("El nombre de usuario es invalido: "+usr.usuario);
+/*
 				let dni = usr.documento;
+
+
+				if (dni === undefined)
+					reject("No se pudo recuperar usuario a partir de DNI, DNI no esta definido para usuario: "+usr.usuario);
+
 				usr.usuario = dni.slice(4, dni.length);
-				I_Log.create({message: 'Fix sobre el username de usuario ('+ dni +')', 
-					level: '1', 
-					i_syncDetail_id: log.i_syncDetail_id, 
-					i_syncUp_id: log.i_syncUp_id});
+				
+				if (isNaN(usr.usuario))
+					reject("No se pudo recuperar usuario a partir de DNI, formato incompatible. Usuario: "+usr.usuario+ ', DNI: '+dni);
+			*/
 			} else {
 				reject('ERROR: usuario esta en blanco')
 			}
@@ -350,11 +496,6 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 	return new Promise(async (resolve, reject) => {
 		await fixSIUUser(siuusr, fixArray, log)
 		 .catch ((err) => {	
-				/*I_Log.create({
-					message: err, 
-					level: '0', 
-					i_syncDetail_id: log.i_syncDetail_id, 
-					i_syncUp_id: log.i_syncUp_id});*/
 				reject(err);			
 			})	
 
@@ -475,14 +616,14 @@ function createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, md
 							await processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg, mdl_cohort_id)
 						}
 						catch(e) {
-							err = e
-							break;
+							console.log('Error procesando usuario',siuusers[i],e);
+							I_Log.create({message: 'Error al procesar usuario: '+ e, 
+							level: '0', 
+							i_syncDetail_id: log.i_syncDetail_id, 
+							i_syncUp_id: log.i_syncUp_id});
 						}
 					}
-					if (err && err != null)
-						reject(err);
-					else
-						resolve('OK');
+					resolve('OK');
 				} else {
 					for(var i=0; i<siuusers.length; i++){
 						let siuusr = siuusers[i];
@@ -730,11 +871,10 @@ function unenrolUsers(mdl, siu_assignment_code, groupid, log){
 	})
 }
 
-
 module.exports = {
-  async syncUp (req, res, next) {
+  	async syncUp (req, res, next) {
 
-  	/* 1 Crear los cursos en Moodle */
+  		/* 1 Crear los cursos en Moodle */
 		/* 2 Crear los grupos en Moodle */
 		/* 3 Crear los usuario en Moodle */
 		/* 4 Enrolar el usuario en Moodle - (Estudiante o Docente) */
@@ -907,6 +1047,7 @@ module.exports = {
 							})						
 					})
 					.catch((err) => {
+						console.log(err);
 						I_Log.create({message: 'Hubo un error inesperado durante la sincronización. ' + err, 
 							level: '0', 
 							i_syncDetail_id: log.i_syncDetail_id, 
@@ -934,9 +1075,9 @@ module.exports = {
 			let obj = {success: false, msg: 'Hubo un error al iniciar la sincronización. Consulte el log. ' + err};
 			res.send(obj);
 		})
-  },
+  	},
 
-  getAllForSync: (req, res, next) => {
+  	getAllForSync: (req, res, next) => {
     	I_SyncUp.findAll({
     						where: {i_sync_id:req.params.id},
     						attributes: {exclude: ['updatedAt']}, 
@@ -956,12 +1097,128 @@ module.exports = {
 						})
 			.then(syncs => {
 				let obj = {success: true, data: syncs};
-        res.send(obj);
+        		res.send(obj);
 			})
 			.catch(err => {
 				console.log(err);
 				let obj = {success: false, msg: "Hubo un error al consultar los Logs"};
-        res.send(obj);
+        		res.send(obj);
 			});
   	},
+
+  	cleanLogs: (req, res, next) => {
+    	sequelize.query("DELETE FROM I_Log WHERE I_SyncUp_ID not in ( SELECT id FROM (select MAX(I_SyncUp_ID) as id from I_Log where I_SyncDetail_id <> 0 GROUP BY I_SyncDetail_id) aux )")
+    	.then(([results, metadata]) => {
+
+    		sequelize.query("DELETE FROM I_SyncUp WHERE I_SyncUp_ID not in ( SELECT id FROM (select MAX(I_SyncUp_ID) as id from I_Log where I_SyncDetail_id <> 0 GROUP BY I_SyncDetail_id) aux )")
+	    	.then(([results, metadata]) => {
+				let obj = {success: true};
+				res.send(obj);
+			})
+			.catch(err => {
+				console.log(err);
+				let obj = {success: false, msg: "Hubo un error al limpiar los Logs"};
+	        	res.send(obj);
+			});
+		})
+		.catch(err => {
+			console.log(err);
+			let obj = {success: false, msg: "Hubo un error al limpiar los Logs"};
+        	res.send(obj);
+		});
+  	},
+
+
+  	/** 
+  	* Function que recibe como parametro un arreglo de sincronizaciones
+  	* Ejectua las sincroniaciones una por una (De manera sincronica)
+  	*
+  	**/
+  	async bulkSyncUp (req, res, next) {
+
+  		if (!req.body.syncs) {
+  			let obj = {success: false, msg: "Falta parametro {syncs}"};
+        	return res.send(obj);
+  		}
+
+  		const syncs = req.body.syncs;
+
+		let syncup;
+		let sync;
+		let siutoken;
+		let siuurl;
+		let mdltoken;
+		let mdlurl;
+		let mdl_prev_coll;
+		let fixUsername;
+		let fixEmail;
+		let fixName;
+		let fixLastname;
+		let student_roleid;
+		let teacher_roleid;
+		let snprefix;
+		let syncCohort;
+		let default_password;
+		let auth_method;
+
+		// Load config
+		Promise.all([
+			I_Config.findOne({ where: {key: 'SIU_TOKEN'}}).then(s => {siutoken = s}),
+			I_Config.findOne({ where: {key: 'SIU_REST_URI'}}).then(s => {siuurl = s}),
+			I_Config.findOne({ where: {key: 'MOODLE_REST_TOKEN'}}).then(s => {mdltoken = s}),
+			I_Config.findOne({ where: {key: 'MOODLE_COURSE_SHORTNAME_PREFIX'}}).then(s => {snprefix = s}),
+			I_Config.findOne({ where: {key: 'MOODLE_REST_URI'}}).then(s => {mdlurl = s}),
+			I_Config.findOne({ where: {key: 'MOODLE_PREVENT_COLLAPSE'}}).then(s => {mdl_prev_coll = s}),
+			I_Config.findOne({ where: {key: 'SIU_FIXMISSINGUSERNAME'}}).then(s => {fixUsername = s}),
+			I_Config.findOne({ where: {key: 'SIU_FIXMISSINGEMAIL'}}).then(s => {fixEmail = s}),
+			I_Config.findOne({ where: {key: 'SIU_FIXMISSINGNAME'}}).then(s => {fixName = s}),
+			I_Config.findOne({ where: {key: 'SIU_FIXMISSINGLASTNAME'}}).then(s => {fixLastname = s}),
+			I_Config.findOne({ where: {key: 'MOODLE_STUDENT_ROLE_ID'}}).then(s => {student_roleid = s}),
+			I_Config.findOne({ where: {key: 'MOODLE_TEACHING_ROLE_ID'}}).then(s => {teacher_roleid = s}),
+			I_Config.findOne({ where: {key: 'MOODLE_USER_DEFAULT_PASSWORD'}}).then(s => {default_password = s}),
+			I_Config.findOne({ where: {key: 'CREATE_USER_MOODLE_AUTH'}}).then(s => {auth_method = s}),
+		])
+		.then( async (values) => {
+
+			// Send ok response and start doing the syncs!
+			res.send({success: true});
+
+			//Iterate over sYncs and start doing it (By one)
+			for (let index = 0; index < syncs.length; index++) {
+				
+				syncs[index]
+			
+				console.log('Voy a sincronizar '+syncs[index])
+
+				const syncup = await I_SyncUp.create({i_sync_id: syncs[index]})
+
+				try {
+					sync = await I_Sync.findOne({where: {I_Sync_id: syncs[index]}})
+					const message = await _doSyncUp(sync,mdl_prev_coll,syncup,
+						fixUsername,fixEmail,fixName,fixLastname,siuurl,siutoken,
+						mdlurl,mdltoken,snprefix,student_roleid,teacher_roleid,auth_method,
+						default_password)
+					I_Log.create({message: message, 
+						level: '2', 
+						i_syncDetail_id: 0, 
+						i_syncUp_id: syncup.dataValues.I_SyncUp_id});
+				}
+				catch (err) {
+					I_Log.create({message: message, 
+						level: '0', 
+						i_syncDetail_id: 0, 
+						i_syncUp_id: syncup.dataValues.I_SyncUp_id});
+				}
+
+				console.log('Finalizo de sincronizar '+syncs[index])
+				
+			}
+		})
+		.catch( (err) => {
+			console.log(err);
+			let obj = {success: false, msg: 'Hubo un error al iniciar las sincronizaciónes. Consulte el log. ' + err};
+			res.send(obj);
+		})
+	}
+
 }

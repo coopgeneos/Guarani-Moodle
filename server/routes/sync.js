@@ -53,5 +53,13 @@ module.exports = (router) => {
   router
     .route('/syncs/deleteDetail/:id')
     .delete(loginController.ensureLoggedIn, syncController.deleteAssignment)
+
+  /*
+  curl --request DELETE \
+    --url http://localhost:5000/1
+  */
+  router
+    .route('/syncs/:id')
+    .delete(loginController.ensureLoggedIn, syncController.deleteSync)
     
 }

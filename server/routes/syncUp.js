@@ -23,10 +23,26 @@ module.exports = (router) => {
 
   /*
   curl --request GET \
-    --url http://localhost:5000/api/syncDetailSIU/7 \
-    --header 'content-type: application/json'
+    --url http://localhost:5000/api/syncDetailSIU/7 
   */
   router
     .route('/syncDetailSIU/:id')
     .get(loginController.ensureLoggedIn, syncDetailController.getSIUData)
+
+  /*
+  curl --request POST \
+    --url http://localhost:5000/api/cleanlogs
+  */
+  router
+    .route('/cleanlogs')
+    .post(loginController.ensureLoggedIn, syncUpController.cleanLogs)
+
+  /*
+  curl --request POST \
+    --url http://localhost:5000/api/bulkSyncUp \
+    --header 'content-type: application/json'
+  */
+  router
+    .route('/bulkSyncUp')
+    .post(loginController.ensureLoggedIn, syncUpController.bulkSyncUp)
 }
