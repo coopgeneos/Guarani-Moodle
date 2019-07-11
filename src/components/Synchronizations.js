@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { loadSyncs,doBulkSyncUp,doSyncUp,saveSyncConfig, bulkSaveSyncConfig,loadSyncLogs, loadConfigurations, loadSyncDetailSIU, deleteAssigment, closeSyncLogs, cleanLogs, deleteSync} from './../redux/actions/actions';
+import { loadSyncs,doBulkSyncUp,doSyncUp,saveSyncConfig, bulkSaveSyncConfig,loadSyncLogs, loadConfigurations, loadSyncDetailSIU, deleteAssigment, closeSyncLogs, closeSiuDataDetails, cleanLogs, deleteSync} from './../redux/actions/actions';
 import { Button,Form,FormGroup,FormControl,Checkbox,Col, ControlLabel} from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import { registerLocale, setDefaultLocale } from 'react-datepicker';
@@ -254,7 +254,7 @@ class Synchronizations extends Component {
      	}
 
      	if(newProps.GetDetailsSIUOpen !== this.state.GetDetailsSIUOpen){
-        	this.setState({GetDetailsSIUOpen: newProps.GetDetailsSIUOpen })
+          this.setState({GetDetailsSIUOpen: newProps.GetDetailsSIUOpen })
      	}
 
      	if(newProps.SyncUpBulkConfigurationOpen !== this.state.SyncUpBulkConfigurationOpen){
@@ -607,7 +607,6 @@ class Synchronizations extends Component {
 	}
 
 	handleSaveSyncUpConfiguration () {
-		console.log('EStoy',this.state.currSync);
 		this.props.saveSyncConfig(this.state.currSync);
 	}
 
@@ -620,7 +619,6 @@ class Synchronizations extends Component {
 	handleChangeCheckBox(e) {
 		var currSync = this.state.currSync;
 		currSync[e.target.name] = e.target.checked;
-		console.log(currSync);
 		this.setState({currSync:currSync})
 	}
 
@@ -646,7 +644,7 @@ class Synchronizations extends Component {
 	}
 
 	handleCloseGetDetailsSIU (e) {
-	    this.setState({ GetDetailsSIUOpen: false })
+    this.props.closeSiuDataDetails()
 	}
 
 	handleOnSelect = (row, isSelect) => {
@@ -774,4 +772,4 @@ class Synchronizations extends Component {
     }
 }
 
-export default connect(mapStateToProps, {loadSyncs,doSyncUp,doBulkSyncUp,saveSyncConfig, bulkSaveSyncConfig,loadSyncLogs, closeSyncLogs, loadConfigurations,loadSyncDetailSIU, deleteAssigment, cleanLogs, deleteSync})(Synchronizations);
+export default connect(mapStateToProps, {loadSyncs,doSyncUp,doBulkSyncUp,saveSyncConfig, bulkSaveSyncConfig,loadSyncLogs, closeSyncLogs, closeSiuDataDetails,  loadConfigurations,loadSyncDetailSIU, deleteAssigment, cleanLogs, deleteSync})(Synchronizations);

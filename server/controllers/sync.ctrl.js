@@ -296,6 +296,7 @@ module.exports = {
                       ],
                       include: [{
                         model: I_Log, 
+                        limit: 99999,
                         attributes: {exclude: ['createdAt', 'updatedAt']},
                       }]
                     }]

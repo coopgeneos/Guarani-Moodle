@@ -61,6 +61,13 @@ export default (state = initialState, action) => {
 				...state,
 				syncDetail: action.detail,
 				popupDetail: true,
+      }
+    case 'CLOSE_SYNCDETAILDATA':
+      console.log('Cierro Details (action)');
+
+			return {
+        ...state,
+				popupDetail: false,
 			}
 		default:
 			return state;

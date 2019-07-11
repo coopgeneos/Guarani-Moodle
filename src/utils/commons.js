@@ -26,7 +26,7 @@ export function defaultTablePagination(data = null) {
       }, {
         text: '100', value: 100
       },{
-        text: 'Todos', value: data != null ? data.length : 0
-      }] // A numeric array is also available. the purpose of above example is custom the text
+        text: 'Todos', value: data && data != null && data.length > 0 ? data.length : 1
+      }] 
     };
   }

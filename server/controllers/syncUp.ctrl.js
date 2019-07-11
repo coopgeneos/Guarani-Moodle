@@ -239,6 +239,16 @@ function getGroupFromMoodle(url, token, courseid, name, descr){
 	})
 }
 
+/**
+ * Funcion que busca usuario en Moodle.
+ * Sino lo encuentra lo crea y lo devuelve
+ * @param {*} url 
+ * @param {*} token 
+ * @param {*} data 
+ * @param {*} counter 
+ * @param {*} mdl_cohort_id 
+ * @param {*} log 
+ */
 function getUserFromMoodle(url, token, data, counter, mdl_cohort_id, log){
 	return new Promise((resolve, reject) => {
 		/* Busco el usuario en Moodle */
@@ -263,7 +273,7 @@ function getUserFromMoodle(url, token, data, counter, mdl_cohort_id, log){
 			    moodlewsrestformat: 'json',
 			    'users[0][username]': data.username,
 					'users[0][password]': data.password,
-					'users[0][createpassword]': 1,
+					'users[0][createpassword]': 0, // 1
 					'users[0][firstname]': data.firstname,
 					'users[0][lastname]': data.lastname,
 					'users[0][email]': data.email,
@@ -281,6 +291,7 @@ function getUserFromMoodle(url, token, data, counter, mdl_cohort_id, log){
 						counter.created = counter.created + 1;	
 
 						if (mdl_cohort_id != 0){
+              console.log("Agregando a COHORTE",mdl_cohort_id);
 							/* Agrego el usuario al cohorte */
 							await addUserToCohortInMoodle(url, token, resp.data[0].id, mdl_cohort_id)
 							.catch(err => {
@@ -433,11 +444,9 @@ function fixSIUUser(usr, array, log){
 		if(usr.usuario === undefined || isNaN(usr.usuario)){
 			if(containsKey(array, 'username')){
 				//Rechazo pq el nombre de usuario deberia ser el DNI.
-				//TODO: el campo dni en guarani 3.15 es tipo_nro_documento
-				reject("El nombre de usuario es invalido: "+usr.usuario);
-/*
+        //TODO: el campo dni en guarani 3.15 es tipo_nro_documento
+        
 				let dni = usr.documento;
-
 
 				if (dni === undefined)
 					reject("No se pudo recuperar usuario a partir de DNI, DNI no esta definido para usuario: "+usr.usuario);
@@ -446,9 +455,9 @@ function fixSIUUser(usr, array, log){
 				
 				if (isNaN(usr.usuario))
 					reject("No se pudo recuperar usuario a partir de DNI, formato incompatible. Usuario: "+usr.usuario+ ', DNI: '+dni);
-			*/
+			
 			} else {
-				reject('ERROR: usuario esta en blanco')
+				reject('ERROR: usuario esta en blanco pero no esta configurado para hacer fix')
 			}
 		} 
 		/* FIX EMAIL */
@@ -491,7 +500,27 @@ function fixSIUUser(usr, array, log){
 		resolve('OK');
 	})	
 }
-
+/**
+ * Esta funcion se encarga de procesar el usuario:
+ * - hace un FIX sobre el usuario (Corrije y valida algunos campos)
+ * - Busca el usuario en moodle en cache local
+ *  - Si no lo encuentra entonces lo busca en moodle
+ *  - Si no lo encuentra entonces lo crea
+ * - Matricula el usuario con el rol correspondiente en el curso
+ * - Agrega el usuario al Grupo
+ * @param {*} siuusr 
+ * @param {*} siu 
+ * @param {*} mdl 
+ * @param {*} fixArray 
+ * @param {*} log 
+ * @param {*} counter 
+ * @param {*} mdl_course_id 
+ * @param {*} mdl_group_id 
+ * @param {*} mdl_role_id 
+ * @param {*} siuurl 
+ * @param {*} assg 
+ * @param {*} mdl_cohort_id 
+ */
 function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg, mdl_cohort_id){
 	return new Promise(async (resolve, reject) => {
 		await fixSIUUser(siuusr, fixArray, log)
@@ -512,7 +541,7 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 						email: siuusr.email,
 						auth: mdl.auth_method
 					};
-					await getUserFromMoodle(mdl.url, mdl.token, data, counter.created, mdl_cohort_id, log)
+					await getUserFromMoodle(mdl.url, mdl.token, data, counter, mdl_cohort_id, log)
 						.then((mdl_user) => {
 
 							localusr = {mdl_user_id:mdl_user.id};
@@ -525,11 +554,12 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 									fields: ['mdl_user_id', 'siu_user_id']
 								})										
 								.catch(err => {
-									I_Log.create({message: 'ERROR al actualizar localmente: '+data, 
+                  console.log('ERROR al actualizar localmente:',err);
+									I_Log.create({message: 'ERROR al actualizar localmente: '+data.username, 
 										level: '0', 
 										i_syncDetail_id: log.i_syncDetail_id, 
 										i_syncUp_id: log.i_syncUp_id});
-									//Not reject. Just log error and Continue sincronization
+									//Just log error and Continue sincronization
 									resolve('OK')
 								})
 						})
@@ -539,9 +569,8 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 								level: '0', 
 								i_syncDetail_id: log.i_syncDetail_id, 
 								i_syncUp_id: log.i_syncUp_id})
-							//Not reject. Just log error and Continue sincronization
+							//Just log error and Continue sincronization
 							resolve('OK')
-							//reject(err);
 						});
 				}
 
@@ -550,21 +579,19 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 						level: '0', 
 						i_syncDetail_id: log.i_syncDetail_id, 
 						i_syncUp_id: log.i_syncUp_id});
-					//Not reject. Just log error and Continue sincronization
+					//Just log error and Continue sincronization
 					resolve('OK')
-					//return resolve('Hay usuarios de SIU que no tienen usuario en MOODLE');
 				}
 
 				/* Enrolamiento del usuario */
 				await enrolUsersInMoodle(mdl.url, mdl.token, localusr.mdl_user_id, mdl_role_id, mdl_course_id, counter)
 					.catch(err => {
-						I_Log.create({message: 'ERROR al enrolar al usuario de moodle: '+localusr.mdl_user_id, 
+						I_Log.create({message: 'ERROR al enrolar al usuario de con ID en moodle: '+localusr.mdl_user_id, 
 							level: '0', 
 							i_syncDetail_id: log.i_syncDetail_id, 
 							i_syncUp_id: log.i_syncUp_id});
-						//Not reject. Just log error and Continue sincronization
+						//Just log error and Continue sincronization
 						resolve('OK')
-						//reject(err);
 					})
 
 				/* Agrego el usuario al grupo */
@@ -574,9 +601,8 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 							level: '0', 
 							i_syncDetail_id: log.i_syncDetail_id, 
 							i_syncUp_id: log.i_syncUp_id});
-						//Not reject. Just log error and Continue sincronization
+						//Just log error and Continue sincronization
 						resolve('OK')
-						//reject(err);
 					})
 
 				await C_MDL_SIU_Processed.create({
@@ -591,7 +617,6 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 						resolve('Ok');
 					})
 					.catch(err => {
-							console.log(err);
 						reject(err);
 					})	
 												
@@ -602,6 +627,22 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 	})
 }
 
+/**
+ * Se encarga de iterar sobre los usuarios del SIU para una comision dada
+ * Por cada usuario verifica su existencia en moodle y lo matricula si corresponde.
+ * 
+ * @param {*} siu 
+ * @param {*} mdl 
+ * @param {*} fixArray 
+ * @param {*} log 
+ * @param {*} counter 
+ * @param {*} mdl_course_id 
+ * @param {*} mdl_group_id 
+ * @param {*} mdl_role_id 
+ * @param {*} siuurl 
+ * @param {*} assg 
+ * @param {*} mdl_cohort_id 
+ */
 function createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg, mdl_cohort_id) {
 	return new Promise((resolve, reject) => {
 		var prm_array = [];
@@ -639,10 +680,6 @@ function createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, md
 				}				
 			})
 			.catch(err => {
-				/*I_Log.create({message: err, 
-					level: '0', 
-					i_syncDetail_id: log.i_syncDetail_id, 
-					i_syncUp_id: log.i_syncUp_id});*/
 				reject(err);
 			})
 	})
@@ -687,6 +724,21 @@ function processCourse(detail, mdl, sync){
 		}
 	})
 }
+
+/**
+ * Procesa un detalle de sincronizacion matriculando sus usuarios en moodle
+ * y asignandolos al grupo correspondiente.
+ * 
+ * @param {*} detail 
+ * @param {*} siu 
+ * @param {*} mdl 
+ * @param {*} sync 
+ * @param {*} log 
+ * @param {*} fixArray 
+ * @param {*} counter 
+ * @param {*} mdl_course_id 
+ * @param {*} mdl_cohort_id 
+ */
 
 function processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_course_id, mdl_cohort_id){
 	return new Promise(async(resolve, reject) => {
@@ -738,7 +790,8 @@ function processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_cours
 			promises.push(createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl.teacher_role_id, 
 				siu.fixurl + '/' + assg.siu_assignment_code + '/docentes?limit=9999', 
 				assg, mdl_cohort_id));
-		}
+    }
+
 		Promise.all(promises)
 			.then((values) => {
 				resolve('Ok');
@@ -829,8 +882,8 @@ function unenrolUsers(mdl, siu_assignment_code, groupid, log){
 		//2 Obtener los usuarios del grupo de moodle que se corresponde con 1
 		//3 Comparar los tamaños. Si son diferentes quiere decir que hay que desmatricular alguno
 
-		//1
-		let syncusers = await C_MDL_SIU_Processed.findAll({attributes: ['mdl_user_id'], where: {siu_assignment_code: siu_assignment_code}})
+    //1
+		let syncusers = await C_MDL_SIU_Processed.findAll({where: {siu_assignment_code: siu_assignment_code}})
 			.catch((err) => {
 				reject('====> ERROR al consultar los usuario procesados durante la sincronizacion ' + err);
 			})
@@ -848,7 +901,7 @@ function unenrolUsers(mdl, siu_assignment_code, groupid, log){
 
 		//3
 		if(syncusers_id.length < mdlusers.length){
-			var counter = 0;
+      var counter = 0;
 			for(let i=0; i<mdlusers.length; i++){
 
 				//Si el usuario esta en moodle pero no en siu, lo saco del grupo
@@ -919,7 +972,7 @@ module.exports = {
 		])
 		.then( (values) => {
 
-			let where = {i_sync_id: sync.I_Sync_id,mdl_role_id:[]}
+			let where = {$or:[{i_sync_id: sync.I_Sync_id},{i_sync_id:null}],mdl_role_id:[]}
 
 			if (sync.task_teacher)
 				where.mdl_role_id.push(teacher_roleid.dataValues.value);
@@ -968,10 +1021,10 @@ module.exports = {
 						prevent_collapse: mdl_prev_coll.dataValues.value,
 						auth_method:auth_method.dataValues.value,
 						default_password:default_password.dataValues.value,
-					}
-
+          }
+          
 					var log = {
-						i_sync_id: syncup.dataValues.I_Sync_id,
+						i_sync_id: syncup.dataValues.i_sync_id,
 						i_syncUp_id: syncup.dataValues.I_SyncUp_id
 					}
 
@@ -1007,14 +1060,19 @@ module.exports = {
 							level: '2', 
 							i_syncDetail_id: log.i_syncDetail_id, 
 							i_syncUp_id: log.i_syncUp_id});
-						
-						let details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
+            
+            /**
+             * Itero por cada detalle y desmatriculo los usuarios correspondientes.
+             */
+
+            //Refresco detalles (para tener el grupo de moodle actualizado)
+            details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
+
 						var _array = [];
 						for (var j=0; j<details.length; j++) {
 							let detail = details[j].dataValues;
 							log.i_syncDetail_id = detail.I_SyncDetail_id;
-
-						  	_array.push(unenrolUsers(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
+						  _array.push(unenrolUsers(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
 						  			  	
 						}
 
@@ -1083,7 +1141,7 @@ module.exports = {
     						attributes: {exclude: ['updatedAt']}, 
     						order: [
 		                      ["createdAt","desc"],
-		                      [I_Log,"createdAt","asc"]
+		                      [I_Log,"I_Log_id","asc"]
 		                    ],
 							include: [{
 								model: I_Log, 

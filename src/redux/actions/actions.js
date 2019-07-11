@@ -355,7 +355,7 @@ export function doSyncUp (I_Sync_ID) {
 	    .post(url+'api/syncUp/'+I_Sync_ID)
 		.then(function (response) {
 		  	if (response.data.success)
-		  		NotificationManager.success('La sincronización de: '+response.data.name+' se esta ejecutando en segundo plano. Puede revisar los logs cuando lo desee', 'Comenzo la sincronizació');
+		  		NotificationManager.success('La sincronización de: '+response.data.name+' se esta ejecutando en segundo plano. Puede revisar los logs cuando lo desee', 'Comenzo la sincronización');
 	    	else
 	    		NotificationManager.error(response.data.msg,'Error');
 	  	})
@@ -485,6 +485,13 @@ export function closeSyncLogs () {
    	return (dispatch) => {
 	    dispatch({type: 'CLOSE_SYNCS_LOGS'})
 	}
+}
+
+export function closeSiuDataDetails () {
+	 console.log('Cierro Details');
+  return (dispatch) => {
+    dispatch({type: 'CLOSE_SYNCDETAILDATA'})
+  }
 }
 
 export function loadCategories () {
