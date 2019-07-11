@@ -446,7 +446,16 @@ function fixSIUUser(usr, array, log){
 				//Rechazo pq el nombre de usuario deberia ser el DNI.
         //TODO: el campo dni en guarani 3.15 es tipo_nro_documento
         
-				let dni = usr.documento;
+        let dni = null;
+				if (usr.documento)	
+					dni = usr.documento;
+
+				if (dni===null && usr.tipo_nro_documento)
+					dni = usr.tipo_nro_documento;
+
+				if (dni === null || dni === undefined){
+					reject("No se pudo recuperar usuario a partir de DNI, DNI no esta definido para usuario: "+usr.usuario);
+				}
 
 				if (dni === undefined)
 					reject("No se pudo recuperar usuario a partir de DNI, DNI no esta definido para usuario: "+usr.usuario);
@@ -457,6 +466,7 @@ function fixSIUUser(usr, array, log){
 					reject("No se pudo recuperar usuario a partir de DNI, formato incompatible. Usuario: "+usr.usuario+ ', DNI: '+dni);
 			
 			} else {
+        console.log("ERROR: usuario esta en blanco",usr);
 				reject('ERROR: usuario esta en blanco pero no esta configurado para hacer fix')
 			}
 		} 

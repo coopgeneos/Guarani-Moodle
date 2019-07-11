@@ -92,7 +92,7 @@ function updateSchoolPeriods(assignments) {
     				periods.push(obj);
     			}
     			if (i === assignments.length -1) {
-    				let perds = removeDuplicatedObjects(periods, 'name')
+    				let perds = removeDuplicatedObjects(periods, 'C_SIU_School_Period_id')
 						C_SIU_School_Period.bulkCreate(perds)
 							.then(result => {
 								resolve(result);
@@ -135,7 +135,7 @@ function updateAssignments(assignments) {
 	  				};
 	  				assigs.push(obj);
 	    			if (i === assignments.length -1) {
-	    				let toCreate = removeDuplicatedObjects(assigs, 'name')
+	    				let toCreate = assigs;
 							C_SIU_Assignment.bulkCreate(toCreate)
 								.then(result => {
 									resolve(result);
