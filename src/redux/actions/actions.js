@@ -8,6 +8,7 @@ const config = require(__dirname + '/../../config/config.json')[env];
 
 let url = config.urlAPI;
 axios.defaults.withCredentials = true;
+console.log(url);
 
 //Refresh user data from user ID
 export function getUser (userID) {

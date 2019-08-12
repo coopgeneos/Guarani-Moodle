@@ -350,17 +350,18 @@ function enrolUsersInMoodle(url, token, userid, roleid, courseid, counter){
 				/* El WS devuelve null, es porque enroló el usuario correctamente */
 				if(resp.data === null){
 					counter.registered = counter.registered + 1;
-					resolve('OK');
+					return resolve('OK');
 				} else {
 					if(resp.data.exception) {
-						console.log("====> ERROR al enrolar usuario en Moodle : "+resp.data.message);
-						reject(resp.data.message);
+            console.log("====> ERROR al enrolar usuario en Moodle : "+resp.data.message);
+						return reject(resp.data.message);
 					}
 					console.log('====> ERROR al enrolar usuario en Moodle ' + userid + ' con parametros ' + roleid + ', ' + courseid);
-					reject('ERROR al enrolar usuario en Moodle ' + userid + ' con parametros ' + roleid + ', ' + courseid);
+					return reject('ERROR al enrolar usuario en Moodle ' + userid + ' con parametros ' + roleid + ', ' + courseid);
 				}
 			})
 			.catch(err => {
+        //Si el error es que no encontro el usuario entonces borro vinculacion y vuelvo a intentar.
 				console.log('====> ERROR 500 al enrolar usuario en Moodle ' + userid + ' con parametros ' + roleid + ', ' + courseid + ' >>> ' + err);
 				reject(err);
 			})
@@ -464,7 +465,12 @@ function fixSIUUser(usr, array, log){
 				
 				if (isNaN(usr.usuario))
 					reject("No se pudo recuperar usuario a partir de DNI, formato incompatible. Usuario: "+usr.usuario+ ', DNI: '+dni);
-			
+      
+        I_Log.create({message: 'Fix sobre usuario ('+ dni +')', 
+					level: '1', 
+					i_syncDetail_id: log.i_syncDetail_id, 
+          i_syncUp_id: log.i_syncUp_id});
+          
 			} else {
         console.log("ERROR: usuario esta en blanco",usr);
 				reject('ERROR: usuario esta en blanco pero no esta configurado para hacer fix')
@@ -595,13 +601,19 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 
 				/* Enrolamiento del usuario */
 				await enrolUsersInMoodle(mdl.url, mdl.token, localusr.mdl_user_id, mdl_role_id, mdl_course_id, counter)
-					.catch(err => {
+					.catch(async function(err) {
 						I_Log.create({message: 'ERROR al enrolar al usuario de con ID en moodle: '+localusr.mdl_user_id, 
 							level: '0', 
 							i_syncDetail_id: log.i_syncDetail_id, 
-							i_syncUp_id: log.i_syncUp_id});
+              i_syncUp_id: log.i_syncUp_id});
+            
+            //If this is the error then delete user from local cache so next sincronization its ok!
+            if (err.includes("User ID does not exist or is deleted!")) {
+              await C_MDL_SIU_User.destroy({where: {mdl_user_id: localusr.mdl_user_id}});
+            }
+
 						//Just log error and Continue sincronization
-						resolve('OK')
+						return resolve('OK')
 					})
 
 				/* Agrego el usuario al grupo */
@@ -895,7 +907,7 @@ function unenrolUsers(mdl, siu_assignment_code, groupid, log){
     //1
 		let syncusers = await C_MDL_SIU_Processed.findAll({where: {siu_assignment_code: siu_assignment_code}})
 			.catch((err) => {
-				reject('====> ERROR al consultar los usuario procesados durante la sincronizacion ' + err);
+				return reject('====> ERROR al consultar los usuario procesados durante la sincronizacion ' + err);
 			})
 
 		var syncusers_id = [];
@@ -906,11 +918,11 @@ function unenrolUsers(mdl, siu_assignment_code, groupid, log){
 		//2
 		let mdlusers = await getEnroledUsersFromMoodle(mdl.url, mdl.token, groupid)
 			.catch((err) => {
-				reject(err);
+				return reject(err);
 			})
 
 		//3
-		if(syncusers_id.length < mdlusers.length){
+		if(mdlusers && syncusers_id.length < mdlusers.length){
       var counter = 0;
 			for(let i=0; i<mdlusers.length; i++){
 
@@ -919,7 +931,7 @@ function unenrolUsers(mdl, siu_assignment_code, groupid, log){
 				if(!syncusers_id.includes(mdlusers[i])){
 					await unenrolUsersFromMoodle(mdl.url, mdl.token, groupid, mdlusers[i])
 						.catch((err) => {
-							reject(err);
+							return reject(err);
 						})
 					counter++;
 				}
