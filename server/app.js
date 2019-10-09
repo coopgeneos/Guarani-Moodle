@@ -99,7 +99,9 @@ app.listen(port, () => {
             where: {
               task_from: {[Op.lt]: now},
               task_to: {[Op.gte]: now},
-              task_next: {[Op.lte]: now.getHours()},
+              // Disable sync hour. Just synchronize if the dates match
+              
+              //task_next: {[Op.lte]: now.getHours()},
               task_periodicity: {[Op.ne]: 0},
             }
           })

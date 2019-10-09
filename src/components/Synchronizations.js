@@ -85,7 +85,8 @@ const SyncUpConfigurationPopup =  ({handleCloseSyncUpConfiguration, handleSaveSy
 							    selected={SyncUpConfigurationDateTo}
 							/>
 						</Col>
-					</FormGroup>
+          </FormGroup>
+         {/* 
 					<FormGroup key="syncUpConfigAuto3" controlId={"formHorizontal"+"syncUpConfigAuto3"} >
 						<Col  sm={2}>
 					    	<ControlLabel>Periodicidad: </ControlLabel>
@@ -93,7 +94,8 @@ const SyncUpConfigurationPopup =  ({handleCloseSyncUpConfiguration, handleSaveSy
 						<Col sm={2}>
       						<FormControl type="number" name="task_periodicity"  value={SyncUpConfigurationPeriodicity} onChange={handleChange} />
 						</Col>
-					</FormGroup>
+          </FormGroup>
+         */}
 					<FormGroup key="newCategoryButton" controlId={"formHorizontal"+"newCategory"} >
 						<Col md={2} sm={6}>
 							<Button onClick={handleCloseSyncUpConfiguration} >Cancelar</Button>
