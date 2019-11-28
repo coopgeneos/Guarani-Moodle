@@ -80,8 +80,17 @@ function updateSchoolPeriods(assignments) {
 			C_SIU_School_Period.findOne({ where: {name: currentValue.periodo_lectivo.nombre} })
     		.then(period => {
     			if (period == null) {
+            console.log('currentValue.periodo_lectivo',currentValue.periodo_lectivo);
     				let year = currentValue.periodo_lectivo.nombre.substring(currentValue.periodo_lectivo.nombre.length - 5, currentValue.periodo_lectivo.nombre.length);
-    				year = Number(year);
+            year = Number(year);
+
+            // Year in C_Scholl_Period isn't used yet. So we can assume year as current Year without problem
+            if (year = 'NaN') {
+              console.log('Error al parsear el año para el periodo lectivo. Se setea el año actual por defecto',currentValue.periodo_lectivo)
+              let currentYear = new Date();
+              year = currentYear.getFullYear();
+            }
+              
     				let obj = {
     					C_SIU_School_Period_id: currentValue.periodo_lectivo.periodo_lectivo, 
     					name: currentValue.periodo_lectivo.nombre,
