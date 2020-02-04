@@ -14,6 +14,7 @@ const I_Log = require('./../models').I_Log
 
 const axios = require('axios');
 const querystring = require('querystring');
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 
 function _doSyncUp(sync,mdl_prev_coll,syncup,
@@ -715,7 +716,7 @@ function processCourse(detail, mdl, sync){
 			//Busco id de categoria
 			let syncCategory = await I_SyncCategory.findOne({ where: {I_SyncCategory_id: sync.i_syncCategory_id}});
 
-			//El nombre viene determinado por el nombre de la sincronizacion + el id + el periodo
+			//El nombre viene determinado por el Codigo de la sincronizacion
 			let mdlact = await getCourseFromMoodle(
 				mdl.url, 
 				mdl.token, 

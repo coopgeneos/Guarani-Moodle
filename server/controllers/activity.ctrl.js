@@ -6,6 +6,7 @@ const I_SyncDetail = require('./../models').I_SyncDetail
 const I_Config = require('./../models').I_Config
 const axios = require('axios');
 const url = require('url');
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 
 function removeDuplicatedObjects(array, objectKey){
@@ -208,9 +209,10 @@ function queryOnSIUDigest (uri, token) {
 function queryOnSIUBasic (uri, token) {
 	let buff = new Buffer(token)
 	let hash = buff.toString('base64');  
-	const Basic = 'Basic ' + hash;   
+  const Basic = 'Basic ' + hash;   
+  console.log('queryOnSIUBasic',uri);
 	return axios.get(uri + '?limit=9999', 
-		{headers : { 'Authorization' : Basic }});
+    { headers : { 'Authorization' : Basic }});
 }
 
 function queryOnSIU (authmode, uri, token) {
