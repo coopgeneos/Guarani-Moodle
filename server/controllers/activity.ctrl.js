@@ -57,7 +57,7 @@ function updateActivities(assignments) {
     				debugger;		    				
 						C_SIU_Activity.bulkCreate(acts)
 							.then(activs => {
-								resolve(activs);
+                resolve(activs);
 							})
 							.catch(err => {
 								console.log(err);
@@ -81,12 +81,11 @@ function updateSchoolPeriods(assignments) {
 			C_SIU_School_Period.findOne({ where: {name: currentValue.periodo_lectivo.nombre} })
     		.then(period => {
     			if (period == null) {
-            console.log('currentValue.periodo_lectivo',currentValue.periodo_lectivo);
     				let year = currentValue.periodo_lectivo.nombre.substring(currentValue.periodo_lectivo.nombre.length - 5, currentValue.periodo_lectivo.nombre.length);
             year = Number(year);
 
             // Year in C_Scholl_Period isn't used yet. So we can assume year as current Year without problem
-            if (year = 'NaN') {
+            if (year == 'NaN') {
               console.log('Error al parsear el año para el periodo lectivo. Se setea el año actual por defecto',currentValue.periodo_lectivo)
               let currentYear = new Date();
               year = currentYear.getFullYear();
@@ -105,7 +104,7 @@ function updateSchoolPeriods(assignments) {
     				let perds = removeDuplicatedObjects(periods, 'C_SIU_School_Period_id')
 						C_SIU_School_Period.bulkCreate(perds)
 							.then(result => {
-								resolve(result);
+                resolve(result);
 							})
 							.catch(err => {
 								console.log(err);
@@ -210,7 +209,6 @@ function queryOnSIUBasic (uri, token) {
 	let buff = new Buffer(token)
 	let hash = buff.toString('base64');  
   const Basic = 'Basic ' + hash;   
-  console.log('queryOnSIUBasic',uri);
 	return axios.get(uri + '?limit=9999', 
     { headers : { 'Authorization' : Basic }});
 }

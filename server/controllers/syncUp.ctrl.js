@@ -322,14 +322,16 @@ function queryOnSIU (url, token) {
 		axios.get(url, {headers : { 'Authorization' : Basic }})
 			.then(response => {
 				if ( !(response.data instanceof Array)){
-					console.log('====> ERROR 500 consultando los usuarios en SIU GUARANI >>> ' + response.data);
-					reject(response.data);
+					console.log('====> ERROR 500 consultando los usuarios en SIU GUARANI (Error) >>> ' + response.data);
+          console.log('====> URL >>> ' + url);
+          reject(response.data);
 				}
 
 				resolve(response.data);
 			})
 			.catch(err => {
-				console.log('====> ERROR 500 consultando los usuarios en SIU GUARANI >>> ' + err);
+        console.log('====> ERROR 500 consultando los usuarios en SIU GUARANI (Catch) >>> ' + err);
+        console.log('====> URL >>> ' + url);
 				reject(err);
 			})
 
@@ -765,12 +767,11 @@ function processCourse(detail, mdl, sync){
 
 function processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_course_id, mdl_cohort_id){
 	return new Promise(async(resolve, reject) => {
-		
 		let assg = await C_SIU_Assignment.findOne({where: {siu_assignment_code: detail.siu_assignment_code}})
 			.catch((err) => {
 				console.log('====> ERROR al consultar C_SIU_Assignment (getCourseFromMoodle)');
 				reject(err);
-			})
+      })
 
 		/* Creo el grupo en Moodle y le asigno el curso antes creado */
 		let mdl_group_id = detail.mdl_group_id;
@@ -1059,7 +1060,8 @@ module.exports = {
 					I_Log.create({message: 'Comenzo la sincronización '+ sync.name, 
 							level: '2', 
 							i_syncDetail_id: 0, 
-							i_syncUp_id: log.i_syncUp_id});
+              i_syncUp_id: log.i_syncUp_id});
+          console.log('Comenzo la sincronización '+ sync.name);
 
 					if (where.mdl_role_id.length == 0) {
 						return
