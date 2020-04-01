@@ -1287,7 +1287,7 @@ module.exports = {
 						i_syncUp_id: syncup.dataValues.I_SyncUp_id});
 				}
 				catch (err) {
-					I_Log.create({message: message, 
+					I_Log.create({message: 'Hubo un error inesperado durante la sincronización. ' + err, 
 						level: '0', 
 						i_syncDetail_id: 0, 
 						i_syncUp_id: syncup.dataValues.I_SyncUp_id});
