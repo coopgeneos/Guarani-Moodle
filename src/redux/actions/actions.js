@@ -252,7 +252,7 @@ export function loadSyncs () {
    	return (dispatch) => {
       	dispatch({type: 'SET_APP_LOADING'})
 
-        axios.get(url+'api/syncs',{query:"1=1"})
+        axios.get(url+'api/syncs')
 		  .then(function (response) {
 		  	if (response.data.data)
 	    		dispatch({type: 'SET_SYNCS', syncs:response.data.data})

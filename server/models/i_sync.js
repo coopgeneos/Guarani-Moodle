@@ -44,7 +44,10 @@ module.exports = (sequelize, DataTypes) => {
 		task_student: {
 			type: DataTypes.BOOLEAN,
 			default:true
-		},
+    },
+    active: {
+      type: DataTypes.BOOLEAN,
+    }
 	},
 	{
 		tableName: 'I_Sync'

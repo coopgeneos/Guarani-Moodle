@@ -85,7 +85,7 @@ function updateSchoolPeriods(assignments) {
             year = Number(year);
 
             // Year in C_Scholl_Period isn't used yet. So we can assume year as current Year without problem
-            if (year == 'NaN') {
+            if (isNaN(year )) {
               console.log('Error al parsear el año para el periodo lectivo. Se setea el año actual por defecto',currentValue.periodo_lectivo)
               let currentYear = new Date();
               year = currentYear.getFullYear();

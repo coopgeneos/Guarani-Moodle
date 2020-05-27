@@ -268,7 +268,7 @@ module.exports = {
   },
 
   getByParameters: (req, res, next) => {
-    I_Sync.findAll({where: req.query,
+    I_Sync.findAll({where: {active:1},
                     attributes: {exclude: ['createdAt', 'updatedAt']},
                     order: [
                         ["name","asc"],
@@ -283,9 +283,6 @@ module.exports = {
                       as: 'Details',
                     },{
                       model: I_SyncCategory, 
-                      attributes: {exclude: ['createdAt', 'updatedAt']},
-                    },{
-                      model: I_SyncCohort, 
                       attributes: {exclude: ['createdAt', 'updatedAt']},
                     },{
                       model: I_SyncUp, 
