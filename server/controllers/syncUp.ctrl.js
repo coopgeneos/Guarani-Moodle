@@ -108,12 +108,18 @@ function _doSyncUp(sync,mdl_prev_coll,syncup,
 							let detail = details[j].dataValues;
 							log.i_syncDetail_id = detail.I_SyncDetail_id;
 
-						  	_array.push(unenrolUsers(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
+						  	_array.push(unenrolUsersFromGroup(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
 						  			  	
 						}
 
 						Promise.all(_array)
-							.then((vals) => {
+							.then(async(vals) => {
+                
+                /**
+                * Desmatriculo todos los usuarios sin grupos
+                */
+               await unenrolUsers(mdl,mdl_course_id,log);
+
 								//Set sync up has finalized
 								I_SyncUp.update(
 									{completed:true},
@@ -125,10 +131,12 @@ function _doSyncUp(sync,mdl_prev_coll,syncup,
 									.catch(err => {
 										console.log('ERROR al actualizar localmente',err)
 										reject('ERROR al actualizar localmente: '+err) 
-									})
+                  })
+                  console.log('ACA?')
 								
 							})
 							.catch((err) => {
+                console.log('o ACA !!!?')
 								console.log(err);
 								reject('Ocurrió un error durante la sincronización (Desmatriculacion). Consulte el log. ' + err) 
 							})						
@@ -335,6 +343,60 @@ function queryOnSIU (url, token) {
 				reject(err);
 			})
 
+	})
+}
+
+function getEnroledUsersInMoodle(url, token, courseid){
+	return new Promise((resolve, reject) => {
+		let formData = {
+	    wstoken: token, 
+	    wsfunction: 'core_enrol_get_enrolled_users', 
+	    moodlewsrestformat: 'json',
+			'courseid': courseid		
+    };
+		axios.post(url, querystring.stringify(formData))
+			.then(resp => {
+          return resolve(resp.data);
+			})
+			.catch(err => {
+        //Si el error es que no encontro el usuario entonces borro vinculacion y vuelvo a intentar.
+				console.log('====> ERROR 500 al obtener usuarios de curso en Moodle, curso: ' + courseid + ' >>> ' + err);
+				reject(err);
+			})
+		
+	})
+}
+
+function unenrolUsersInMoodle(url, token, userid, courseid){
+	return new Promise((resolve, reject) => {
+		let formData = {
+	    wstoken: token, 
+	    wsfunction: 'enrol_manual_unenrol_users', 
+	    moodlewsrestformat: 'json',
+			'enrolments[0][userid]': userid,
+			'enrolments[0][courseid]': courseid		
+	  };
+		axios.post(url, querystring.stringify(formData))
+			.then(resp => {
+				/* El WS devuelve null, es porque desenroló el usuario correctamente */
+				if(resp.data === null){
+          console.log('Se desmatriculo del curso: ' + courseid + ' al usuario: '+userid);
+					return resolve('OK');
+				} else {
+					if(resp.data.exception) {
+            console.log("====> ERROR al desenrolar usuario en Moodle : "+resp.data.message);
+						return reject(resp.data.message);
+					}
+					console.log('====> ERROR al desenrolar usuario en Moodle ' + userid + ' con parametro ' + courseid);
+					return reject('ERROR al desenrolar usuario en Moodle ' + userid + ' con parametro ' + courseid);
+				}
+			})
+			.catch(err => {
+        //Si el error es que no encontro el usuario entonces borro vinculacion y vuelvo a intentar.
+				console.log('====> ERROR 500 al desenrolar usuario en Moodle ' + userid + ' con parametro ' + courseid + ' >>> ' + err);
+				reject(err);
+			})
+		
 	})
 }
 
@@ -602,7 +664,7 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
 					resolve('OK')
 				}
 
-				/* Enrolamiento del usuario */
+        /* Enrolamiento del usuario */
 				await enrolUsersInMoodle(mdl.url, mdl.token, localusr.mdl_user_id, mdl_role_id, mdl_course_id, counter)
 					.catch(async function(err) {
 						I_Log.create({message: 'ERROR al enrolar al usuario de con ID en moodle: '+localusr.mdl_user_id, 
@@ -874,7 +936,7 @@ function getEnroledUsersFromMoodle(url, token, groupid){
 	})
 }
 
-function unenrolUsersFromMoodle(url, token, groupid, userid){
+function unenrolUsersFromGroupInMoodle(url, token, groupid, userid){
 	return new Promise(async(resolve, reject) => {
 		let formData = {
 	    wstoken: token, 
@@ -900,11 +962,36 @@ function unenrolUsersFromMoodle(url, token, groupid, userid){
 	})
 }
 
-function unenrolUsers(mdl, siu_assignment_code, groupid, log){
+function unenrolUsers(mdl, courseid, log){
+	return new Promise(async(resolve, reject) => {
+    //1 Obtengo todos los usuarios para un curso
+    //2 Itero y elimino los que no tienen grupo
+
+    //1
+    let users = await getEnroledUsersInMoodle(mdl.url, mdl.token,courseid)
+    .catch((err) => {
+      return reject(err);
+    });
+
+    //2
+		for(var i=0; i<users.length; i++){
+      //Si no tiene grupo elimino
+      if (users[i].groups.length == 0) {
+        await unenrolUsersInMoodle(mdl.url, mdl.token, users[i].id, courseid)
+        .catch((err) => {
+          return reject(err);
+        })
+      }
+		}
+		return resolve('OK');
+	})
+}
+
+function unenrolUsersFromGroup(mdl, siu_assignment_code, groupid, log){
 	return new Promise(async(resolve, reject) => {
 		//1 obtener los usuarios de una comision en siu
 		//2 Obtener los usuarios del grupo de moodle que se corresponde con 1
-		//3 Comparar los tamaños. Si son diferentes quiere decir que hay que desmatricular alguno
+    //3 Comparar los tamaños. Si son diferentes quiere decir que hay que desmatricular alumnos del grupo
 
     //1
 		let syncusers = await C_MDL_SIU_Processed.findAll({where: {siu_assignment_code: siu_assignment_code}})
@@ -931,7 +1018,7 @@ function unenrolUsers(mdl, siu_assignment_code, groupid, log){
 				//Si el usuario esta en moodle pero no en siu, lo saco del grupo
 
 				if(!syncusers_id.includes(mdlusers[i])){
-					await unenrolUsersFromMoodle(mdl.url, mdl.token, groupid, mdlusers[i])
+					await unenrolUsersFromGroupInMoodle(mdl.url, mdl.token, groupid, mdlusers[i])
 						.catch((err) => {
 							return reject(err);
 						})
@@ -1087,7 +1174,7 @@ module.exports = {
 							i_syncUp_id: log.i_syncUp_id});
             
             /**
-             * Itero por cada detalle y desmatriculo los usuarios correspondientes.
+             * Itero por cada detalle y desmatriculo los usuarios correspondientes de los grupos
              */
 
             //Refresco detalles (para tener el grupo de moodle actualizado)
@@ -1097,17 +1184,23 @@ module.exports = {
 						for (var j=0; j<details.length; j++) {
 							let detail = details[j].dataValues;
 							log.i_syncDetail_id = detail.I_SyncDetail_id;
-						  _array.push(unenrolUsers(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
-						  			  	
-						}
+						  _array.push(unenrolUsersFromGroup(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
+            }
 
 						Promise.all(_array)
-							.then((vals) => {
+							.then(async(vals) => {
+
+                /**
+                * Desmatriculo todos los usuarios sin grupos
+                */
+                await unenrolUsers(mdl,mdl_course_id,log);
+
 								//Set sync up has finalized
 								I_SyncUp.update(
 									{completed:true},
 									{where:{I_SyncUp_id: syncup.dataValues.I_SyncUp_id}})
 									.then((vals) => {
+                    console.log('Sincronización '+ sync.name + ' completa!');
 										I_Log.create({message: 'Sincronización '+ sync.name + ' completa!', 
 											level: '2', 
 											i_syncDetail_id: 0, 
