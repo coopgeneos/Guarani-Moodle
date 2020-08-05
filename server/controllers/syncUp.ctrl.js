@@ -76,8 +76,6 @@ function _doSyncUp(sync,mdl_prev_coll,syncup,
 						i_syncUp_id: syncup.dataValues.I_SyncUp_id
 					}
 
-					var prm_array = [];
-
 					I_Log.create({message: 'Comenzo la sincronización '+ sync.name, 
 							level: '2', 
 							i_syncDetail_id: 0, 
@@ -87,64 +85,64 @@ function _doSyncUp(sync,mdl_prev_coll,syncup,
 
 					for(var i=0; i<details.length; i++){
 						let detail = details[i].dataValues;
-						log.i_syncDetail_id = detail.I_SyncDetail_id; 		
-						prm_array.push(processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_course_id, syncCohort.mdl_cohort_id));
-					}
+            log.i_syncDetail_id = detail.I_SyncDetail_id; 
+            try {
+              await processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_course_id, syncCohort.mdl_cohort_id);
+            }
+            catch (err) {
+              console.log(err);
+              I_Log.create({message: 'Hubo un error inesperado durante la sincronización de un detalle. ' + err, 
+                level: '0', 
+                i_syncDetail_id: detail.I_SyncDetail_id, 
+                i_syncUp_id: syncup.dataValues.I_SyncUp_id
+              });
+            }
+          }
 
-					Promise.all(prm_array)
-					.then(async (values) => {
-						I_Log.create({message: 'Se crearon '+ counter.created + ' usuarios en Moodle', 
+          I_Log.create({message: 'Se crearon '+ counter.created + ' usuarios en Moodle', 
 							level: '2', 
 							i_syncDetail_id: log.i_syncDetail_id, 
 							i_syncUp_id: log.i_syncUp_id});
-						I_Log.create({message: 'Se matricularon '+ counter.registered + ' usuarios en Moodle', 
-							level: '2', 
-							i_syncDetail_id: log.i_syncDetail_id, 
-							i_syncUp_id: log.i_syncUp_id});
+          I_Log.create({message: 'Se matricularon '+ counter.registered + ' usuarios en Moodle', 
+            level: '2', 
+            i_syncDetail_id: log.i_syncDetail_id, 
+            i_syncUp_id: log.i_syncUp_id});
 						
-						let details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
-						var _array = [];
-						for (var j=0; j<details.length; j++) {
-							let detail = details[j].dataValues;
-							log.i_syncDetail_id = detail.I_SyncDetail_id;
+          details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
+          var _array = [];
+          for (var j=0; j<details.length; j++) {
+            let detail = details[j].dataValues;
+            log.i_syncDetail_id = detail.I_SyncDetail_id;
 
-						  	_array.push(unenrolUsersFromGroup(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
-						  			  	
-						}
+              _array.push(unenrolUsersFromGroup(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
+                      
+          }
 
-						Promise.all(_array)
-							.then(async(vals) => {
-                
-                /**
-                * Desmatriculo todos los usuarios sin grupos
-                */
-               await unenrolUsers(mdl,mdl_course_id,log);
+          Promise.all(_array)
+            .then(async(vals) => {
+              
+              /**
+              * Desmatriculo todos los usuarios sin grupos
+              */
+              await unenrolUsers(mdl,mdl_course_id,log);
 
-								//Set sync up has finalized
-								I_SyncUp.update(
-									{completed:true},
-									{where:{I_SyncUp_id: syncup.dataValues.I_SyncUp_id}})
-									.then((vals) => {
-										console.log('Sincronización '+ sync.name + ' completa!')
-										resolve ('Sincronización '+ sync.name + ' completa!')
-									})									
-									.catch(err => {
-										console.log('ERROR al actualizar localmente',err)
-										reject('ERROR al actualizar localmente: '+err) 
-                  })
-                  console.log('ACA?')
-								
-							})
-							.catch((err) => {
-                console.log('o ACA !!!?')
-								console.log(err);
-								reject('Ocurrió un error durante la sincronización (Desmatriculacion). Consulte el log. ' + err) 
-							})						
-					})
-					.catch((err) => {
-						console.log('Hubo un error inesperado durante la sincronización. ',err);
-						reject('Hubo un error inesperado durante la sincronización. ' + err)
-					})
+              //Set sync up has finalized
+              I_SyncUp.update(
+                {completed:true},
+                {where:{I_SyncUp_id: syncup.dataValues.I_SyncUp_id}})
+                .then((vals) => {
+                  console.log('Sincronización '+ sync.name + ' completa!')
+                  resolve ('Sincronización '+ sync.name + ' completa!')
+                })									
+                .catch(err => {
+                  console.log('ERROR al actualizar localmente',err)
+                  reject('ERROR al actualizar localmente: '+err) 
+                })              
+            })
+            .catch((err) => {
+              console.log(err);
+              reject('Ocurrió un error durante la sincronización (Desmatriculacion). Consulte el log. ' + err) 
+            })						
 
 				} catch (err) {
 					console.log('Hubo un error inesperado durante la sincronización. ',err);
@@ -731,7 +729,7 @@ function processUser(siuusr, siu, mdl, fixArray, log, counter, mdl_course_id, md
  * @param {*} mdl_cohort_id 
  */
 function createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl_role_id, siuurl, assg, mdl_cohort_id) {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		var prm_array = [];
 		/* Obtengo los alumnos/docentes desde SIU */							
 		queryOnSIU (siuurl, siu.token)
@@ -829,6 +827,7 @@ function processCourse(detail, mdl, sync){
 
 function processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_course_id, mdl_cohort_id){
 	return new Promise(async(resolve, reject) => {
+    console.log('Comenzando sincronizacion de detalle: '+detail.siu_assignment_code);
 		let assg = await C_SIU_Assignment.findOne({where: {siu_assignment_code: detail.siu_assignment_code}})
 			.catch((err) => {
 				console.log('====> ERROR al consultar C_SIU_Assignment (getCourseFromMoodle)');
@@ -865,26 +864,25 @@ function processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_cours
 		}
 		
 		mdl.groups.push(mdl_group_id);
-		
-		let promises = [];
-		if(sync.task_student && sync.task_student == true){
-			promises.push(createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl.student_role_id, 
-				siu.fixurl + '/' + assg.siu_assignment_code + '/alumnos?limit=9999', 
-				assg, mdl_cohort_id));
-		}
-		if(sync.task_teacher && sync.task_teacher == true){
-			promises.push(createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl.teacher_role_id, 
-				siu.fixurl + '/' + assg.siu_assignment_code + '/docentes?limit=9999', 
-				assg, mdl_cohort_id));
-    }
+    
+    try {
 
-		Promise.all(promises)
-			.then((values) => {
-				resolve('Ok');
-			})
-			.catch((err) => {
-				reject(err);
-			})	
+      if(sync.task_student && sync.task_student == true){
+        await createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl.student_role_id, 
+          siu.fixurl + '/' + assg.siu_assignment_code + '/alumnos?limit=9999', 
+          assg, mdl_cohort_id);
+      }
+      if(sync.task_teacher && sync.task_teacher == true){
+        await createUsersInMoodle(siu, mdl, fixArray, log, counter, mdl_course_id, mdl_group_id, mdl.teacher_role_id, 
+          siu.fixurl + '/' + assg.siu_assignment_code + '/docentes?limit=9999', 
+          assg, mdl_cohort_id);
+      }
+      resolve('Ok');
+    }
+    catch(err) {
+      reject(err);
+    }
+	
 	})
 }
 
@@ -917,7 +915,7 @@ function getEnroledUsersFromMoodle(url, token, groupid){
 	return new Promise((resolve, reject) => {
 		let formData = {
 	    wstoken: token, 
-	    wsfunction: 'core_group_get_group_members', 
+	    wsfunction: 'local_get_groupmembers_get_group_members', 
 	    moodlewsrestformat: 'json',
 			'groupids[0]': groupid	
 	  };
@@ -926,8 +924,8 @@ function getEnroledUsersFromMoodle(url, token, groupid){
 				if(resp.data.exception) {
 					console.log("====> ERROR al consultar los usuarios matriculados en Moodle: "+ groupid + ' :: ' + resp.data.message);
 					return reject(resp.data.exception);
-				}
-				return resolve(resp.data[0].userids);				
+        }
+				return resolve(resp.data[0].users);				
 			})
 			.catch(err => {
 				console.log("====> ERROR 500 al consultar los usuarios matriculados en Moodle: "+ groupid + ' :: ' + err);
@@ -1002,23 +1000,24 @@ function unenrolUsersFromGroup(mdl, siu_assignment_code, groupid, log){
 		var syncusers_id = [];
 		for(var i=0; i<syncusers.length; i++){
 			syncusers_id.push(syncusers[i].dataValues.mdl_user_id);
-		}
-
+    }
+    
 		//2
 		let mdlusers = await getEnroledUsersFromMoodle(mdl.url, mdl.token, groupid)
 			.catch((err) => {
 				return reject(err);
-			})
+      })
 
 		//3
 		if(mdlusers && syncusers_id.length < mdlusers.length){
       var counter = 0;
 			for(let i=0; i<mdlusers.length; i++){
 
-				//Si el usuario esta en moodle pero no en siu, lo saco del grupo
-
-				if(!syncusers_id.includes(mdlusers[i])){
-					await unenrolUsersFromGroupInMoodle(mdl.url, mdl.token, groupid, mdlusers[i])
+        //Si el usuario esta en moodle pero no en siu, 
+        //Y su rol es estudiante (Rol estudiante configurado en la interfaz)
+        if(!syncusers_id.includes(mdlusers[i].id) 
+          && mdlusers[i].role == mdl.student_role_id ){
+            await unenrolUsersFromGroupInMoodle(mdl.url, mdl.token, groupid, mdlusers[i].id)
 						.catch((err) => {
 							return reject(err);
 						})
@@ -1159,77 +1158,76 @@ module.exports = {
 					for(var i=0; i<details.length; i++){
 						let detail = details[i].dataValues;
 						log.i_syncDetail_id = detail.I_SyncDetail_id; 		
-						prm_array.push(processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_course_id, syncCohort.mdl_cohort_id));
+            try {
+              await processDetail(detail, siu, mdl, sync, log, fixArray, counter, mdl_course_id, syncCohort.mdl_cohort_id);
+            }
+            catch (err) {
+              console.log(err);
+              I_Log.create({message: 'Hubo un error inesperado durante la sincronización de un detalle. ' + err, 
+                level: '0', 
+                i_syncDetail_id: detail.I_SyncDetail_id, 
+                i_syncUp_id: syncup.dataValues.I_SyncUp_id
+              });
+            }
 					}
 
-					Promise.all(prm_array)
-					.then(async (values) => {
-						I_Log.create({message: 'Se crearon '+ counter.created + ' usuarios en Moodle', 
-							level: '2', 
-							i_syncDetail_id: log.i_syncDetail_id, 
-							i_syncUp_id: log.i_syncUp_id});
-						I_Log.create({message: 'Se matricularon '+ counter.registered + ' usuarios en Moodle', 
-							level: '2', 
-							i_syncDetail_id: log.i_syncDetail_id, 
-							i_syncUp_id: log.i_syncUp_id});
+          I_Log.create({message: 'Se crearon '+ counter.created + ' usuarios en Moodle', 
+            level: '2', 
+            i_syncDetail_id: log.i_syncDetail_id, 
+            i_syncUp_id: log.i_syncUp_id});
+          I_Log.create({message: 'Se matricularon '+ counter.registered + ' usuarios en Moodle', 
+            level: '2', 
+            i_syncDetail_id: log.i_syncDetail_id, 
+            i_syncUp_id: log.i_syncUp_id});
             
-            /**
-             * Itero por cada detalle y desmatriculo los usuarios correspondientes de los grupos
-             */
+          /**
+           * Itero por cada detalle y desmatriculo los usuarios correspondientes de los grupos
+           */
 
-            //Refresco detalles (para tener el grupo de moodle actualizado)
-            details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
+          //Refresco detalles (para tener el grupo de moodle actualizado)
+          details = await I_SyncDetail.findAll({where: {i_sync_id: sync.I_Sync_id}});
 
-						var _array = [];
-						for (var j=0; j<details.length; j++) {
-							let detail = details[j].dataValues;
-							log.i_syncDetail_id = detail.I_SyncDetail_id;
-						  _array.push(unenrolUsersFromGroup(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
-            }
+          var _array = [];
+          for (var j=0; j<details.length; j++) {
+            let detail = details[j].dataValues;
+            log.i_syncDetail_id = detail.I_SyncDetail_id;
+            _array.push(unenrolUsersFromGroup(mdl, detail.siu_assignment_code, detail.mdl_group_id, log));
+          }
 
-						Promise.all(_array)
-							.then(async(vals) => {
+          Promise.all(_array)
+            .then(async(vals) => {
 
-                /**
-                * Desmatriculo todos los usuarios sin grupos
-                */
-                await unenrolUsers(mdl,mdl_course_id,log);
+              /**
+              * Desmatriculo todos los usuarios sin grupos
+              */
+              await unenrolUsers(mdl,mdl_course_id,log);
 
-								//Set sync up has finalized
-								I_SyncUp.update(
-									{completed:true},
-									{where:{I_SyncUp_id: syncup.dataValues.I_SyncUp_id}})
-									.then((vals) => {
-                    console.log('Sincronización '+ sync.name + ' completa!');
-										I_Log.create({message: 'Sincronización '+ sync.name + ' completa!', 
-											level: '2', 
-											i_syncDetail_id: 0, 
-											i_syncUp_id: syncup.dataValues.I_SyncUp_id});
-									})									
-									.catch(err => {
-										I_Log.create({message: 'ERROR al actualizar localmente: '+err, 
-											level: '0', 
-											i_syncDetail_id: 0, 
-											i_syncUp_id: syncup.dataValues.I_SyncUp_id});
-									})
-								
-							})
-							.catch((err) => {
-								console.log(err);
-								I_Log.create({message: 'Ocurrió un error durante la sincronización (Desmatriculacion). Consulte el log. ' + err, 
-											level: '0', 
-											i_syncDetail_id: 0, 
-											i_syncUp_id: syncup.dataValues.I_SyncUp_id});
-							})						
-					})
-					.catch((err) => {
-						console.log(err);
-						I_Log.create({message: 'Hubo un error inesperado durante la sincronización. ' + err, 
-							level: '0', 
-							i_syncDetail_id: log.i_syncDetail_id, 
-							i_syncUp_id: log.i_syncUp_id
-						});
-					})
+              //Set sync up has finalized
+              I_SyncUp.update(
+                {completed:true},
+                {where:{I_SyncUp_id: syncup.dataValues.I_SyncUp_id}})
+                .then((vals) => {
+                  console.log('Sincronización '+ sync.name + ' completa!');
+                  I_Log.create({message: 'Sincronización '+ sync.name + ' completa!', 
+                    level: '2', 
+                    i_syncDetail_id: 0, 
+                    i_syncUp_id: syncup.dataValues.I_SyncUp_id});
+                })									
+                .catch(err => {
+                  I_Log.create({message: 'ERROR al actualizar localmente: '+err, 
+                    level: '0', 
+                    i_syncDetail_id: 0, 
+                    i_syncUp_id: syncup.dataValues.I_SyncUp_id});
+                })
+              
+            })
+            .catch((err) => {
+              console.log(err);
+              I_Log.create({message: 'Ocurrió un error durante la sincronización (Desmatriculacion). Consulte el log. ' + err, 
+                    level: '0', 
+                    i_syncDetail_id: 0, 
+                    i_syncUp_id: syncup.dataValues.I_SyncUp_id});
+            })						
 
 				} catch (err) {
 					console.log(err);
@@ -1380,6 +1378,7 @@ module.exports = {
 						i_syncUp_id: syncup.dataValues.I_SyncUp_id});
 				}
 				catch (err) {
+          console.log(err);
 					I_Log.create({message: 'Hubo un error inesperado durante la sincronización. ' + err, 
 						level: '0', 
 						i_syncDetail_id: 0, 
